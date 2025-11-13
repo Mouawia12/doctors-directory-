@@ -1,0 +1,12 @@
+# Local tooling & cache
+.DS_Store
+
+# Frontend / backend node modules are already ignored inside their folders
+
+# Environment overrides (kept locally)
+.env
+backend-doctors-directory/.env
+frontend-doctors-directory/.env
+
+# External dashboard reference assets (kept locally only)
+/eduadmin-responsive-bootstrap-admin-template-dashboard/

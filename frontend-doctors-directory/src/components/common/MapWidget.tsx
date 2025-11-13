@@ -1,0 +1,77 @@
+import { useEffect, useRef } from 'react'
+import { importLibrary, setOptions } from '@googlemaps/js-api-loader'
+import { env } from '@/lib/env'
+
+export interface Marker {
+  lat: number
+  lng: number
+  title?: string
+}
+
+interface MapWidgetProps {
+  markers: Marker[]
+  zoom?: number
+  className?: string
+}
+
+export const MapWidget = ({ markers, zoom = 12, className }: MapWidgetProps) => {
+  const mapRef = useRef<HTMLDivElement | null>(null)
+  const loaderConfigured = useRef(false)
+
+  useEffect(() => {
+    if (!env.mapsKey || !mapRef.current) return
+    let isMounted = true
+
+    const initMap = async () => {
+      try {
+        if (!loaderConfigured.current) {
+          setOptions({
+            key: env.mapsKey,
+          })
+          loaderConfigured.current = true
+        }
+
+        const [{ Map }, { AdvancedMarkerElement }] = await Promise.all([
+          importLibrary('maps') as Promise<{ Map: typeof google.maps.Map }>,
+          importLibrary('marker') as Promise<{ AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement }>,
+        ])
+
+        if (!isMounted || !mapRef.current) return
+
+        const center = markers[0] ?? { lat: 24.7136, lng: 46.6753 }
+        const map = new Map(mapRef.current, {
+          center,
+          zoom,
+          disableDefaultUI: true,
+          mapId: env.mapsMapId || undefined,
+        })
+
+        markers.forEach((marker) => {
+          new AdvancedMarkerElement({
+            position: { lat: marker.lat, lng: marker.lng },
+            map,
+            title: marker.title,
+          })
+        })
+      } catch (error) {
+        console.error('تعذّر تحميل خريطة Google', error)
+      }
+    }
+
+    initMap()
+
+    return () => {
+      isMounted = false
+    }
+  }, [markers, zoom])
+
+  if (!env.mapsKey) {
+    return (
+      <div className="flex h-72 items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white text-sm text-slate-500">
+        يرجى إضافة مفتاح خرائط Google لعرض الخريطة.
+      </div>
+    )
+  }
+
+  return <div ref={mapRef} className={className ?? 'h-72 w-full rounded-3xl border border-slate-100'} />
+}
