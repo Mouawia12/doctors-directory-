@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import { toast } from 'sonner'
 import { env } from '@/lib/env'
@@ -14,6 +15,18 @@ interface GoogleAuthButtonProps {
 
 export const GoogleAuthButton = ({ type, onSuccess, label = 'أو تابع باستخدام حساب Google', className }: GoogleAuthButtonProps) => {
   const mutation = useGoogleSocialAuth()
+  const [buttonWidth, setButtonWidth] = useState('320')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const computeWidth = () => {
+      const available = Math.min(320, Math.max(240, window.innerWidth - 120))
+      setButtonWidth(String(available))
+    }
+    computeWidth()
+    window.addEventListener('resize', computeWidth)
+    return () => window.removeEventListener('resize', computeWidth)
+  }, [])
 
   if (!env.googleClientId) {
     return null
@@ -25,7 +38,7 @@ export const GoogleAuthButton = ({ type, onSuccess, label = 'أو تابع با�
       <div className="flex justify-center">
         <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white/80 px-3 py-2">
           <GoogleLogin
-            width="320"
+            width={buttonWidth}
             locale="ar"
             shape="pill"
             theme="outline"
