@@ -25,7 +25,7 @@ export const GoogleAuthButton = ({ type, onSuccess, label = 'أو تابع با�
       <div className="flex justify-center">
         <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white/80 px-3 py-2">
           <GoogleLogin
-            width="100%"
+            width="320"
             locale="ar"
             shape="pill"
             theme="outline"
