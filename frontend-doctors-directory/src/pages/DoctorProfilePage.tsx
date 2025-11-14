@@ -123,9 +123,11 @@ export const DoctorProfilePage = () => {
                 </a>
               </Button>
               {canEdit && (
-                <Button variant="outline" asChild>
-                  <Link to="/doctor/profile">{translate('تعديل الملف', 'Edit profile')}</Link>
-                </Button>
+                <>
+                  <Button variant="outline" asChild>
+                    <Link to="/doctor/profile">{translate('تعديل الملف', 'Edit profile')}</Link>
+                  </Button>
+                </>
               )}
             </div>
           </div>
