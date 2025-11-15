@@ -36,7 +36,8 @@ export const AccountLayout = () => {
                 }`
               }
             >
-              <tab.icon className="h-4 w-4" title={tab.label} />
+              <span className="sr-only">{tab.label}</span>
+              <tab.icon className="h-4 w-4" />
             </NavLink>
           ))}
           <Button variant="ghost" onClick={() => navigate('/')}>
