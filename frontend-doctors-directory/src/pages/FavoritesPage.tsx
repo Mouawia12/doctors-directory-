@@ -1,27 +1,27 @@
 import { useFavoritesQuery } from '@/features/favorites/hooks'
 import { DoctorCard } from '@/components/common/DoctorCard'
 import { EmptyState } from '@/components/common/EmptyState'
-import { useLocaleText } from '@/app/hooks/useLocaleText'
+import { useTranslation } from 'react-i18next'
 
 export const FavoritesPage = () => {
   const { data, isLoading } = useFavoritesQuery()
   const items = data?.items ?? []
-  const translate = useLocaleText()
+  const { t } = useTranslation()
 
   if (isLoading) {
-    return <div className="container text-slate-500">{translate('جارٍ تحميل المفضلة...', 'Loading favorites...')}</div>
+    return <div className="container text-slate-500">{t('favorites.loading')}</div>
   }
 
   return (
     <div className="container space-y-4">
       <div>
-        <p className="text-xs text-slate-500">{translate('قائمتك', 'Your list')}</p>
-        <h1 className="text-2xl font-semibold text-slate-900">{translate('الأطباء المفضلون', 'Favorite doctors')}</h1>
+        <p className="text-xs text-slate-500">{t('favorites.listLabel')}</p>
+        <h1 className="text-2xl font-semibold text-slate-900">{t('favorites.title')}</h1>
       </div>
       {items.length === 0 ? (
         <EmptyState
-          title={translate('لا توجد أطباء في المفضلة', 'No doctors in favorites yet')}
-          description={translate('ابدأ بإضافة الأطباء الذين تود متابعتهم لاحقاً.', 'Start adding doctors you want to follow later.')}
+          title={t('favorites.emptyTitle')}
+          description={t('favorites.emptyDescription')}
         />
       ) : (
         <div className="grid gap-4">

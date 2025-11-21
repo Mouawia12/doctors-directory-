@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { useToggleFavorite } from '@/features/favorites/hooks'
 import { useAuthQuery } from '@/features/auth/hooks'
 import { cn } from '@/lib/utils'
-import { useLocaleText } from '@/app/hooks/useLocaleText'
+import { useTranslation } from 'react-i18next'
 
 interface DoctorCardProps {
   doctor: Doctor
@@ -17,7 +17,7 @@ interface DoctorCardProps {
 export const DoctorCard = ({ doctor, compact = false, profilePath }: DoctorCardProps) => {
   const { data: user } = useAuthQuery()
   const { mutate: toggleFavorite, isPending } = useToggleFavorite()
-  const translate = useLocaleText()
+  const { t } = useTranslation()
 
   const galleryCover = doctor.media?.gallery?.[0]?.url
   const targetProfile = profilePath ?? `/doctors/${doctor.id}`
@@ -34,7 +34,7 @@ export const DoctorCard = ({ doctor, compact = false, profilePath }: DoctorCardP
           className="h-48 w-full rounded-2xl object-cover"
           loading="lazy"
         />
-        {doctor.is_verified && <Badge className="absolute right-2 top-2">{translate('موثق', 'Verified')}</Badge>}
+        {doctor.is_verified && <Badge className="absolute right-2 top-2">{t('doctorCard.verified')}</Badge>}
       </div>
       <div className="flex flex-1 flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
@@ -62,10 +62,7 @@ export const DoctorCard = ({ doctor, compact = false, profilePath }: DoctorCardP
         <div className="flex flex-wrap gap-2 text-xs text-slate-600">
           <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
             <Stethoscope className="h-3.5 w-3.5" />
-            {translate(
-              `${doctor.years_of_experience || 0} سنة خبرة`,
-              `${doctor.years_of_experience || 0} years of experience`,
-            )}
+            {t('doctorCard.experience', { count: doctor.years_of_experience || 0 })}
           </span>
           {doctor.city && (
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
@@ -82,12 +79,12 @@ export const DoctorCard = ({ doctor, compact = false, profilePath }: DoctorCardP
         {!compact && <p className="line-clamp-2 text-sm text-slate-600">{doctor.bio}</p>}
         <div className="mt-auto flex flex-wrap items-center gap-3">
           <Button asChild>
-            <Link to={targetProfile}>{translate('عرض الملف', 'View profile')}</Link>
+            <Link to={targetProfile}>{t('doctorCard.viewProfile')}</Link>
           </Button>
           {doctor.clinics && doctor.clinics.length > 0 && (
             <p className="text-xs text-slate-500">
-              {translate('عيادات في', 'Clinics in')}{' '}
-              {doctor.clinics.map((clinic) => clinic.city).join(translate('، ', ', '))}
+              {t('doctorCard.clinicsIn')}{' '}
+              {doctor.clinics.map((clinic) => clinic.city).join(t('common.comma'))}
             </p>
           )}
         </div>

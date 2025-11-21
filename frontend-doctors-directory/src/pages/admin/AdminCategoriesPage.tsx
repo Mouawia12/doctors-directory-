@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import type { Category } from '@/types/doctor'
+import { useTranslation } from 'react-i18next'
 
 const flattenCategories = (tree: Category[] = [], depth = 0): Array<Category & { depth: number }> =>
   tree.flatMap((category) => [
@@ -15,6 +16,7 @@ const flattenCategories = (tree: Category[] = [], depth = 0): Array<Category & {
 export const AdminCategoriesPage = () => {
   const { data: categories, isLoading } = useCategoriesQuery()
   const mutation = useCategoryMutations()
+  const { t } = useTranslation()
 
   const [name, setName] = useState('')
 
@@ -25,32 +27,32 @@ export const AdminCategoriesPage = () => {
       {
         onSuccess: () => {
           setName('')
-          toast.success('تم إضافة التصنيف')
+          toast.success(t('adminCategories.createSuccess'))
         },
       },
     )
   }
 
   const handleDelete = (id: number) => {
-    if (!confirm('هل أنت متأكد من حذف التصنيف؟')) return
-    mutation.mutate({ type: 'delete', categoryId: id }, { onSuccess: () => toast.success('تم حذف التصنيف') })
+    if (!confirm(t('adminCategories.confirmDelete'))) return
+    mutation.mutate({ type: 'delete', categoryId: id }, { onSuccess: () => toast.success(t('adminCategories.deleteSuccess')) })
   }
 
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">إضافة تصنيف</h2>
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">{t('adminCategories.addTitle')}</h2>
         <div className="flex flex-col gap-3 md:flex-row">
-          <Input placeholder="اسم التصنيف" value={name} onChange={(event) => setName(event.target.value)} />
+          <Input placeholder={t('adminCategories.namePlaceholder')} value={name} onChange={(event) => setName(event.target.value)} />
           <Button onClick={handleCreate} disabled={mutation.isPending}>
-            إضافة
+            {t('adminCategories.addAction')}
           </Button>
         </div>
       </div>
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
-        <h3 className="mb-4 text-lg font-semibold text-slate-900">التصنيفات الحالية</h3>
+        <h3 className="mb-4 text-lg font-semibold text-slate-900">{t('adminCategories.currentTitle')}</h3>
         {isLoading ? (
-          <p className="text-sm text-slate-500">جارٍ التحميل...</p>
+          <p className="text-sm text-slate-500">{t('adminCategories.loading')}</p>
         ) : (
           <CategoryTreeList categories={categories ?? []} onDelete={handleDelete} />
         )}
@@ -61,9 +63,10 @@ export const AdminCategoriesPage = () => {
 
 const CategoryTreeList = ({ categories, onDelete }: { categories: Category[]; onDelete: (id: number) => void }) => {
   const flattened = useMemo(() => flattenCategories(categories), [categories])
+  const { t } = useTranslation()
 
   if (flattened.length === 0) {
-    return <p className="text-sm text-slate-500">لا توجد تصنيفات بعد.</p>
+    return <p className="text-sm text-slate-500">{t('adminCategories.empty')}</p>
   }
 
   return (
@@ -75,14 +78,14 @@ const CategoryTreeList = ({ categories, onDelete }: { categories: Category[]; on
         >
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-xs font-semibold text-primary-700">
-              {category.depth === 0 ? 'أصل' : `فرعي ${category.depth}`}
+              {category.depth === 0 ? t('adminCategories.tree.root') : t('adminCategories.tree.child', { depth: category.depth })}
             </div>
             <div className="flex flex-col">
               <span className="font-semibold text-slate-900" style={{ marginInlineStart: `${category.depth * 12}px` }}>
                 {category.name}
               </span>
               <span className="text-xs text-slate-500" style={{ marginInlineStart: `${category.depth * 12}px` }}>
-                {category.depth === 0 ? 'تصنيف رئيسي' : 'متفرع من تصنيف أعلى'}
+                {category.depth === 0 ? t('adminCategories.tree.rootLabel') : t('adminCategories.tree.childLabel')}
               </span>
             </div>
           </div>
@@ -90,7 +93,7 @@ const CategoryTreeList = ({ categories, onDelete }: { categories: Category[]; on
             className="text-xs font-semibold text-rose-500 transition hover:text-rose-600"
             onClick={() => onDelete(category.id)}
           >
-            حذف
+            {t('adminCategories.delete')}
           </button>
         </div>
       ))}

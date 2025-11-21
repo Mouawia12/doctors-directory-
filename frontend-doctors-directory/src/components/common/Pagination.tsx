@@ -1,4 +1,4 @@
-import { useLocaleText } from '@/app/hooks/useLocaleText'
+import { useTranslation } from 'react-i18next'
 
 interface PaginationProps {
   page: number
@@ -9,7 +9,7 @@ interface PaginationProps {
 
 export const Pagination = ({ page, perPage, total, onChange }: PaginationProps) => {
   const totalPages = Math.max(1, Math.ceil(total / perPage))
-  const translate = useLocaleText()
+  const { t } = useTranslation()
 
   if (totalPages <= 1) return null
 
@@ -20,17 +20,17 @@ export const Pagination = ({ page, perPage, total, onChange }: PaginationProps) 
         disabled={page <= 1}
         onClick={() => onChange(page - 1)}
       >
-        {translate('السابق', 'Previous')}
+        {t('pagination.previous')}
       </button>
       <span className="text-slate-600">
-        {translate(`صفحة ${page} من ${totalPages}`, `Page ${page} of ${totalPages}`)}
+        {t('pagination.page', { page, total: totalPages })}
       </span>
       <button
         className="rounded-full border border-slate-200 px-3 py-1 text-slate-500 disabled:opacity-40"
         disabled={page >= totalPages}
         onClick={() => onChange(page + 1)}
       >
-        {translate('التالي', 'Next')}
+        {t('pagination.next')}
       </button>
     </div>
   )

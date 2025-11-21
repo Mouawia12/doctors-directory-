@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader'
 import { env } from '@/lib/env'
 import clsx from 'clsx'
+import { useTranslation } from 'react-i18next'
 
 interface LocationValue {
   lat?: number
@@ -23,6 +24,7 @@ export const LocationPicker = ({ value, onChange }: LocationPickerProps) => {
   const mapInstance = useRef<google.maps.Map | null>(null)
   const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
   const loaderConfigured = useRef(false)
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (!env.mapsKey || !mapRef.current) return
@@ -102,7 +104,7 @@ export const LocationPicker = ({ value, onChange }: LocationPickerProps) => {
           })
         }
       } catch (error) {
-        console.error('تعذر تحميل مكوّن الخريطة التفاعلية', error)
+        console.error(t('locationPicker.error'), error)
       }
     }
 
@@ -124,7 +126,7 @@ export const LocationPicker = ({ value, onChange }: LocationPickerProps) => {
       <input
         ref={inputRef}
         type="text"
-        placeholder="ابحث عن مدينة أو عنوان"
+        placeholder={t('locationPicker.placeholder')}
         className={clsx(
           'w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400',
         )}

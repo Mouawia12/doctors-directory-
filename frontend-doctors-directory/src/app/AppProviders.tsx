@@ -44,7 +44,7 @@ export const AppProviders = ({ children }: Props) => {
     <Suspense
       fallback={
         <div className="min-h-screen grid place-items-center text-lg text-slate-600">
-          {language === 'ar' ? 'جارٍ التحميل...' : 'Loading...'}
+          {i18n.t('common.loading', { lng: language })}
         </div>
       }
     >

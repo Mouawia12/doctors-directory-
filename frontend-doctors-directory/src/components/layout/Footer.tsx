@@ -1,14 +1,14 @@
-import { useLocaleText } from '@/app/hooks/useLocaleText'
+import { useTranslation } from 'react-i18next'
 
 export const Footer = () => {
-  const translate = useLocaleText()
+  const { t } = useTranslation()
 
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="container flex flex-col gap-4 py-10 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="font-semibold text-slate-700">{translate('دليل الأطباء', 'Doctors Directory')}</p>
-          <p>{translate('منصة موحدة للعثور على أفضل الأطباء في منطقتك.', 'A unified platform to find the best doctors in your area.')}</p>
+          <p className="font-semibold text-slate-700">{t('footer.title')}</p>
+          <p>{t('footer.description')}</p>
         </div>
         <div className="flex gap-4">
           <a href="mailto:care@doctors.directory" className="hover:text-primary-600">

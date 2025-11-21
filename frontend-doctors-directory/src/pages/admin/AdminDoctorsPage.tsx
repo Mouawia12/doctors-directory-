@@ -15,13 +15,13 @@ import { Pagination } from '@/components/common/Pagination'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { Card } from '@/components/ui/Card'
 import type { DoctorStatus, Doctor } from '@/types/doctor'
-import { useLocaleText } from '@/app/hooks/useLocaleText'
+import { useTranslation } from 'react-i18next'
 
-const formatDate = (value?: string, translate?: ReturnType<typeof useLocaleText>) =>
-  value ? dayjs(value).format(translate?.('DD MMM YYYY', 'DD MMM YYYY') || 'DD MMM YYYY') : translate?.('—', '—') || '—'
+const formatDate = (value?: string) =>
+  value ? dayjs(value).format('DD MMM YYYY') : '—'
 
 export const AdminDoctorsPage = () => {
-  const translate = useLocaleText()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [status, setStatus] = useState<DoctorStatus | 'all'>('pending')
   const [search, setSearch] = useState('')
@@ -29,10 +29,10 @@ export const AdminDoctorsPage = () => {
   const perPage = 10
 
   const statusFilters: { label: string; value: DoctorStatus | 'all' }[] = [
-    { label: translate('الكل', 'All'), value: 'all' },
-    { label: translate('قيد المراجعة', 'Pending'), value: 'pending' },
-    { label: translate('المعتمدون', 'Approved'), value: 'approved' },
-    { label: translate('المرفوضون', 'Rejected'), value: 'rejected' },
+    { label: t('adminDoctors.filters.all'), value: 'all' },
+    { label: t('adminDoctors.filters.pending'), value: 'pending' },
+    { label: t('adminDoctors.filters.approved'), value: 'approved' },
+    { label: t('adminDoctors.filters.rejected'), value: 'rejected' },
   ]
 
   const filters = useMemo(
@@ -56,7 +56,7 @@ export const AdminDoctorsPage = () => {
     let note: string | undefined
 
     if (action === 'reject') {
-      note = window.prompt(translate('أدخل سبب الرفض (اختياري)؟', 'Enter rejection reason (optional)')) ?? undefined
+      note = window.prompt(t('adminDoctors.confirmReject')) ?? undefined
     }
 
     moderationMutation.mutate(
@@ -65,22 +65,22 @@ export const AdminDoctorsPage = () => {
         onSuccess: () =>
           toast.success(
             action === 'approve'
-              ? translate('تم اعتماد الطبيب', 'Doctor approved')
-              : translate('تم رفض الطلب وتحديث الحالة', 'Request rejected and status updated'),
+              ? t('adminDoctors.approveSuccess')
+              : t('adminDoctors.rejectSuccess'),
           ),
-        onError: () => toast.error(translate('تعذر تحديث حالة الطبيب', 'Failed to update doctor status')),
+        onError: () => toast.error(t('adminDoctors.moderationError')),
       },
     )
   }
 
   const handleDelete = (doctor: Doctor) => {
     const confirmed = window.confirm(
-      translate(`هل أنت متأكد من حذف ${doctor.full_name}؟ لا يمكن التراجع.`, `Delete ${doctor.full_name}? This cannot be undone.`),
+      t('adminDoctors.confirmDelete', { name: doctor.full_name }),
     )
     if (!confirmed) return
     deleteMutation.mutate(doctor.id, {
-      onSuccess: () => toast.success(translate('تم حذف الطبيب', 'Doctor deleted')),
-      onError: () => toast.error(translate('تعذر حذف الطبيب', 'Unable to delete doctor')),
+      onSuccess: () => toast.success(t('adminDoctors.deleteSuccess')),
+      onError: () => toast.error(t('adminDoctors.deleteError')),
     })
   }
 
@@ -119,7 +119,7 @@ export const AdminDoctorsPage = () => {
             className="flex w-full items-center justify-center gap-2 lg:w-auto"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
-            <span>{translate('إضافة طبيب', 'Add doctor')}</span>
+            <span>{t('adminDoctors.addDoctor')}</span>
           </Button>
         </div>
 
@@ -129,7 +129,7 @@ export const AdminDoctorsPage = () => {
               <Input
                 value={search}
                 onChange={onSearchChange}
-                placeholder={translate('ابحث باسم الطبيب، التخصص أو رقم الهاتف', 'Search by doctor, specialty, or phone')}
+                placeholder={t('adminDoctors.searchPlaceholder')}
                 className="w-full rounded-2xl border-slate-200 bg-slate-50 pr-10"
               />
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -143,24 +143,24 @@ export const AdminDoctorsPage = () => {
                 }}
                 className="justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:text-primary-600 sm:w-32"
               >
-                {translate('مسح', 'Clear')}
+                {t('common.actions.clear')}
               </Button>
             )}
           </div>
           <div className="flex items-center justify-end gap-2 text-sm text-slate-500">
             <Filter className="h-4 w-4" />
-            {isFetching ? translate('يتم تحديث النتائج...', 'Refreshing results...') : translate('إجمالي:', 'Total:')}{' '}
+            {isFetching ? t('adminDoctors.updating') : t('adminDoctors.total')}{' '}
             {data?.pagination.total ?? 0}
           </div>
         </div>
       </Card>
 
       {isLoading ? (
-        <Card className="text-sm text-slate-500">{translate('جارٍ تحميل قائمة الأطباء...', 'Loading doctors...')}</Card>
+        <Card className="text-sm text-slate-500">{t('adminDoctors.loading')}</Card>
       ) : doctors.length === 0 ? (
         <EmptyState
-          title={translate('لا يوجد أطباء حالياً بهذه المعايير', 'No doctors match these filters')}
-          description={translate('جرّب تغيير حالة التصفية أو البحث.', 'Try adjusting the filters or search query.')}
+          title={t('adminDoctors.emptyTitle')}
+          description={t('adminDoctors.emptyCopy')}
         />
       ) : (
         <div className="space-y-4">
@@ -173,18 +173,17 @@ export const AdminDoctorsPage = () => {
                     <StatusBadge status={doctor.status} />
                     {doctor.is_verified && (
                       <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
-                        {translate('موثق', 'Verified')}
+                        {t('doctorProfile.verified')}
                       </span>
                     )}
                   </div>
                   <p className="text-sm text-slate-500">{doctor.specialty}</p>
                   <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
                     <span>
-                      {translate('آخر تحديث', 'Updated')}:{' '}
-                      {formatDate(doctor.updated_at, translate)}
+                      {t('adminDoctors.lastUpdated')}: {formatDate(doctor.updated_at)}
                     </span>
-                    {doctor.city && <span>{translate('المدينة', 'City')}: {doctor.city}</span>}
-                    {doctor.phone && <span>{translate('الهاتف', 'Phone')}: {doctor.phone}</span>}
+                    {doctor.city && <span>{t('adminDoctors.city')}: {doctor.city}</span>}
+                    {doctor.phone && <span>{t('adminDoctors.phone')}: {doctor.phone}</span>}
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -193,14 +192,14 @@ export const AdminDoctorsPage = () => {
                     className="flex-1 min-w-[120px]"
                     onClick={() => navigate(`/admin/doctors/${doctor.id}`)}
                   >
-                    {translate('عرض الملف', 'View profile')}
+                    {t('adminDoctors.viewProfile')}
                   </Button>
                   <Button
                     variant="outline"
                     className="flex-1 min-w-[120px]"
                     onClick={() => navigate(`/admin/doctors/${doctor.id}/edit`)}
                   >
-                    {translate('تعديل', 'Edit')}
+                    {t('adminDoctors.edit')}
                   </Button>
                   <Button
                     variant="outline"
@@ -208,14 +207,14 @@ export const AdminDoctorsPage = () => {
                     disabled={moderationMutation.isPending}
                     onClick={() => handleModeration(doctor, 'reject')}
                   >
-                    {translate('رفض', 'Reject')}
+                    {t('adminDoctors.reject')}
                   </Button>
                   <Button
                     className="flex-1 min-w-[120px]"
                     disabled={moderationMutation.isPending}
                     onClick={() => handleModeration(doctor, 'approve')}
                   >
-                    {translate('اعتماد', 'Approve')}
+                    {t('adminDoctors.approve')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -223,7 +222,7 @@ export const AdminDoctorsPage = () => {
                     disabled={deleteMutation.isPending}
                     onClick={() => handleDelete(doctor)}
                   >
-                    {translate('حذف', 'Delete')}
+                    {t('adminDoctors.delete')}
                   </Button>
                 </div>
               </div>

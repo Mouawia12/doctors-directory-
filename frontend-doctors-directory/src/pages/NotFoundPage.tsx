@@ -1,22 +1,22 @@
 import { Button } from '@/components/ui/Button'
 import { Link } from 'react-router-dom'
-import { useLocaleText } from '@/app/hooks/useLocaleText'
+import { useTranslation } from 'react-i18next'
 
 export const NotFoundPage = () => {
-  const translate = useLocaleText()
+  const { t } = useTranslation()
 
   return (
     <div className="container grid min-h-[60vh] place-items-center text-center">
       <div className="space-y-4">
-        <p className="text-sm text-slate-500">{translate('خطأ 404', 'Error 404')}</p>
+        <p className="text-sm text-slate-500">{t('notFound.code')}</p>
         <h1 className="text-3xl font-semibold text-slate-900">
-          {translate('الصفحة غير موجودة', 'Page not found')}
+          {t('notFound.title')}
         </h1>
         <p className="text-slate-500">
-          {translate('ربما تم نقل الصفحة أو لم تعد متاحة.', 'The page may have been moved or is no longer available.')}
+          {t('notFound.description')}
         </p>
         <Button asChild>
-          <Link to="/">{translate('العودة للصفحة الرئيسية', 'Back to homepage')}</Link>
+          <Link to="/">{t('notFound.back')}</Link>
         </Button>
       </div>
     </div>

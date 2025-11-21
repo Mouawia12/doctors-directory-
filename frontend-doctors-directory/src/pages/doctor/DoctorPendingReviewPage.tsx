@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { useLocaleText } from '@/app/hooks/useLocaleText'
 import { useAuthQuery } from '@/features/auth/hooks'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge } from '@/components/admin/StatusBadge'
+import { useTranslation } from 'react-i18next'
 
 export const DoctorPendingReviewPage = () => {
   const { data: user } = useAuthQuery()
   const navigate = useNavigate()
-  const translate = useLocaleText()
+  const { t } = useTranslation()
   const status = user?.doctor_profile?.status ?? 'pending'
   const isApproved = status === 'approved'
 
@@ -38,24 +38,18 @@ export const DoctorPendingReviewPage = () => {
           <StatusBadge status={status} />
           <h1 className="text-3xl font-bold text-slate-900">
             {isApproved
-              ? translate('تم اعتماد حسابك بنجاح', 'Your profile is approved')
-              : translate('حسابك قيد المراجعة', 'Your profile is under review')}
+              ? t('doctorPending.approved')
+              : t('doctorPending.underReview')}
           </h1>
           <p className="text-base leading-7 text-slate-500">
             {isApproved
-              ? translate(
-                  'مبارك! أصبح ملفك متاحًا للمرضى، ويمكنك الآن تحديث بياناتك أو إدارة مواعيدك.',
-                  'Congratulations! Your profile is live and you can now manage your sessions and updates.',
-                )
-              : translate(
-                  'راجع بياناتك وتأكّد من مطابقة الوثائق مع المعلومات الرسمية. سنخبرك فور اعتماد الملف.',
-                  'Please double-check your data. We will notify you once the profile gets approved.',
-                )}
+              ? t('doctorPending.approvedCopy')
+              : t('doctorPending.pendingCopy')}
           </p>
         </div>
         <div className="flex flex-col gap-4 md:flex-row md:justify-center">
           <Button className="rounded-full px-6 py-3" onClick={() => navigate('/doctor/profile')}>
-            {translate('تعديل ملفي', 'Edit my profile')}
+            {t('doctorPending.editProfile')}
           </Button>
         </div>
       </div>

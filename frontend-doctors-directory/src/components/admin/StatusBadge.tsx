@@ -1,4 +1,4 @@
-import { useLocaleText } from '@/app/hooks/useLocaleText'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import type { DoctorStatus } from '@/types/doctor'
 
@@ -9,11 +9,11 @@ const toneMap: Record<DoctorStatus, string> = {
 }
 
 export const StatusBadge = ({ status }: { status: DoctorStatus }) => {
-  const translate = useLocaleText()
+  const { t } = useTranslation()
   const labelMap: Record<DoctorStatus, string> = {
-    pending: translate('قيد المراجعة', 'Pending'),
-    approved: translate('معتمد', 'Approved'),
-    rejected: translate('مرفوض', 'Rejected'),
+    pending: t('common.statuses.pending'),
+    approved: t('common.statuses.approved'),
+    rejected: t('common.statuses.rejected'),
   }
 
   return (

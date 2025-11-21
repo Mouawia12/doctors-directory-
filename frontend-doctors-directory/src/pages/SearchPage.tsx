@@ -10,14 +10,14 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { MapWidget } from '@/components/common/MapWidget'
-import { useLocaleText } from '@/app/hooks/useLocaleText'
+import { useTranslation } from 'react-i18next'
 
 const languageOptions = ['ar', 'en', 'fr']
 
 export const SearchPage = () => {
   const [params, setParams] = useSearchParams()
   const page = Number(params.get('page') ?? '1')
-  const translate = useLocaleText()
+  const { t } = useTranslation()
 
   const filters = useMemo(
     () => ({
@@ -94,28 +94,28 @@ export const SearchPage = () => {
   }
 
   const filterLabels = {
-    q: translate('كلمات مفتاحية', 'Keywords'),
-    city: translate('المدينة', 'City'),
-    specialty: translate('التخصص', 'Specialty'),
-    min_exp: translate('سنوات الخبرة', 'Experience (years)'),
+    q: t('searchPage.filters.keywords'),
+    city: t('searchPage.filters.city'),
+    specialty: t('searchPage.filters.specialty'),
+    min_exp: t('searchPage.filters.years'),
   }
 
   const cityOptions = [
-    { value: '', label: translate('كل المدن', 'All cities') },
-    { value: 'الرياض', label: translate('الرياض', 'Riyadh') },
-    { value: 'جدة', label: translate('جدة', 'Jeddah') },
-    { value: 'دبي', label: translate('دبي', 'Dubai') },
-    { value: 'الدوحة', label: translate('الدوحة', 'Doha') },
-    { value: 'القاهرة', label: translate('القاهرة', 'Cairo') },
+    { value: '', label: t('searchPage.options.allCities') },
+    { value: t('searchPage.options.riyadh'), label: t('searchPage.options.riyadh') },
+    { value: t('searchPage.options.jeddah'), label: t('searchPage.options.jeddah') },
+    { value: t('searchPage.options.dubai'), label: t('searchPage.options.dubai') },
+    { value: t('searchPage.options.doha'), label: t('searchPage.options.doha') },
+    { value: t('searchPage.options.cairo'), label: t('searchPage.options.cairo') },
   ]
 
   const specialtyOptions = [
-    { value: '', label: translate('كل التخصصات', 'All specialties') },
-    { value: 'العلاج الفردي', label: translate('العلاج الفردي', 'Individual therapy') },
-    { value: 'العلاج الأسري والزوجي', label: translate('العلاج الأسري والزوجي', 'Family & couples therapy') },
-    { value: 'العلاج السلوكي المعرفي', label: translate('العلاج السلوكي المعرفي', 'Cognitive behavioral therapy') },
-    { value: 'علاج الإدمان', label: translate('علاج الإدمان', 'Addiction counseling') },
-    { value: 'اضطرابات الطفولة', label: translate('اضطرابات الطفولة', 'Child & adolescent therapy') },
+    { value: '', label: t('searchPage.options.allSpecialties') },
+    { value: t('searchPage.options.individualTherapy'), label: t('searchPage.options.individualTherapy') },
+    { value: t('searchPage.options.familyTherapy'), label: t('searchPage.options.familyTherapy') },
+    { value: t('searchPage.options.cbt'), label: t('searchPage.options.cbt') },
+    { value: t('searchPage.options.addiction'), label: t('searchPage.options.addiction') },
+    { value: t('searchPage.options.childhood'), label: t('searchPage.options.childhood') },
   ]
 
   const doctors = useMemo(() => {
@@ -132,11 +132,15 @@ export const SearchPage = () => {
     <div className="container grid gap-8 lg:grid-cols-[320px,1fr] lg:items-start">
       <aside className="flex h-fit flex-col gap-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-card lg:sticky lg:top-24">
         <div>
-          <label className="text-xs text-slate-500">{translate('كلمات مفتاحية', 'Keywords')}</label>
-          <Input value={filters.q} onChange={(event) => handleFilterChange('q', event.target.value)} />
+          <label className="text-xs text-slate-500">{t('searchPage.filters.keywords')}</label>
+          <Input
+            value={filters.q}
+            placeholder={t('searchPage.form.keywordsPlaceholder')}
+            onChange={(event) => handleFilterChange('q', event.target.value)}
+          />
         </div>
         <div>
-          <label className="text-xs text-slate-500">{translate('المدينة', 'City')}</label>
+          <label className="text-xs text-slate-500">{t('searchPage.filters.city')}</label>
           <Select value={filters.city} onChange={(e) => handleFilterChange('city', e.target.value)}>
             {cityOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -146,7 +150,7 @@ export const SearchPage = () => {
           </Select>
         </div>
         <div>
-          <label className="text-xs text-slate-500">{translate('التخصص', 'Specialty')}</label>
+          <label className="text-xs text-slate-500">{t('searchPage.filters.specialty')}</label>
           <Select value={filters.specialty} onChange={(e) => handleFilterChange('specialty', e.target.value)}>
             {specialtyOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -156,7 +160,7 @@ export const SearchPage = () => {
           </Select>
         </div>
         <div>
-          <label className="text-xs text-slate-500">{translate('عدد سنوات الخبرة', 'Years of experience')}</label>
+          <label className="text-xs text-slate-500">{t('searchPage.filters.years')}</label>
           <Input
             type="number"
             min={0}
@@ -165,7 +169,7 @@ export const SearchPage = () => {
           />
         </div>
         <div>
-          <label className="text-xs text-slate-500">{translate('اللغات', 'Languages')}</label>
+          <label className="text-xs text-slate-500">{t('searchPage.filters.languages')}</label>
           <div className="mt-2 flex flex-wrap gap-2">
             {languageOptions.map((lang) => (
               <button
@@ -183,7 +187,7 @@ export const SearchPage = () => {
         </div>
         <label className="flex items-center gap-2 text-sm text-slate-600">
           <Checkbox checked={filters.has_media} onChange={(event) => handleCheckboxChange('has_media', event.target.checked)} />
-          {translate('عرض الأطباء الذين لديهم وسائط', 'Show doctors with media')}
+          {t('searchPage.filters.mediaOnly')}
         </label>
       </aside>
 
@@ -191,12 +195,12 @@ export const SearchPage = () => {
         <FilterChips filters={activeFilters} onRemove={removeFilter} labels={filterLabels} />
         {isLoading ? (
           <div className="rounded-3xl border border-slate-100 bg-white p-6 text-center text-slate-500 shadow-card">
-            {translate('جارٍ تحميل النتائج...', 'Loading results...')}
+            {t('searchPage.results.loading')}
           </div>
         ) : doctors.length === 0 ? (
           <EmptyState
-            title={translate('لا يوجد أطباء يطابقون البحث', 'No doctors matched your search')}
-            description={translate('حاول تعديل الفلاتر للحصول على نتائج أكثر.', 'Try adjusting the filters to get more results.')}
+            title={t('searchPage.results.emptyTitle')}
+            description={t('searchPage.results.emptyDescription')}
           />
         ) : (
           <>

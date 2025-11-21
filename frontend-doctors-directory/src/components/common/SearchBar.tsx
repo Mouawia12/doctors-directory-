@@ -1,37 +1,37 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { useLocaleText } from '@/app/hooks/useLocaleText'
 
 interface SearchBarProps {
   onSearch: (filters: { q?: string; city?: string; specialty?: string }) => void
 }
 
 export const SearchBar = ({ onSearch }: SearchBarProps) => {
+  const { t } = useTranslation()
   const [q, setQ] = useState('')
   const [city, setCity] = useState('')
   const [specialty, setSpecialty] = useState('')
-  const translate = useLocaleText()
 
   const cities = [
-    { value: '', label: translate('كل المدن', 'All cities') },
-    { value: 'الرياض', label: translate('الرياض', 'Riyadh') },
-    { value: 'جدة', label: translate('جدة', 'Jeddah') },
-    { value: 'دبي', label: translate('دبي', 'Dubai') },
-    { value: 'الدوحة', label: translate('الدوحة', 'Doha') },
-    { value: 'القاهرة', label: translate('القاهرة', 'Cairo') },
+    { value: '', label: t('searchBar.cities.all') },
+    { value: t('searchBar.cities.riyadh'), label: t('searchBar.cities.riyadh') },
+    { value: t('searchBar.cities.jeddah'), label: t('searchBar.cities.jeddah') },
+    { value: t('searchBar.cities.dubai'), label: t('searchBar.cities.dubai') },
+    { value: t('searchBar.cities.doha'), label: t('searchBar.cities.doha') },
+    { value: t('searchBar.cities.cairo'), label: t('searchBar.cities.cairo') },
   ]
 
   const specialties = [
-    { value: '', label: translate('كل التخصصات', 'All specialties') },
-    { value: 'طب الأسرة', label: translate('طب الأسرة', 'Family Medicine') },
-    { value: 'أمراض القلب', label: translate('أمراض القلب', 'Cardiology') },
-    { value: 'الجلدية', label: translate('الجلدية', 'Dermatology') },
-    { value: 'طب الأطفال', label: translate('طب الأطفال', 'Pediatrics') },
-    { value: 'طب العيون', label: translate('طب العيون', 'Ophthalmology') },
+    { value: '', label: t('searchBar.specialties.all') },
+    { value: t('searchBar.specialties.family'), label: t('searchBar.specialties.family') },
+    { value: t('searchBar.specialties.cardio'), label: t('searchBar.specialties.cardio') },
+    { value: t('searchBar.specialties.derm'), label: t('searchBar.specialties.derm') },
+    { value: t('searchBar.specialties.pediatrics'), label: t('searchBar.specialties.pediatrics') },
+    { value: t('searchBar.specialties.ophthalmology'), label: t('searchBar.specialties.ophthalmology') },
   ]
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -46,11 +46,11 @@ export const SearchBar = ({ onSearch }: SearchBarProps) => {
     >
       <div className="md:col-span-2">
         <label className="mb-1 block text-xs font-medium text-slate-500">
-          {translate('ابحث باسم الطبيب أو الخدمة', 'Search by doctor or service')}
+          {t('searchBar.label')}
         </label>
         <div className="relative">
           <Input
-            placeholder={translate('مثال: قلب، تجميل...', 'Example: cardiology, cosmetic...')}
+            placeholder={t('searchBar.placeholder')}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -58,7 +58,7 @@ export const SearchBar = ({ onSearch }: SearchBarProps) => {
         </div>
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-500">{translate('المدينة', 'City')}</label>
+        <label className="mb-1 block text-xs font-medium text-slate-500">{t('searchBar.city')}</label>
         <Select value={city} onChange={(e) => setCity(e.target.value)}>
           {cities.map((cityOption) => (
             <option key={cityOption.value} value={cityOption.value}>
@@ -69,7 +69,7 @@ export const SearchBar = ({ onSearch }: SearchBarProps) => {
       </div>
       <div>
         <label className="mb-1 block text-xs font-medium text-slate-500">
-          {translate('التخصص', 'Specialty')}
+          {t('searchBar.specialty')}
         </label>
         <Select value={specialty} onChange={(e) => setSpecialty(e.target.value)}>
           {specialties.map((item) => (
@@ -81,7 +81,7 @@ export const SearchBar = ({ onSearch }: SearchBarProps) => {
       </div>
       <div className="md:col-span-4 flex items-center justify-end">
         <Button type="submit" className="w-full md:w-auto">
-          {translate('ابدأ البحث', 'Search')}
+          {t('searchBar.submit')}
         </Button>
       </div>
     </form>

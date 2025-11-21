@@ -5,6 +5,7 @@ import { env } from '@/lib/env'
 import { useGoogleSocialAuth } from '@/features/auth/hooks'
 import type { AuthSuccessPayload } from '@/features/auth/api'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 interface GoogleAuthButtonProps {
   type?: 'doctor' | 'user'
@@ -13,10 +14,12 @@ interface GoogleAuthButtonProps {
   className?: string
 }
 
-export const GoogleAuthButton = ({ type, onSuccess, label = 'أو تابع باستخدام حساب Google', className }: GoogleAuthButtonProps) => {
+export const GoogleAuthButton = ({ type, onSuccess, label, className }: GoogleAuthButtonProps) => {
   const mutation = useGoogleSocialAuth()
   const [buttonWidth, setButtonWidth] = useState('0')
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const { t, i18n } = useTranslation()
+  const resolvedLabel = label ?? t('googleAuth.defaultLabel')
 
   useEffect(() => {
     if (typeof window === 'undefined' || !containerRef.current) return
@@ -38,7 +41,7 @@ export const GoogleAuthButton = ({ type, onSuccess, label = 'أو تابع با�
 
   return (
     <div className={cn('space-y-2', className)}>
-      <p className="text-center text-xs text-slate-500">{label}</p>
+      <p className="text-center text-xs text-slate-500">{resolvedLabel}</p>
       <div className="flex justify-center">
         <div
           ref={containerRef}
@@ -47,13 +50,13 @@ export const GoogleAuthButton = ({ type, onSuccess, label = 'أو تابع با�
           {buttonWidth !== '0' && (
             <GoogleLogin
               width={buttonWidth}
-              locale="ar"
+              locale={i18n.language}
               shape="pill"
               theme="outline"
               text="signin_with"
               onSuccess={(response) => {
                 if (!response.credential) {
-                  toast.error('لم نستطع قراءة بيانات Google')
+                  toast.error(t('googleAuth.parseError'))
                   return
                 }
                 mutation.mutate(
@@ -62,13 +65,13 @@ export const GoogleAuthButton = ({ type, onSuccess, label = 'أو تابع با�
                     onSuccess,
                     onError: (error) => {
                       const message =
-                        (error as Record<string, any>)?.response?.data?.message ?? 'تعذر تسجيل الدخول عبر Google'
+                        (error as Record<string, any>)?.response?.data?.message ?? t('googleAuth.loginError')
                       toast.error(message)
                     },
                   },
                 )
               }}
-              onError={() => toast.error('تعذر الاتصال بخدمات Google')}
+              onError={() => toast.error(t('googleAuth.connectionError'))}
             />
           )}
         </div>
