@@ -79,6 +79,7 @@ const buildSchema = (t: TFunction) =>
     insurances_text: z.string().optional(),
     identity_birth_year: z.string().optional(),
     identity_religion: z.string().optional(),
+    identity_other: z.string().optional(),
   })
 
 type FormValues = z.infer<ReturnType<typeof buildSchema>>
@@ -323,7 +324,7 @@ export const DoctorProfileFormPage = () => {
         }
       }
     }
-      toast.error(t('doctorForm.validation.required'))
+    toast.error(t('doctorForm.toasts.formError'))
   }
 
   useEffect(() => {
@@ -403,7 +404,7 @@ export const DoctorProfileFormPage = () => {
       .filter((clinic) => clinic.address !== '' && clinic.city !== '')
 
     if (cleanedClinics.length === 0) {
-      toast.error(t('doctorForm.clinics.add'))
+      toast.error(t('doctorForm.validation.clinicRequired'))
       return
     }
 
@@ -451,13 +452,13 @@ export const DoctorProfileFormPage = () => {
 
     saveProfile.mutate(payload, {
       onSuccess: (savedDoctor) => {
-        toast.success(t('doctorForm.buttons.save'))
+        toast.success(t('doctorForm.toasts.saveSuccess'))
         if (savedDoctor.status === 'pending') {
           navigate('/doctor/pending', { replace: true })
         }
       },
       onError: (error) => {
-        toast.error(getErrorMessage(error, t('doctorForm.validation.required')))
+        toast.error(getErrorMessage(error, t('doctorForm.toasts.saveError')))
       },
     })
   }
@@ -474,7 +475,7 @@ export const DoctorProfileFormPage = () => {
         return prev.filter((item) => item !== value)
       }
       if (limit && prev.length >= limit) {
-        toast.warning(t('doctorForm.validation.required'))
+        toast.warning(t('doctorForm.validation.selectionLimit', { count: limit }))
         return prev
       }
       return [...prev, value]
@@ -513,15 +514,15 @@ export const DoctorProfileFormPage = () => {
     formData.append('collection', collection)
     Array.from(event.target.files).forEach((file) => formData.append('files[]', file))
     mediaUpload.mutate(formData, {
-    onSuccess: () => toast.success(t('doctorForm.media.uploadedMediaTitle')),
-    onError: () => toast.error(t('doctorForm.validation.required')),
-  })
+      onSuccess: () => toast.success(t('doctorForm.toasts.uploadSuccess')),
+      onError: () => toast.error(t('doctorForm.toasts.uploadError')),
+    })
   }
 
   const handleMediaDelete = (mediaId: number) => {
     mediaDelete.mutate(mediaId, {
-    onSuccess: () => toast.success(t('doctorForm.media.delete')),
-  })
+      onSuccess: () => toast.success(t('doctorForm.toasts.deleteSuccess')),
+    })
   }
 
   if (isLoading) {
@@ -597,14 +598,14 @@ export const DoctorProfileFormPage = () => {
             />
           </div>
         </div>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <div className="mt-6 flex flex-nowrap justify-start gap-2 overflow-x-auto pb-1 text-center md:justify-center">
           {profileTabs.map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => handleTabClick(tab)}
               className={cn(
-                'rounded-full px-4 py-2 text-sm transition',
+                'rounded-full px-3 py-2 text-xs md:px-4 md:py-2 md:text-sm transition min-w-fit',
                 activeTab === tab
                   ? 'bg-primary-500 text-white shadow-card'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
@@ -666,7 +667,7 @@ export const DoctorProfileFormPage = () => {
               <option value="">{t('doctorForm.about.labels.pronounsPlaceholder')}</option>
               {pronounOptions.map((option) => (
                 <option key={option} value={option}>
-                  {option}
+                  {t(`doctorForm.identity.pronouns.${option}`)}
                 </option>
               ))}
             </select>

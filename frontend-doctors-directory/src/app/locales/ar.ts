@@ -790,6 +790,16 @@ export const ar = {
         languageRequired: 'أدخل لغة واحدة على الأقل',
         phoneRequired: 'الهاتف مطلوب',
         yearsRequired: 'سنوات الخبرة مطلوبة',
+        clinicRequired: 'أضف عيادة واحدة على الأقل مع العنوان والمدينة',
+        selectionLimit: 'يمكنك الاختيار حتى {{count}} خيارات',
+      },
+      toasts: {
+        formError: 'يرجى إكمال الحقول المطلوبة',
+        saveSuccess: 'تم حفظ الملف بنجاح',
+        saveError: 'تعذّر حفظ الملف',
+        uploadSuccess: 'تم رفع الوسائط بنجاح',
+        uploadError: 'فشل الرفع، حاول مرة أخرى',
+        deleteSuccess: 'تم حذف الوسائط',
       },
     },
     locationPicker: {

@@ -166,7 +166,7 @@ export const DoctorProfilePage = () => {
                 <div className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-white/70 p-3">
                   <Globe className="h-4 w-4 text-primary-500" />
                   <a href={doctor.website} target="_blank" rel="noreferrer" className="font-medium text-primary-700 underline">
-                    {translate('زيارة الموقع', 'Visit website')}
+                    {t('doctorProfile.visitWebsite')}
                   </a>
                 </div>
               )}
@@ -174,13 +174,13 @@ export const DoctorProfilePage = () => {
             <div className="flex flex-wrap gap-3">
               <Button asChild>
                 <a href={doctor.whatsapp ? `https://wa.me/${doctor.whatsapp}` : `tel:${doctor.phone}`}>
-                  {translate('حجز جلسة', 'Book a session')}
+                  {t('doctorProfile.book')}
                 </a>
               </Button>
               {canEdit && (
                 <>
                   <Button variant="outline" asChild>
-                    <Link to="/doctor/profile">{translate('تعديل الملف', 'Edit profile')}</Link>
+                    <Link to="/doctor/profile">{t('doctorProfile.editProfile')}</Link>
                   </Button>
                 </>
               )}

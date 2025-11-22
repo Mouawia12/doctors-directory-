@@ -791,6 +791,16 @@ export const en = {
         languageRequired: 'Enter at least one language',
         phoneRequired: 'Phone is required',
         yearsRequired: 'Years of experience required',
+        clinicRequired: 'Add at least one clinic location',
+        selectionLimit: 'You can pick up to {{count}} options',
+      },
+      toasts: {
+        formError: 'Please complete required fields',
+        saveSuccess: 'Profile saved successfully',
+        saveError: 'Could not save profile',
+        uploadSuccess: 'Media uploaded successfully',
+        uploadError: 'Upload failed, try again',
+        deleteSuccess: 'Media item deleted',
       },
     },
     locationPicker: {
