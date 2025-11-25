@@ -73,7 +73,7 @@ export const Navbar = () => {
               </span>
               <LanguageSwitcher variant="outline" size="sm" />
               {isPatient && (
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" className="px-3 py-1.5 text-sm" asChild>
                   <Link to="/account">{t('nav.userDashboard')}</Link>
                 </Button>
               )}
