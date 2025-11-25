@@ -5,10 +5,12 @@ import {
   loginWithGoogle,
   logout,
   register,
+  updatePassword,
   type AuthSuccessPayload,
   type LoginPayload,
   type RegisterPayload,
   type SocialLoginPayload,
+  type UpdatePasswordPayload,
 } from '@/features/auth/api'
 import { queryClient } from '@/lib/queryClient'
 import { queryKeys } from '@/lib/queryKeys'
@@ -54,6 +56,11 @@ export const useLogoutMutation = () => {
     },
   })
 }
+
+export const useUpdatePasswordMutation = () =>
+  useMutation({
+    mutationFn: (payload: UpdatePasswordPayload) => updatePassword(payload),
+  })
 
 const handleAuthState = ({ user, token }: AuthSuccessPayload) => {
   persistAuthToken(token)

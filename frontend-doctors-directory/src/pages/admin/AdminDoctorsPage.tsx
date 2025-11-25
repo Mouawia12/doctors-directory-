@@ -30,6 +30,7 @@ export const AdminDoctorsPage = () => {
 
   const statusFilters: { label: string; value: DoctorStatus | 'all' }[] = [
     { label: t('adminDoctors.filters.all'), value: 'all' },
+    { label: t('adminDoctors.filters.draft'), value: 'draft' },
     { label: t('adminDoctors.filters.pending'), value: 'pending' },
     { label: t('adminDoctors.filters.approved'), value: 'approved' },
     { label: t('adminDoctors.filters.rejected'), value: 'rejected' },

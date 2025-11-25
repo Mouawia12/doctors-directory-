@@ -6,6 +6,7 @@ use App\Enums\DoctorStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Doctor;
 use App\Models\User;
@@ -35,7 +36,7 @@ class AuthController extends Controller
                     'user_id' => $user->id,
                     'full_name' => $user->name,
                     'specialty' => 'غير محدد',
-                    'status' => DoctorStatus::Pending->value,
+                    'status' => DoctorStatus::Draft->value,
                     'languages' => ['ar'],
                 ]);
             }
@@ -88,5 +89,25 @@ class AuthController extends Controller
         $token?->delete();
 
         return $this->respond(null, __('تم تسجيل الخروج'));
+    }
+
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        if (! Hash::check($request->input('current_password'), $user->password)) {
+            return $this->respondWithError(
+                ['current_password' => [__('كلمة المرور الحالية غير صحيحة')]],
+                __('كلمة المرور الحالية غير صحيحة'),
+                422
+            );
+        }
+
+        $user->forceFill([
+            'password' => Hash::make($request->input('password')),
+        ])->save();
+
+        return $this->respond(null, __('تم تحديث كلمة المرور'));
     }
 }

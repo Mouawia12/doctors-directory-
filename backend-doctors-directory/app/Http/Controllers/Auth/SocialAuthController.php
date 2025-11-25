@@ -115,7 +115,7 @@ class SocialAuthController extends Controller
                     'user_id' => $user->id,
                     'full_name' => $name,
                     'specialty' => 'غير محدد',
-                    'status' => DoctorStatus::Pending->value,
+                    'status' => DoctorStatus::Draft->value,
                     'languages' => ['ar'],
                     'email' => $user->email,
                 ]);

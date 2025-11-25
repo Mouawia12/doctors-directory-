@@ -26,6 +26,12 @@ export interface SocialLoginPayload {
   type?: 'doctor' | 'user'
 }
 
+export interface UpdatePasswordPayload {
+  current_password: string
+  password: string
+  password_confirmation: string
+}
+
 export const fetchCurrentUser = async (): Promise<User | null> => {
   try {
     const { data } = await api.get<ApiResponse<User>>('/api/auth/me')
@@ -55,4 +61,8 @@ export const loginWithGoogle = async (payload: SocialLoginPayload): Promise<Auth
 
 export const logout = async (): Promise<void> => {
   await api.post('/api/auth/logout')
+}
+
+export const updatePassword = async (payload: UpdatePasswordPayload): Promise<void> => {
+  await api.put('/api/auth/password', payload)
 }

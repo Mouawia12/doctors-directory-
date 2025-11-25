@@ -1,4 +1,4 @@
-export type DoctorStatus = 'pending' | 'approved' | 'rejected'
+export type DoctorStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 
 export interface Clinic {
   id: number

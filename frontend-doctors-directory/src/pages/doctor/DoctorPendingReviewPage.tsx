@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useAuthQuery } from '@/features/auth/hooks'
@@ -11,6 +12,12 @@ export const DoctorPendingReviewPage = () => {
   const { t } = useTranslation()
   const status = user?.doctor_profile?.status ?? 'pending'
   const isApproved = status === 'approved'
+
+  useEffect(() => {
+    if (status === 'draft') {
+      navigate('/doctor/profile', { replace: true })
+    }
+  }, [status, navigate])
 
   return (
     <div className="relative flex min-h-[calc(100vh-200px)] w-full items-center justify-center overflow-hidden px-4 py-16">

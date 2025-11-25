@@ -11,12 +11,15 @@ import FavoritesPage from '@/pages/FavoritesPage'
 import LoginPage from '@/pages/auth/LoginPage'
 import RegisterPage from '@/pages/auth/RegisterPage'
 import DoctorProfileFormPage from '@/pages/doctor/DoctorProfileFormPage'
+import DoctorProfileOverviewPage from '@/pages/doctor/DoctorProfileOverviewPage'
 import DoctorPendingReviewPage from '@/pages/doctor/DoctorPendingReviewPage'
+import UserProfilePage from '@/pages/account/UserProfilePage'
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage'
 import AdminDoctorsPage from '@/pages/admin/AdminDoctorsPage'
 import AdminDoctorDetailsPage from '@/pages/admin/AdminDoctorDetailsPage'
 import AdminDoctorFormPage from '@/pages/admin/AdminDoctorFormPage'
 import AdminCategoriesPage from '@/pages/admin/AdminCategoriesPage'
+import AdminPasswordPage from '@/pages/admin/AdminPasswordPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
 export const router = createBrowserRouter([
@@ -53,9 +56,18 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
+      { index: true, element: <DoctorProfileOverviewPage /> },
       { path: 'profile', element: <DoctorProfileFormPage /> },
       { path: 'pending', element: <DoctorPendingReviewPage /> },
     ],
+  },
+  {
+    path: '/account',
+    element: (
+      <ProtectedRoute roles={['user']}>
+        <UserProfilePage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/admin',
@@ -71,6 +83,7 @@ export const router = createBrowserRouter([
       { path: 'doctors/:doctorId', element: <AdminDoctorDetailsPage /> },
       { path: 'doctors/:doctorId/edit', element: <AdminDoctorFormPage /> },
       { path: 'categories', element: <AdminCategoriesPage /> },
+      { path: 'password', element: <AdminPasswordPage /> },
     ],
   },
   { path: '*', element: <NotFoundPage /> },

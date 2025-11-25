@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import type { FieldErrors } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AxiosError } from 'axios'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -18,9 +17,13 @@ import type { Category } from '@/types/doctor'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
+import { FolderKanban, GraduationCap, HeartPulse, ShieldCheck, Star, UserRound, Wallet, X, type LucideIcon } from 'lucide-react'
+import { queryClient } from '@/lib/queryClient'
+import { queryKeys } from '@/lib/queryKeys'
+import type { User } from '@/types/user'
 
-const profileTabs = ['about', 'finances', 'qualifications', 'specialties', 'clientFocus', 'treatment'] as const
-type SectionId = (typeof profileTabs)[number]
+const sectionOrder = ['about', 'finances', 'qualifications', 'specialties', 'clientFocus', 'treatment'] as const
+type SectionId = (typeof sectionOrder)[number]
 
 
 const buildSchema = (t: TFunction) =>
@@ -120,7 +123,6 @@ const safeStringArray = (value: unknown): string[] => {
 }
 
 export const DoctorProfileFormPage = () => {
-  const navigate = useNavigate()
   const { data: doctor, isLoading } = useDoctorProfileQuery()
   const categoriesQuery = useCategoriesQuery()
   const saveProfile = useSaveDoctorProfile()
@@ -165,15 +167,7 @@ export const DoctorProfileFormPage = () => {
   const identityGenderOptions = useMemo(() => ['female', 'male', 'nonbinary', 'trans'], [])
   const identityEthnicityOptions = useMemo(() => ['arab', 'white', 'black', 'asian', 'latino', 'mixed'], [])
   const identityLgbtqOptions = useMemo(() => ['lgbtq', 'ally', 'questioning'], [])
-  const [activeTab, setActiveTab] = useState<SectionId>('about')
-  const sectionRefs = useRef<Record<SectionId, HTMLDivElement | null>>({
-    about: null,
-    finances: null,
-    qualifications: null,
-    specialties: null,
-    clientFocus: null,
-    treatment: null,
-  })
+  const [activeSection, setActiveSection] = useState<SectionId | null>(null)
 
   const flattenedCategories = useMemo(
     () => flattenCategories(categoriesQuery.data ?? []),
@@ -189,6 +183,7 @@ export const DoctorProfileFormPage = () => {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
+    shouldUnregister: false,
     defaultValues: {
       gender: 'male',
       display_name_preference: 'personal',
@@ -213,15 +208,6 @@ export const DoctorProfileFormPage = () => {
       'w-full rounded-2xl border border-slate-200 px-3 py-2 focus:border-primary-400 focus:ring-primary-100',
       hasError && 'border-red-400 focus:border-red-400 focus:ring-red-100',
     )
-
-  const setSectionRef = (id: SectionId) => (node: HTMLDivElement | null) => {
-    sectionRefs.current[id] = node
-  }
-
-  const handleTabClick = (id: SectionId) => {
-    sectionRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    setActiveTab(id)
-  }
 
   useEffect(() => {
     if (!doctor) return
@@ -327,35 +313,6 @@ export const DoctorProfileFormPage = () => {
     toast.error(t('doctorForm.toasts.formError'))
   }
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleEntry = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
-        if (visibleEntry) {
-          const sectionId = visibleEntry.target.getAttribute('data-section-id') as SectionId | null
-          if (sectionId) {
-            setActiveTab(sectionId)
-          }
-        }
-      },
-      {
-        rootMargin: '-35% 0px -55% 0px',
-        threshold: 0.2,
-      },
-    )
-
-    profileTabs.forEach((id) => {
-      const node = sectionRefs.current[id]
-      if (node) {
-        observer.observe(node)
-      }
-    })
-
-    return () => observer.disconnect()
-  }, [])
-
   const getErrorMessage = (error: unknown, fallback: string) => {
     if (error instanceof AxiosError) {
       const data = error.response?.data as ApiResponse<unknown> | undefined
@@ -418,7 +375,7 @@ export const DoctorProfileFormPage = () => {
     }
 
     const sanitizedIdentity = Object.fromEntries(
-      Object.entries(identityPayload).filter(([_, value]) => {
+      Object.entries(identityPayload).filter(([, value]) => {
         if (Array.isArray(value)) {
           return value.length > 0
         }
@@ -453,9 +410,10 @@ export const DoctorProfileFormPage = () => {
     saveProfile.mutate(payload, {
       onSuccess: (savedDoctor) => {
         toast.success(t('doctorForm.toasts.saveSuccess'))
-        if (savedDoctor.status === 'pending') {
-          navigate('/doctor/pending', { replace: true })
-        }
+        setActiveSection(null)
+        queryClient.setQueryData<User | null>(queryKeys.auth, (prev) =>
+          prev ? { ...prev, doctor_profile: savedDoctor } : prev,
+        )
       },
       onError: (error) => {
         toast.error(getErrorMessage(error, t('doctorForm.toasts.saveError')))
@@ -544,34 +502,850 @@ export const DoctorProfileFormPage = () => {
   const hasClinics = clinics.some(
     (clinic) => clinic.address.trim().length > 0 && clinic.city.trim().length > 0,
   )
-  const completionChecks = [
-    Boolean(watchedValues.full_name?.trim()),
-    Boolean(watchedValues.specialty?.trim()),
-    Boolean(watchedValues.license_number?.trim()),
-    Boolean(watchedValues.city?.trim()),
-    languagesCount > 0,
-    Boolean(watchedValues.phone?.trim()),
-    Boolean(watchedValues.new_clients_intro?.trim()),
-    hasParagraph,
-    hasClinics,
-    selectedCategories.length > 0,
-    paymentMethods.length > 0,
-    Boolean(watchedValues.insurances_text?.trim()),
-    Boolean(watchedValues.qualifications_text?.trim()),
-    Boolean(watchedValues.education_institution?.trim()),
-    clientParticipants.length > 0,
-    clientAgeGroups.length > 0,
-    alliedCommunities.length > 0,
-    therapyModalities.length > 0,
-  ]
-  const completedCount = completionChecks.filter(Boolean).length
+  const sectionCompletion: Record<SectionId, boolean> = {
+    about:
+      Boolean(watchedValues.full_name?.trim()) &&
+      Boolean(watchedValues.specialty?.trim()) &&
+      Boolean(watchedValues.phone?.trim()) &&
+      Boolean(watchedValues.city?.trim()) &&
+      languagesCount > 0 &&
+      hasParagraph &&
+      hasClinics,
+    finances:
+      paymentMethods.length > 0 &&
+      Boolean(watchedValues.fee_individual?.trim()) &&
+      Boolean(watchedValues.insurances_text?.trim()),
+    qualifications:
+      Boolean(watchedValues.qualifications_text?.trim()) &&
+      Boolean(watchedValues.education_institution?.trim()),
+    specialties: selectedCategories.length > 0,
+    clientFocus:
+      clientParticipants.length > 0 && clientAgeGroups.length > 0 && alliedCommunities.length > 0,
+    treatment: therapyModalities.length > 0 || Boolean(watchedValues.treatment_note?.trim()),
+  }
+  const completionValues = Object.values(sectionCompletion)
+  const completedSections = completionValues.filter(Boolean).length
   const completionPercentage =
-    Math.round((completedCount / Math.max(completionChecks.length, 1)) * 100) || 0
-  const activeTabIndex = profileTabs.findIndex((tab) => tab === activeTab)
+    Math.round((completedSections / Math.max(completionValues.length, 1)) * 100) || 0
+
+  const summaryFallback = t('doctorForm.summary.empty')
+  const sectionSummaries: Record<SectionId, string> = {
+    about: watchedValues.full_name?.trim() || summaryFallback,
+    finances: watchedValues.fee_individual?.trim()
+      ? `${watchedValues.fee_individual} ${t('common.currency')}`
+      : summaryFallback,
+    qualifications:
+      watchedValues.qualifications_text?.split('\n').filter(Boolean)[0]?.trim() || summaryFallback,
+    specialties: selectedCategories.length
+      ? t('doctorForm.specialties.categoriesTitle') + ': ' + selectedCategories.length
+      : summaryFallback,
+    clientFocus: clientParticipants.length
+      ? clientParticipants
+          .map((item) => t(`doctorForm.clientFocus.participantsOptions.${item}`))
+          .join(t('common.comma'))
+      : summaryFallback,
+    treatment: therapyModalities.length ? therapyModalities.slice(0, 3).join(t('common.comma')) : summaryFallback,
+  }
+
+  const sectionIcons: Record<SectionId, LucideIcon> = {
+    about: UserRound,
+    finances: Wallet,
+    qualifications: GraduationCap,
+    specialties: Star,
+    clientFocus: HeartPulse,
+    treatment: FolderKanban,
+  }
 
   const isNewDoctor = !doctor
+  const isUnderReview = doctor?.status === 'pending'
   const avatarMedia = doctor?.media?.avatar ?? null
   const introVideoMedia = doctor?.media?.intro_video ?? null
+
+  const renderSectionContent = (section: SectionId) => {
+    switch (section) {
+      case 'about':
+        return (
+          <>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.fullPublicName')}</label>
+                <Input
+                  {...register('full_name')}
+                  placeholder={t('doctorForm.about.placeholders.fullPublicName')}
+                  aria-invalid={!!errors.full_name}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.honorific')}</label>
+                <Input {...register('honorific_prefix')} placeholder="Dr." aria-invalid={!!errors.honorific_prefix} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.firstName')}</label>
+                <Input
+                  {...register('first_name')}
+                  placeholder={t('doctorForm.about.placeholders.firstName')}
+                  aria-invalid={!!errors.first_name}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.middleName')}</label>
+                <Input
+                  {...register('middle_name')}
+                  placeholder={t('doctorForm.about.placeholders.middleName')}
+                  aria-invalid={!!errors.middle_name}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.lastName')}</label>
+                <Input
+                  {...register('last_name')}
+                  placeholder={t('doctorForm.about.placeholders.lastName')}
+                  aria-invalid={!!errors.last_name}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.credentialSuffix')}</label>
+                <Input
+                  {...register('credentials_suffix')}
+                  placeholder={t('doctorForm.about.placeholders.credentials')}
+                  aria-invalid={!!errors.credentials_suffix}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.pronouns')}</label>
+                <select {...register('preferred_pronouns')} className={selectClasses(!!errors.preferred_pronouns)}>
+                  <option value="">{t('doctorForm.about.labels.pronounsPlaceholder')}</option>
+                  {pronounOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {t(`doctorForm.identity.pronouns.${option}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.displayName')}</label>
+                <select
+                  {...register('display_name_preference')}
+                  className={selectClasses(!!errors.display_name_preference)}
+                >
+                  <option value="personal">{t('doctorForm.about.displayNameOptions.personal')}</option>
+                  <option value="business">{t('doctorForm.about.displayNameOptions.business')}</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.businessName')}</label>
+                <Input
+                  {...register('business_name')}
+                  disabled={displayPreference !== 'business'}
+                  aria-invalid={!!errors.business_name}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.tagline')}</label>
+                <Input
+                  {...register('tagline')}
+                  placeholder={t('doctorForm.about.placeholders.tagline')}
+                  aria-invalid={!!errors.tagline}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.primarySpecialty')}</label>
+                <Input {...register('specialty')} aria-invalid={!!errors.specialty} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.secondarySpecialty')}</label>
+                <Input
+                  {...register('sub_specialty')}
+                  placeholder={t('doctorForm.about.placeholders.secondarySpecialty')}
+                  aria-invalid={!!errors.sub_specialty}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseNumber')}</label>
+                <Input {...register('license_number')} aria-invalid={!!errors.license_number} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseState')}</label>
+                <Input
+                  {...register('license_state')}
+                  placeholder={t('doctorForm.about.placeholders.licenseState')}
+                  aria-invalid={!!errors.license_state}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseExpiration')}</label>
+                <Input type="date" {...register('license_expiration')} aria-invalid={!!errors.license_expiration} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.professionalRole')}</label>
+                <Input
+                  {...register('professional_role')}
+                  placeholder={t('doctorForm.about.placeholders.professionalRole')}
+                  aria-invalid={!!errors.professional_role}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licensureStatus')}</label>
+                <select {...register('licensure_status')} className={selectClasses(!!errors.licensure_status)}>
+                  <option value="">{t('doctorForm.about.labels.licensureStatus')}</option>
+                  <option value="licensed">{t('doctorForm.about.licensureOptions.licensed')}</option>
+                  <option value="supervised">{t('doctorForm.about.licensureOptions.supervised')}</option>
+                  <option value="unlicensed">{t('doctorForm.about.licensureOptions.unlicensed')}</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-500">{t('doctorForm.about.labels.bio')}</label>
+              <Textarea
+                rows={4}
+                {...register('bio')}
+                placeholder={t('doctorForm.about.placeholders.bio')}
+                aria-invalid={!!errors.bio}
+              />
+            </div>
+
+            <div className="rounded-2xl border border-slate-100 p-4 space-y-4">
+              <div>
+                <h3 className="font-semibold text-slate-900">{t('doctorForm.about.labels.aboutHeading')}</h3>
+                <p className="text-xs text-slate-500">{t('doctorForm.about.labels.aboutHint')}</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.paragraph1')}</label>
+                <Textarea rows={3} {...register('about_paragraph_one')} aria-invalid={!!errors.about_paragraph_one} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.paragraph2')}</label>
+                <Textarea rows={3} {...register('about_paragraph_two')} aria-invalid={!!errors.about_paragraph_two} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.paragraph3')}</label>
+                <Textarea rows={3} {...register('about_paragraph_three')} aria-invalid={!!errors.about_paragraph_three} />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-slate-100 p-4">
+                <p className="font-semibold text-slate-900">{t('doctorForm.media.headshotTitle')}</p>
+                <p className="text-xs text-slate-500">{t('doctorForm.media.headshotHint')}</p>
+                <div className="mt-3 space-y-2">
+                  {avatarMedia ? (
+                    <div className="relative">
+                      <img src={avatarMedia.url} alt={avatarMedia.name} className="h-48 w-full rounded-2xl object-cover" />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-3 rounded-full bg-white/80 px-2 py-1 text-xs text-red-500"
+                        onClick={() => handleMediaDelete(avatarMedia.id)}
+                      >
+                        {t('doctorForm.media.delete')}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">{t('doctorForm.media.noImage')}</p>
+                  )}
+                  <Input type="file" accept="image/*" onChange={(event) => handleMediaUpload(event, 'avatar')} />
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-100 p-4">
+                <p className="font-semibold text-slate-900">{t('doctorForm.media.introVideoTitle')}</p>
+                <p className="text-xs text-slate-500">{t('doctorForm.media.introVideoHint')}</p>
+                <div className="mt-3 space-y-2">
+                  {introVideoMedia ? (
+                    <div className="space-y-2">
+                      <video controls className="w-full rounded-2xl" src={introVideoMedia.url} />
+                      <button
+                        type="button"
+                        className="rounded-full bg-slate-100 px-3 py-1 text-xs text-red-500"
+                        onClick={() => handleMediaDelete(introVideoMedia.id)}
+                      >
+                        {t('doctorForm.media.deleteVideo')}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">{t('doctorForm.media.noVideo')}</p>
+                  )}
+                  <Input
+                    type="file"
+                    accept="video/mp4,video/quicktime"
+                    onChange={(event) => handleMediaUpload(event, 'intro_video')}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-2xl border border-slate-100 p-4">
+              <div>
+                <p className="font-semibold text-slate-900">{t('doctorForm.media.documentsTitle')}</p>
+                <p className="text-xs text-slate-500">{t('doctorForm.media.documentsHint')}</p>
+              </div>
+              <Input type="file" accept="image/*,application/pdf" onChange={(event) => handleMediaUpload(event, 'documents')} />
+            </div>
+
+            <div className="flex items-center justify-between rounded-2xl border border-slate-100 p-4">
+              <div>
+                <p className="font-semibold text-slate-900">{t('doctorForm.media.galleryTitle')}</p>
+                <p className="text-xs text-slate-500">{t('doctorForm.media.galleryHint')}</p>
+              </div>
+              <Input type="file" multiple onChange={(event) => handleMediaUpload(event, 'gallery')} />
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold text-slate-900">{t('doctorForm.contact.title')}</h3>
+              <p className="text-sm text-slate-500">{t('doctorForm.contact.description')}</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.mainPhone')}</label>
+                <Input {...register('phone')} placeholder="+966..." aria-invalid={!!errors.phone} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.mobilePhone')}</label>
+                <Input
+                  {...register('mobile_phone')}
+                  placeholder={t('doctorForm.contact.mobileHint')}
+                  aria-invalid={!!errors.mobile_phone}
+                />
+              </div>
+              <div className="flex items-center gap-2 pt-5">
+                <Checkbox {...register('mobile_can_text')} />
+                <span className="text-xs text-slate-500">{t('doctorForm.contact.allowTexts')}</span>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.whatsapp')}</label>
+                <Input
+                  {...register('whatsapp')}
+                  placeholder={t('doctorForm.contact.mobileHint')}
+                  aria-invalid={!!errors.whatsapp}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.primaryEmail')}</label>
+                <Input {...register('email')} type="email" aria-invalid={!!errors.email} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.appointmentEmail')}</label>
+                <Input {...register('appointment_email')} type="email" aria-invalid={!!errors.appointment_email} />
+              </div>
+              <div className="flex items-center gap-2 pt-5">
+                <Checkbox {...register('accepts_email_messages')} defaultChecked />
+                <span className="text-xs text-slate-500">{t('doctorForm.contact.allowEmail')}</span>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.website')}</label>
+                <Input {...register('website')} placeholder="https://" aria-invalid={!!errors.website} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.quickIntro')}</label>
+                <Input
+                  {...register('new_clients_intro')}
+                  placeholder={t('doctorForm.contact.quickIntro')}
+                  aria-invalid={!!errors.new_clients_intro}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.serviceDelivery')}</label>
+                <select {...register('service_delivery')} className={selectClasses(!!errors.service_delivery)}>
+                  <option value="">{t('doctorForm.contact.servicePlaceholder')}</option>
+                  {serviceDeliveryOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {t(`doctorForm.contact.serviceOptions.${option}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.newClientsStatus')}</label>
+                <select {...register('new_clients_status')} className={selectClasses(!!errors.new_clients_status)}>
+                  <option value="">{t('doctorForm.contact.newClientsPlaceholder')}</option>
+                  {newClientsStatusOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {t(`doctorForm.contact.newClientOptions.${option}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2 pt-6">
+                <Checkbox {...register('offers_intro_call')} />
+                <span className="text-xs text-slate-500">{t('doctorForm.contact.offersIntroCall')}</span>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.baseCity')}</label>
+                <Input {...register('city')} aria-invalid={!!errors.city} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.languages')}</label>
+                <Input {...register('languages')} placeholder="ar, en, fr" aria-invalid={!!errors.languages} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.contact.yearsExperience')}</label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={60}
+                  {...register('years_of_experience')}
+                  aria-invalid={!!errors.years_of_experience}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-slate-900">{t('doctorForm.clinics.title')}</h3>
+                <Button type="button" variant="outline" onClick={addClinic}>
+                  {t('doctorForm.clinics.add')}
+                </Button>
+              </div>
+              {clinics.map((clinic, index) => (
+                <div key={index} className="grid gap-4 rounded-2xl border border-slate-100 p-4 md:grid-cols-2">
+                  <div>
+                    <label className="text-xs text-slate-500">{t('doctorForm.clinics.city')}</label>
+                    <Input value={clinic.city} onChange={(e) => handleClinicChange(index, 'city', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500">{t('doctorForm.clinics.address')}</label>
+                    <Input value={clinic.address} onChange={(e) => handleClinicChange(index, 'address', e.target.value)} />
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-xs text-slate-500">{t('doctorForm.clinics.mapLabel')}</label>
+                    <LocationPicker
+                      value={{ lat: clinic.lat, lng: clinic.lng, address: clinic.address, city: clinic.city }}
+                      onChange={(value) =>
+                        handleClinicLocationChange(index, {
+                          lat: value.lat,
+                          lng: value.lng,
+                          address: value.address ?? clinic.address,
+                          city: value.city ?? clinic.city,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )
+      case 'finances':
+        return (
+          <>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.finances.individualFee')}</label>
+                <Input
+                  type="number"
+                  min={0}
+                  {...register('fee_individual')}
+                  placeholder="0"
+                  aria-invalid={!!errors.fee_individual}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.finances.coupleFee')}</label>
+                <Input
+                  type="number"
+                  min={0}
+                  {...register('fee_couples')}
+                  placeholder="0"
+                  aria-invalid={!!errors.fee_couples}
+                />
+              </div>
+              <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2">
+                <Checkbox {...register('offers_sliding_scale')} />
+                <span className="text-xs text-slate-500">
+                  {watch('offers_sliding_scale')
+                    ? t('doctorForm.finances.slidingYes')
+                    : t('doctorForm.finances.slidingNo')}
+                </span>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-100 p-4">
+              <p className="text-xs text-slate-500 mb-3">{t('doctorForm.finances.paymentMethods')}</p>
+              <div className="grid gap-2 md:grid-cols-2">
+                {paymentMethodOptions.map((method) => (
+                  <label key={method} className="flex items-center gap-2 text-sm text-slate-700">
+                    <Checkbox
+                      checked={paymentMethods.includes(method)}
+                      onChange={() =>
+                        setPaymentMethods((prev) =>
+                          prev.includes(method) ? prev.filter((item) => item !== method) : [...prev, method],
+                        )
+                      }
+                    />
+                    {t(`doctorForm.finances.paymentChoices.${method}`)}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">{t('doctorForm.finances.insurances')}</label>
+              <Textarea
+                rows={3}
+                {...register('insurances_text')}
+                placeholder={t('doctorForm.finances.insurancesPlaceholder')}
+                aria-invalid={!!errors.insurances_text}
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.finances.npi')}</label>
+                <Input {...register('npi_number')} aria-invalid={!!errors.npi_number} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.finances.liabilityCarrier')}</label>
+                <Input {...register('liability_carrier')} aria-invalid={!!errors.liability_carrier} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.finances.liabilityExpiration')}</label>
+                <Input type="date" {...register('liability_expiration')} aria-invalid={!!errors.liability_expiration} />
+              </div>
+            </div>
+          </>
+        )
+      case 'qualifications':
+        return (
+          <>
+            <div>
+              <label className="text-xs text-slate-500">{t('doctorForm.qualifications.mainQualifications')}</label>
+              <Textarea
+                rows={3}
+                {...register('qualifications_text')}
+                placeholder={t('doctorForm.qualifications.placeholders.qualifications')}
+                aria-invalid={!!errors.qualifications_text}
+              />
+            </div>
+            <div className="rounded-2xl border border-slate-100 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-slate-900">
+                  {t('doctorForm.qualifications.additionalCredentials')}
+                </p>
+                {additionalCredentials.length < 2 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="px-3 py-1 text-xs"
+                    onClick={() => setAdditionalCredentials((prev) => [...prev, ''])}
+                  >
+                    {t('doctorForm.qualifications.addCredential')}
+                  </Button>
+                )}
+              </div>
+              {additionalCredentials.map((cred, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    value={cred}
+                    onChange={(event) =>
+                      setAdditionalCredentials((prev) => prev.map((item, idx) => (idx === index ? event.target.value : item)))
+                    }
+                    placeholder={t('doctorForm.qualifications.placeholders.institution')}
+                  />
+                  {additionalCredentials.length > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="px-3 py-1 text-xs"
+                  onClick={() =>
+                    setAdditionalCredentials((prev) =>
+                      prev.filter((_credential, idx) => idx !== index || prev.length === 1),
+                    )
+                  }
+                >
+                      {t('doctorForm.qualifications.removeCredential')}
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.qualifications.note')}</label>
+                <Textarea rows={3} {...register('qualifications_note')} aria-invalid={!!errors.qualifications_note} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs text-slate-500">{t('doctorForm.qualifications.lastInstitution')}</label>
+                <Input
+                  {...register('education_institution')}
+                  placeholder={t('doctorForm.qualifications.placeholders.institution')}
+                  aria-invalid={!!errors.education_institution}
+                />
+                <label className="text-xs text-slate-500">{t('doctorForm.qualifications.degreeType')}</label>
+                <Input
+                  {...register('education_degree')}
+                  placeholder={t('doctorForm.qualifications.placeholders.degree')}
+                  aria-invalid={!!errors.education_degree}
+                />
+                <label className="text-xs text-slate-500">{t('doctorForm.qualifications.graduationYear')}</label>
+                <Input
+                  type="number"
+                  {...register('education_graduation_year')}
+                  aria-invalid={!!errors.education_graduation_year}
+                />
+                <label className="text-xs text-slate-500">{t('doctorForm.qualifications.practiceStartYear')}</label>
+                <Input
+                  type="number"
+                  {...register('practice_start_year')}
+                  aria-invalid={!!errors.practice_start_year}
+                />
+              </div>
+            </div>
+          </>
+        )
+      case 'specialties':
+        return (
+          <>
+            <div className="space-y-3 rounded-2xl border border-slate-100 p-4">
+              <div>
+                <h4 className="font-semibold text-slate-900">{t('doctorForm.specialties.categoriesTitle')}</h4>
+                <p className="text-xs text-slate-500">{t('doctorForm.specialties.categoriesHint')}</p>
+              </div>
+              {categoriesQuery.isLoading ? (
+                <p className="text-sm text-slate-500">{t('doctorForm.specialties.loading')}</p>
+              ) : flattenedCategories.length > 0 ? (
+                <div className="max-h-[320px] space-y-2 overflow-y-auto pr-2">
+                  {flattenedCategories.map((category) => (
+                    <label key={category.id} className="flex items-center gap-3 text-sm text-slate-700">
+                      <Checkbox
+                        checked={selectedCategories.includes(category.id)}
+                        onChange={() => handleCategoryToggle(category.id)}
+                      />
+                      <span className="flex-1" style={{ paddingInlineStart: `${category.depth * 12}px` }}>
+                        {category.name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">{t('doctorForm.specialties.empty')}</p>
+              )}
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.specialties.noteLabel')}</label>
+                <Textarea
+                  rows={3}
+                  {...register('specialties_note')}
+                  placeholder={t('doctorForm.specialties.notePlaceholder')}
+                  aria-invalid={!!errors.specialties_note}
+                />
+              </div>
+            </div>
+          </>
+        )
+      case 'clientFocus':
+        return (
+          <>
+            <div className="rounded-2xl border border-slate-100 p-4 space-y-4">
+              <div>
+                <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.participants')}</p>
+                <div className="flex flex-wrap gap-4">
+                  {participantOptions.map((option) => (
+                    <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
+                      <Checkbox
+                        checked={clientParticipants.includes(option)}
+                        onChange={() => toggleWithLimit(option, setClientParticipants, 3)}
+                      />
+                      {t(`doctorForm.clientFocus.participantsOptions.${option}`)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.ageGroups')}</p>
+                <div className="flex flex-wrap gap-4">
+                  {ageGroupOptions.map((option) => (
+                    <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
+                      <Checkbox
+                        checked={clientAgeGroups.includes(option)}
+                        onChange={() =>
+                          setClientAgeGroups((prev) =>
+                            prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
+                          )
+                        }
+                      />
+                      {t(`doctorForm.clientFocus.ageOptions.${option}`)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.faith')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {faithOrientationOptions.map((option) => {
+                    const isActive = faithOrientation === option
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setFaithOrientation(option)}
+                        className={cn(
+                          'rounded-2xl border px-4 py-2 text-sm transition',
+                          isActive
+                            ? 'border-primary-200 bg-primary-50 text-primary-700 shadow-card'
+                            : 'border-slate-200 text-slate-600 hover:border-slate-300',
+                        )}
+                        aria-pressed={isActive}
+                      >
+                        {t(`doctorForm.clientFocus.faithOptions.${option}`)}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.allied')}</p>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {alliedCommunityOptions.map((option) => (
+                    <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
+                      <Checkbox
+                        checked={alliedCommunities.includes(option)}
+                        onChange={() =>
+                          setAlliedCommunities((prev) =>
+                            prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
+                          )
+                        }
+                      />
+                      {t(`doctorForm.clientFocus.alliedOptions.${option}`)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-slate-900">{t('doctorForm.identity.title')}</h3>
+              <p className="text-sm text-slate-500">{t('doctorForm.identity.description')}</p>
+            </div>
+            <div className="rounded-2xl border border-dashed border-slate-200 p-4 space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="text-xs text-slate-500">{t('doctorForm.identity.birthYear')}</label>
+                    <Input
+                      type="number"
+                      {...register('identity_birth_year')}
+                      placeholder="1987"
+                      aria-invalid={!!errors.identity_birth_year}
+                    />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500">{t('doctorForm.identity.religion')}</label>
+                  <Input {...register('identity_religion')} aria-invalid={!!errors.identity_religion} />
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">{t('doctorForm.identity.gender')}</p>
+                <div className="flex flex-wrap gap-4">
+                  {identityGenderOptions.map((option) => (
+                    <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
+                      <Checkbox
+                        checked={genderIdentities.includes(option)}
+                        onChange={() =>
+                          setGenderIdentities((prev) =>
+                            prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
+                          )
+                        }
+                      />
+                      {t(`doctorForm.identity.genderOptions.${option}`)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">{t('doctorForm.identity.ethnicity')}</p>
+                <div className="flex flex-wrap gap-4">
+                  {identityEthnicityOptions.map((option) => (
+                    <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
+                      <Checkbox
+                        checked={ethnicities.includes(option)}
+                        onChange={() =>
+                          setEthnicities((prev) =>
+                            prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
+                          )
+                        }
+                      />
+                      {t(`doctorForm.identity.ethnicityOptions.${option}`)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">{t('doctorForm.identity.lgbtq')}</p>
+                <div className="flex flex-wrap gap-4">
+                  {identityLgbtqOptions.map((option) => (
+                    <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
+                      <Checkbox
+                        checked={lgbtqIdentities.includes(option)}
+                        onChange={() =>
+                          setLgbtqIdentities((prev) =>
+                            prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
+                          )
+                        }
+                      />
+                      {t(`doctorForm.identity.lgbtqOptions.${option}`)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.identity.other')}</label>
+                <Textarea rows={2} {...register('identity_other')} aria-invalid={!!errors.identity_other} />
+              </div>
+            </div>
+          </>
+        )
+      case 'treatment':
+        return (
+          <>
+            <div className="rounded-2xl border border-slate-100 p-4">
+              <div className="grid gap-2 md:grid-cols-2">
+                {therapyModalityOptions.map((option) => (
+                  <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
+                    <Checkbox
+                      checked={therapyModalities.includes(option)}
+                      onChange={() =>
+                        setTherapyModalities((prev) =>
+                          prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
+                        )
+                      }
+                    />
+                    {option}
+                  </label>
+                ))}
+              </div>
+              <div className="mt-4">
+                <label className="text-xs text-slate-500">{t('doctorForm.treatment.noteLabel')}</label>
+                <Textarea
+                  rows={3}
+                  {...register('treatment_note')}
+                  placeholder={t('doctorForm.treatment.notePlaceholder')}
+                  aria-invalid={!!errors.treatment_note}
+                />
+              </div>
+            </div>
+          </>
+        )
+      default:
+        return null
+    }
+  }
+
+  const handleOpenSection = (section: SectionId) => {
+    setActiveSection(section)
+  }
+
+  const handleCloseDrawer = () => {
+    if (!saveProfile.isPending) {
+      setActiveSection(null)
+    }
+  }
+
+  const handleDrawerSave = () => {
+    handleSubmit(onSubmit, handleFormErrors)()
+  }
+  const ActiveSectionIcon = activeSection ? sectionIcons[activeSection] : null
 
   return (
     <div className="space-y-8" dir={i18n.dir()}>
@@ -580,828 +1354,77 @@ export const DoctorProfileFormPage = () => {
           {t('doctorForm.pendingBanner')}
         </div>
       )}
-      <div className="sticky top-4 z-10 rounded-3xl border border-slate-100 bg-white/95 p-4 shadow-card backdrop-blur">
-        <div className="flex flex-wrap items-center justify-center gap-3 text-center">
-          <p className="text-base font-semibold text-slate-900">{t('doctorForm.completionTitle')}</p>
-          <span className="text-sm text-slate-500">
-            {t('doctorForm.completionStep', { current: activeTabIndex + 1, total: profileTabs.length })}
-          </span>
-        </div>
-        <div className="mt-4 w-full max-w-xl mx-auto">
-          <div className="flex justify-end text-xs text-slate-500">
-            <span>{completionPercentage}{t('doctorForm.completionPercentSuffix')}</span>
+      {isUnderReview && (
+        <div className="flex items-start gap-3 rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
+          <div className="rounded-2xl bg-white/80 p-2 text-emerald-600">
+            <ShieldCheck className="h-5 w-5" />
           </div>
-          <div className="mt-2 h-2 w-full rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-primary-500 transition-all"
-              style={{ width: `${completionPercentage}%` }}
-            />
-          </div>
-        </div>
-        <div className="mt-6 flex flex-nowrap justify-start gap-2 overflow-x-auto pb-1 text-center md:justify-center">
-          {profileTabs.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => handleTabClick(tab)}
-              className={cn(
-                'rounded-full px-3 py-2 text-xs md:px-4 md:py-2 md:text-sm transition min-w-fit',
-                activeTab === tab
-                  ? 'bg-primary-500 text-white shadow-card'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
-              )}
-            >
-              {t(`doctorForm.tabs.${tab}`)}
-            </button>
-          ))}
-        </div>
-      </div>
-      <form onSubmit={handleSubmit(onSubmit, handleFormErrors)} className="space-y-10">
-        <section
-          ref={setSectionRef('about')}
-          data-section-id="about"
-          className="scroll-mt-32 space-y-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-card"
-        >
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">{t('doctorForm.about.title')}</h2>
+            <p className="text-base font-semibold text-emerald-900">{t('doctorForm.reviewBanner.title')}</p>
+            <p className="text-sm text-emerald-700">{t('doctorForm.reviewBanner.description')}</p>
+          </div>
+        </div>
+      )}
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-base font-semibold text-slate-900">{t('doctorForm.completionTitle')}</p>
             <p className="text-sm text-slate-500">
-              {t('doctorForm.about.description')}
+              {t('doctorForm.completionStep', { current: completedSections, total: sectionOrder.length })}
             </p>
           </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.fullPublicName')}</label>
-            <Input {...register('full_name')} placeholder={t('doctorForm.about.placeholders.fullPublicName')} aria-invalid={!!errors.full_name} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.honorific')}</label>
-            <Input {...register('honorific_prefix')} placeholder="Dr." aria-invalid={!!errors.honorific_prefix} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.firstName')}</label>
-            <Input {...register('first_name')} placeholder={t('doctorForm.about.placeholders.firstName')} aria-invalid={!!errors.first_name} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.middleName')}</label>
-            <Input {...register('middle_name')} placeholder={t('doctorForm.about.placeholders.middleName')} aria-invalid={!!errors.middle_name} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.lastName')}</label>
-            <Input {...register('last_name')} placeholder={t('doctorForm.about.placeholders.lastName')} aria-invalid={!!errors.last_name} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.credentialSuffix')}</label>
-            <Input
-              {...register('credentials_suffix')}
-              placeholder={t('doctorForm.about.placeholders.credentials')}
-              aria-invalid={!!errors.credentials_suffix}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.pronouns')}</label>
-            <select
-              {...register('preferred_pronouns')}
-              className={selectClasses(!!errors.preferred_pronouns)}
-            >
-              <option value="">{t('doctorForm.about.labels.pronounsPlaceholder')}</option>
-              {pronounOptions.map((option) => (
-                <option key={option} value={option}>
-                  {t(`doctorForm.identity.pronouns.${option}`)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.displayName')}</label>
-            <select
-              {...register('display_name_preference')}
-              className={selectClasses(!!errors.display_name_preference)}
-            >
-              <option value="personal">{t('doctorForm.about.displayNameOptions.personal')}</option>
-              <option value="business">{t('doctorForm.about.displayNameOptions.business')}</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.businessName')}</label>
-            <Input
-              {...register('business_name')}
-              disabled={displayPreference !== 'business'}
-              aria-invalid={!!errors.business_name}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.tagline')}</label>
-            <Input
-              {...register('tagline')}
-              placeholder={t('doctorForm.about.placeholders.tagline')}
-              aria-invalid={!!errors.tagline}
-            />
+          <div className="text-sm text-slate-500">
+            {completionPercentage}
+            {t('doctorForm.completionPercentSuffix')}
           </div>
         </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.primarySpecialty')}</label>
-            <Input {...register('specialty')} aria-invalid={!!errors.specialty} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.secondarySpecialty')}</label>
-            <Input
-              {...register('sub_specialty')}
-              placeholder={t('doctorForm.about.placeholders.secondarySpecialty')}
-              aria-invalid={!!errors.sub_specialty}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseNumber')}</label>
-            <Input {...register('license_number')} aria-invalid={!!errors.license_number} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseState')}</label>
-            <Input
-              {...register('license_state')}
-              placeholder={t('doctorForm.about.placeholders.licenseState')}
-              aria-invalid={!!errors.license_state}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseExpiration')}</label>
-            <Input type="date" {...register('license_expiration')} aria-invalid={!!errors.license_expiration} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.professionalRole')}</label>
-            <Input
-              {...register('professional_role')}
-              placeholder={t('doctorForm.about.placeholders.professionalRole')}
-              aria-invalid={!!errors.professional_role}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licensureStatus')}</label>
-            <select
-              {...register('licensure_status')}
-              className={selectClasses(!!errors.licensure_status)}
-            >
-              <option value="">{t('doctorForm.about.labels.licensureStatus')}</option>
-              <option value="licensed">{t('doctorForm.about.licensureOptions.licensed')}</option>
-              <option value="supervised">{t('doctorForm.about.licensureOptions.supervised')}</option>
-              <option value="unlicensed">{t('doctorForm.about.licensureOptions.unlicensed')}</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-xs text-slate-500">{t('doctorForm.about.labels.bio')}</label>
-          <Textarea
-            rows={4}
-            {...register('bio')}
-            placeholder={t('doctorForm.about.placeholders.bio')}
-            aria-invalid={!!errors.bio}
+        <div className="mt-4 h-2 w-full rounded-full bg-slate-100">
+          <div
+            className="h-full rounded-full bg-primary-500 transition-all"
+            style={{ width: `${completionPercentage}%` }}
           />
         </div>
-
-        <div className="rounded-2xl border border-slate-100 p-4 space-y-4">
-          <div>
-            <h3 className="font-semibold text-slate-900">{t('doctorForm.about.labels.aboutHeading')}</h3>
-            <p className="text-xs text-slate-500">{t('doctorForm.about.labels.aboutHint')}</p>
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.paragraph1')}</label>
-            <Textarea rows={3} {...register('about_paragraph_one')} aria-invalid={!!errors.about_paragraph_one} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.paragraph2')}</label>
-            <Textarea rows={3} {...register('about_paragraph_two')} aria-invalid={!!errors.about_paragraph_two} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs text-slate-500">{t('doctorForm.about.labels.paragraph3')}</label>
-            <Textarea rows={3} {...register('about_paragraph_three')} aria-invalid={!!errors.about_paragraph_three} />
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-100 p-4">
-            <p className="font-semibold text-slate-900">{t('doctorForm.media.headshotTitle')}</p>
-            <p className="text-xs text-slate-500">{t('doctorForm.media.headshotHint')}</p>
-            <div className="mt-3 space-y-2">
-              {avatarMedia ? (
-                <div className="relative">
-                  <img
-                    src={avatarMedia.url}
-                    alt={avatarMedia.name}
-                    className="h-48 w-full rounded-2xl object-cover"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-3 rounded-full bg-white/80 px-2 py-1 text-xs text-red-500"
-                    onClick={() => handleMediaDelete(avatarMedia.id)}
+      </div>
+      <form onSubmit={handleSubmit(onSubmit, handleFormErrors)} className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {sectionOrder.map((section) => {
+            const completed = sectionCompletion[section]
+            const Icon = sectionIcons[section]
+            return (
+              <div key={section} className="rounded-3xl border border-slate-100 bg-white p-5 shadow-card">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-base font-semibold text-slate-900">{t(`doctorForm.tabs.${section}`)}</p>
+                    <p className="text-sm text-slate-500">{t(`doctorForm.tabs.${section}Desc`)}</p>
+                  </div>
+                  <div
+                    className={cn(
+                      'rounded-2xl p-3',
+                      completed ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500',
+                    )}
                   >
-                    {t('doctorForm.media.delete')}
-                  </button>
+                    <Icon className="h-5 w-5" />
+                  </div>
                 </div>
-              ) : (
-                <p className="text-xs text-slate-500">{t('doctorForm.media.noImage')}</p>
-              )}
-              <Input type="file" accept="image/*" onChange={(event) => handleMediaUpload(event, 'avatar')} />
-            </div>
-          </div>
-          <div className="rounded-2xl border border-slate-100 p-4">
-            <p className="font-semibold text-slate-900">{t('doctorForm.media.introVideoTitle')}</p>
-            <p className="text-xs text-slate-500">{t('doctorForm.media.introVideoHint')}</p>
-            <div className="mt-3 space-y-2">
-              {introVideoMedia ? (
-                <div className="space-y-2">
-                  <video controls className="w-full rounded-2xl" src={introVideoMedia.url} />
-                  <button
-                    type="button"
-                    className="rounded-full bg-slate-100 px-3 py-1 text-xs text-red-500"
-                    onClick={() => handleMediaDelete(introVideoMedia.id)}
-                  >
-                    {t('doctorForm.media.deleteVideo')}
-                  </button>
+                <p className="mt-4 text-sm text-slate-600">{sectionSummaries[section]}</p>
+                <div className="mt-6 flex items-center justify-between text-xs">
+                  <span className={completed ? 'text-emerald-600' : 'text-amber-600'}>
+                    {completed ? t('doctorForm.summary.ready') : t('doctorForm.summary.todo')}
+                  </span>
+                  <Button type="button" variant="outline" className="text-xs px-3 py-1.5" onClick={() => handleOpenSection(section)}>
+                    {completed ? t('common.actions.edit') : t('common.actions.add')}
+                  </Button>
                 </div>
-              ) : (
-                <p className="text-xs text-slate-500">{t('doctorForm.media.noVideo')}</p>
-              )}
-              <Input
-                type="file"
-                accept="video/mp4,video/quicktime"
-                onChange={(event) => handleMediaUpload(event, 'intro_video')}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between rounded-2xl border border-slate-100 p-4">
-          <div>
-            <p className="font-semibold text-slate-900">{t('doctorForm.media.documentsTitle')}</p>
-            <p className="text-xs text-slate-500">{t('doctorForm.media.documentsHint')}</p>
-          </div>
-          <Input type="file" accept="image/*,application/pdf" onChange={(event) => handleMediaUpload(event, 'documents')} />
-        </div>
-
-        <div className="flex items-center justify-between rounded-2xl border border-slate-100 p-4">
-          <div>
-            <p className="font-semibold text-slate-900">{t('doctorForm.media.galleryTitle')}</p>
-            <p className="text-xs text-slate-500">{t('doctorForm.media.galleryHint')}</p>
-          </div>
-          <Input type="file" multiple onChange={(event) => handleMediaUpload(event, 'gallery')} />
-        </div>
-
-        <div>
-          <h3 className="text-xl font-semibold text-slate-900">{t('doctorForm.contact.title')}</h3>
-          <p className="text-sm text-slate-500">{t('doctorForm.contact.description')}</p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.mainPhone')}</label>
-            <Input {...register('phone')} placeholder="+966..." aria-invalid={!!errors.phone} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.mobilePhone')}</label>
-            <Input
-              {...register('mobile_phone')}
-              placeholder={t('doctorForm.contact.mobileHint')}
-              aria-invalid={!!errors.mobile_phone}
-            />
-          </div>
-          <div className="flex items-center gap-2 pt-5">
-            <Checkbox {...register('mobile_can_text')} />
-            <span className="text-xs text-slate-500">{t('doctorForm.contact.allowTexts')}</span>
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.whatsapp')}</label>
-            <Input {...register('whatsapp')} placeholder={t('doctorForm.contact.mobileHint')} aria-invalid={!!errors.whatsapp} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.primaryEmail')}</label>
-            <Input {...register('email')} type="email" aria-invalid={!!errors.email} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.appointmentEmail')}</label>
-            <Input {...register('appointment_email')} type="email" aria-invalid={!!errors.appointment_email} />
-          </div>
-          <div className="flex items-center gap-2 pt-5">
-            <Checkbox {...register('accepts_email_messages')} defaultChecked />
-            <span className="text-xs text-slate-500">{t('doctorForm.contact.allowEmail')}</span>
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.website')}</label>
-            <Input {...register('website')} placeholder="https://" aria-invalid={!!errors.website} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.quickIntro')}</label>
-            <Input
-              {...register('new_clients_intro')}
-              placeholder={t('doctorForm.contact.quickIntro')}
-              aria-invalid={!!errors.new_clients_intro}
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.serviceDelivery')}</label>
-            <select
-              {...register('service_delivery')}
-              className={selectClasses(!!errors.service_delivery)}
-            >
-              <option value="">{t('doctorForm.contact.servicePlaceholder')}</option>
-              {serviceDeliveryOptions.map((option) => (
-                <option key={option} value={option}>
-                  {t(`doctorForm.contact.serviceOptions.${option}`)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.newClientsStatus')}</label>
-            <select
-              {...register('new_clients_status')}
-              className={selectClasses(!!errors.new_clients_status)}
-            >
-              <option value="">{t('doctorForm.contact.newClientsPlaceholder')}</option>
-              {newClientsStatusOptions.map((option) => (
-                <option key={option} value={option}>
-                  {t(`doctorForm.contact.newClientOptions.${option}`)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2 pt-6">
-            <Checkbox {...register('offers_intro_call')} />
-            <span className="text-xs text-slate-500">{t('doctorForm.contact.offersIntroCall')}</span>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.baseCity')}</label>
-            <Input {...register('city')} aria-invalid={!!errors.city} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.languages')}</label>
-            <Input {...register('languages')} placeholder="ar, en, fr" aria-invalid={!!errors.languages} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.contact.yearsExperience')}</label>
-            <Input
-              type="number"
-              min={0}
-              max={60}
-              {...register('years_of_experience')}
-              aria-invalid={!!errors.years_of_experience}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-slate-900">{t('doctorForm.clinics.title')}</h3>
-            <Button type="button" variant="outline" onClick={addClinic}>
-              {t('doctorForm.clinics.add')}
-            </Button>
-          </div>
-          {clinics.map((clinic, index) => (
-            <div key={index} className="grid gap-4 rounded-2xl border border-slate-100 p-4 md:grid-cols-2">
-              <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.clinics.city')}</label>
-                <Input value={clinic.city} onChange={(e) => handleClinicChange(index, 'city', e.target.value)} />
               </div>
-              <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.clinics.address')}</label>
-                <Input value={clinic.address} onChange={(e) => handleClinicChange(index, 'address', e.target.value)} />
-              </div>
-              <div className="md:col-span-2 space-y-2">
-                <label className="text-xs text-slate-500">{t('doctorForm.clinics.mapLabel')}</label>
-                <LocationPicker
-                  value={{ lat: clinic.lat, lng: clinic.lng, address: clinic.address, city: clinic.city }}
-                  onChange={(value) =>
-                    handleClinicLocationChange(index, {
-                      lat: value.lat,
-                      lng: value.lng,
-                      address: value.address ?? clinic.address,
-                      city: value.city ?? clinic.city,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
-        </section>
-
-        <section
-          ref={setSectionRef('finances')}
-          data-section-id="finances"
-          className="scroll-mt-32 space-y-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-card"
-        >
-          <div>
-            <h3 className="text-xl font-semibold text-slate-900">{t('doctorForm.finances.title')}</h3>
-            <p className="text-sm text-slate-500">{t('doctorForm.finances.description')}</p>
-          </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.finances.individualFee')}</label>
-            <Input type="number" min={0} {...register('fee_individual')} placeholder="0" aria-invalid={!!errors.fee_individual} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.finances.coupleFee')}</label>
-            <Input type="number" min={0} {...register('fee_couples')} placeholder="0" aria-invalid={!!errors.fee_couples} />
-          </div>
-          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2">
-            <Checkbox {...register('offers_sliding_scale')} />
-            <span className="text-xs text-slate-500">
-              {watch('offers_sliding_scale') ? t('doctorForm.finances.slidingYes') : t('doctorForm.finances.slidingNo')}
-            </span>
-          </div>
+        <div className="flex justify-end">
+          <Button type="submit" disabled={saveProfile.isPending}>
+            {saveProfile.isPending ? t('doctorForm.buttons.saving') : t('doctorForm.buttons.save')}
+          </Button>
         </div>
-
-        <div className="rounded-2xl border border-slate-100 p-4">
-          <p className="text-xs text-slate-500 mb-3">{t('doctorForm.finances.paymentMethods')}</p>
-          <div className="grid gap-2 md:grid-cols-2">
-            {paymentMethodOptions.map((method) => (
-              <label key={method} className="flex items-center gap-2 text-sm text-slate-700">
-                <Checkbox
-                  checked={paymentMethods.includes(method)}
-                  onChange={() =>
-                    setPaymentMethods((prev) =>
-                      prev.includes(method) ? prev.filter((item) => item !== method) : [...prev, method],
-                    )
-                  }
-                />
-                {t(`doctorForm.finances.paymentChoices.${method}`)}
-              </label>
-            ))}
-          </div>
-        </div>
-
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.finances.insurances')}</label>
-            <Textarea
-              rows={3}
-              {...register('insurances_text')}
-              placeholder={t('doctorForm.finances.insurancesPlaceholder')}
-              aria-invalid={!!errors.insurances_text}
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.finances.npi')}</label>
-            <Input {...register('npi_number')} aria-invalid={!!errors.npi_number} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.finances.liabilityCarrier')}</label>
-            <Input {...register('liability_carrier')} aria-invalid={!!errors.liability_carrier} />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.finances.liabilityExpiration')}</label>
-            <Input type="date" {...register('liability_expiration')} aria-invalid={!!errors.liability_expiration} />
-          </div>
-        </div>
-        </section>
-
-        <section
-          ref={setSectionRef('qualifications')}
-          data-section-id="qualifications"
-          className="scroll-mt-32 space-y-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-card"
-        >
-          <div>
-            <h3 className="text-xl font-semibold text-slate-900">{t('doctorForm.qualifications.title')}</h3>
-            <p className="text-sm text-slate-500">{t('doctorForm.qualifications.description')}</p>
-          </div>
-        <div>
-          <label className="text-xs text-slate-500">{t('doctorForm.qualifications.mainQualifications')}</label>
-          <Textarea
-            rows={3}
-            {...register('qualifications_text')}
-            placeholder={t('doctorForm.qualifications.placeholders.qualifications')}
-            aria-invalid={!!errors.qualifications_text}
-          />
-        </div>
-
-        <div className="rounded-2xl border border-slate-100 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="font-semibold text-slate-900">{t('doctorForm.qualifications.additionalCredentials')}</p>
-            {additionalCredentials.length < 2 && (
-              <Button
-                type="button"
-                variant="ghost"
-                className="px-3 py-1 text-xs"
-                onClick={() => setAdditionalCredentials((prev) => [...prev, ''])}
-              >
-                {t('doctorForm.qualifications.addCredential')}
-              </Button>
-            )}
-          </div>
-          {additionalCredentials.map((cred, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <Input
-                value={cred}
-                onChange={(event) =>
-                  setAdditionalCredentials((prev) => prev.map((item, idx) => (idx === index ? event.target.value : item)))
-                }
-                placeholder={t('doctorForm.qualifications.placeholders.institution')}
-              />
-              {additionalCredentials.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="px-3 py-1 text-xs"
-                  onClick={() =>
-                    setAdditionalCredentials((prev) => prev.filter((_, idx) => idx !== index || prev.length === 1))
-                  }
-                >
-                  {t('doctorForm.qualifications.removeCredential')}
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.qualifications.note')}</label>
-            <Textarea rows={3} {...register('qualifications_note')} aria-invalid={!!errors.qualifications_note} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs text-slate-500">{t('doctorForm.qualifications.lastInstitution')}</label>
-            <Input
-              {...register('education_institution')}
-              placeholder={t('doctorForm.qualifications.placeholders.institution')}
-              aria-invalid={!!errors.education_institution}
-            />
-            <label className="text-xs text-slate-500">{t('doctorForm.qualifications.degreeType')}</label>
-            <Input
-              {...register('education_degree')}
-              placeholder={t('doctorForm.qualifications.placeholders.degree')}
-              aria-invalid={!!errors.education_degree}
-            />
-            <label className="text-xs text-slate-500">{t('doctorForm.qualifications.graduationYear')}</label>
-            <Input
-              type="number"
-              {...register('education_graduation_year')}
-              aria-invalid={!!errors.education_graduation_year}
-            />
-            <label className="text-xs text-slate-500">{t('doctorForm.qualifications.practiceStartYear')}</label>
-            <Input
-              type="number"
-              {...register('practice_start_year')}
-              aria-invalid={!!errors.practice_start_year}
-            />
-          </div>
-        </div>
-
-        </section>
-
-        <section
-          ref={setSectionRef('specialties')}
-          data-section-id="specialties"
-          className="scroll-mt-32 space-y-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-card"
-        >
-          <div>
-            <h3 className="text-xl font-semibold text-slate-900">{t('doctorForm.specialties.title')}</h3>
-            <p className="text-sm text-slate-500">{t('doctorForm.specialties.description')}</p>
-          </div>
-          <div className="space-y-3 rounded-2xl border border-slate-100 p-4">
-            <div>
-              <h4 className="font-semibold text-slate-900">{t('doctorForm.specialties.categoriesTitle')}</h4>
-              <p className="text-xs text-slate-500">{t('doctorForm.specialties.categoriesHint')}</p>
-            </div>
-            {categoriesQuery.isLoading ? (
-              <p className="text-sm text-slate-500">{t('doctorForm.specialties.loading')}</p>
-            ) : flattenedCategories.length > 0 ? (
-              <div className="max-h-[320px] space-y-2 overflow-y-auto pr-2">
-                {flattenedCategories.map((category) => (
-                  <label key={category.id} className="flex items-center gap-3 text-sm text-slate-700">
-                    <Checkbox
-                      checked={selectedCategories.includes(category.id)}
-                      onChange={() => handleCategoryToggle(category.id)}
-                    />
-                    <span className="flex-1" style={{ paddingInlineStart: `${category.depth * 12}px` }}>
-                      {category.name}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500">{t('doctorForm.specialties.empty')}</p>
-            )}
-            <div>
-              <label className="text-xs text-slate-500">{t('doctorForm.specialties.noteLabel')}</label>
-              <Textarea
-                rows={3}
-                {...register('specialties_note')}
-                placeholder={t('doctorForm.specialties.notePlaceholder')}
-                aria-invalid={!!errors.specialties_note}
-              />
-            </div>
-          </div>
-        </section>
-
-        <section
-          ref={setSectionRef('clientFocus')}
-          data-section-id="clientFocus"
-          className="scroll-mt-32 space-y-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-card"
-        >
-          <div>
-            <h3 className="text-xl font-semibold text-slate-900">{t('doctorForm.clientFocus.title')}</h3>
-            <p className="text-sm text-slate-500">{t('doctorForm.clientFocus.description')}</p>
-          </div>
-
-        <div className="rounded-2xl border border-slate-100 p-4 space-y-4">
-          <div>
-            <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.participants')}</p>
-            <div className="flex flex-wrap gap-4">
-              {participantOptions.map((option) => (
-                <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
-                  <Checkbox
-                    checked={clientParticipants.includes(option)}
-                    onChange={() => toggleWithLimit(option, setClientParticipants, 3)}
-                  />
-                  {t(`doctorForm.clientFocus.participantsOptions.${option}`)}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.ageGroups')}</p>
-            <div className="flex flex-wrap gap-4">
-              {ageGroupOptions.map((option) => (
-                <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
-                  <Checkbox
-                    checked={clientAgeGroups.includes(option)}
-                    onChange={() =>
-                      setClientAgeGroups((prev) =>
-                        prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
-                      )
-                    }
-                  />
-                  {t(`doctorForm.clientFocus.ageOptions.${option}`)}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.faith')}</p>
-            <select
-              value={faithOrientation}
-              onChange={(event) => setFaithOrientation(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-3 py-2"
-            >
-              {faithOrientationOptions.map((option) => (
-                <option key={option} value={option}>
-                  {t(`doctorForm.clientFocus.faithOptions.${option}`)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.allied')}</p>
-            <div className="grid gap-2 md:grid-cols-2">
-              {alliedCommunityOptions.map((option) => (
-                <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
-                  <Checkbox
-                    checked={alliedCommunities.includes(option)}
-                    onChange={() =>
-                      setAlliedCommunities((prev) =>
-                        prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
-                      )
-                    }
-                  />
-                  {t(`doctorForm.clientFocus.alliedOptions.${option}`)}
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-xl font-semibold text-slate-900">{t('doctorForm.identity.title')}</h3>
-          <p className="text-sm text-slate-500">{t('doctorForm.identity.description')}</p>
-        </div>
-        <div className="rounded-2xl border border-dashed border-slate-200 p-4 space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="text-xs text-slate-500">{t('doctorForm.identity.birthYear')}</label>
-              <Input
-                type="number"
-                {...register('identity_birth_year')}
-                placeholder="1987"
-                aria-invalid={!!errors.identity_birth_year}
-              />
-            </div>
-            <div>
-              <label className="text-xs text-slate-500">{t('doctorForm.identity.religion')}</label>
-              <Input {...register('identity_religion')} aria-invalid={!!errors.identity_religion} />
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">{t('doctorForm.identity.gender')}</p>
-            <div className="flex flex-wrap gap-4">
-              {identityGenderOptions.map((option) => (
-                <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
-                  <Checkbox
-                    checked={genderIdentities.includes(option)}
-                    onChange={() =>
-                      setGenderIdentities((prev) =>
-                        prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
-                      )
-                    }
-                  />
-                  {t(`doctorForm.identity.genderOptions.${option}`)}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">{t('doctorForm.identity.ethnicity')}</p>
-            <div className="flex flex-wrap gap-4">
-              {identityEthnicityOptions.map((option) => (
-                <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
-                  <Checkbox
-                    checked={ethnicities.includes(option)}
-                    onChange={() =>
-                      setEthnicities((prev) =>
-                        prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
-                      )
-                    }
-                  />
-                  {t(`doctorForm.identity.ethnicityOptions.${option}`)}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">{t('doctorForm.identity.lgbtq')}</p>
-            <div className="flex flex-wrap gap-4">
-              {identityLgbtqOptions.map((option) => (
-                <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
-                  <Checkbox
-                    checked={lgbtqIdentities.includes(option)}
-                    onChange={() =>
-                      setLgbtqIdentities((prev) =>
-                        prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
-                      )
-                    }
-                  />
-                  {t(`doctorForm.identity.lgbtqOptions.${option}`)}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">{t('doctorForm.identity.other')}</label>
-            <Textarea rows={2} {...register('identity_other')} aria-invalid={!!errors.identity_other} />
-          </div>
-        </div>
-        </section>
-
-        <section
-          ref={setSectionRef('treatment')}
-          data-section-id="treatment"
-          className="scroll-mt-32 space-y-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-card"
-        >
-          <div>
-            <h3 className="text-xl font-semibold text-slate-900">{t('doctorForm.treatment.title')}</h3>
-            <p className="text-sm text-slate-500">{t('doctorForm.treatment.description')}</p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-100 p-4">
-            <div className="grid gap-2 md:grid-cols-2">
-              {therapyModalityOptions.map((option) => (
-                <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
-                  <Checkbox
-                    checked={therapyModalities.includes(option)}
-                    onChange={() =>
-                      setTherapyModalities((prev) =>
-                        prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
-                      )
-                    }
-                  />
-                  {option}
-                </label>
-              ))}
-            </div>
-            <div className="mt-4">
-              <label className="text-xs text-slate-500">{t('doctorForm.treatment.noteLabel')}</label>
-              <Textarea
-                rows={3}
-                {...register('treatment_note')}
-                placeholder={t('doctorForm.treatment.notePlaceholder')}
-                aria-invalid={!!errors.treatment_note}
-              />
-            </div>
-          </div>
-        </section>
-
-        <Button type="submit" disabled={saveProfile.isPending}>
-          {saveProfile.isPending ? t('doctorForm.buttons.saving') : t('doctorForm.buttons.save')}
-        </Button>
       </form>
-
       {doctor?.media && doctor.media.gallery.length > 0 && (
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
           <h3 className="font-semibold text-slate-900">{t('doctorForm.media.uploadedMediaTitle')}</h3>
@@ -1418,6 +1441,42 @@ export const DoctorProfileFormPage = () => {
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+      {activeSection && (
+        <div className="fixed inset-0 z-40 flex">
+          <div className="flex-1 bg-slate-900/40" onClick={handleCloseDrawer} />
+          <div className="ml-auto flex h-full w-full max-w-3xl flex-col bg-white shadow-2xl">
+            <div className="flex items-start justify-between border-b border-slate-100 p-6">
+              <div className="flex items-center gap-3">
+                {ActiveSectionIcon && (
+                  <div className="rounded-2xl bg-primary-50 p-3 text-primary-600">
+                    <ActiveSectionIcon className="h-5 w-5" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-lg font-semibold text-slate-900">{t(`doctorForm.tabs.${activeSection}`)}</p>
+                  <p className="text-sm text-slate-500">{t(`doctorForm.tabs.${activeSection}Desc`)}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
+                onClick={handleCloseDrawer}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">{renderSectionContent(activeSection)}</div>
+            <div className="flex items-center justify-between border-t border-slate-100 p-4">
+              <Button type="button" variant="ghost" onClick={handleCloseDrawer}>
+                {t('common.actions.close')}
+              </Button>
+              <Button type="button" onClick={handleDrawerSave} disabled={saveProfile.isPending}>
+                {saveProfile.isPending ? t('doctorForm.buttons.saving') : t('doctorForm.buttons.sectionSave')}
+              </Button>
+            </div>
           </div>
         </div>
       )}

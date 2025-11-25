@@ -17,6 +17,7 @@ Route::prefix('auth')->group(function (): void {
     Route::post('google', [SocialAuthController::class, 'google']);
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('me', [AuthController::class, 'me'])->middleware('auth:sanctum');
+    Route::put('password', [AuthController::class, 'updatePassword'])->middleware('auth:sanctum');
 });
 
 Route::get('doctors', [DoctorController::class, 'index']);

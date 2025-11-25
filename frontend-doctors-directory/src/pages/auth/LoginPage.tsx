@@ -13,6 +13,7 @@ import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
+import { getDoctorPortalPath } from '@/features/doctor/utils'
 
 const buildSchema = (t: TFunction) =>
   z.object({
@@ -46,7 +47,8 @@ export const LoginPage = () => {
 
     const roles = payload.user.roles
     if (roles.includes('doctor')) {
-      const next = payload.user.doctor_profile?.status === 'approved' ? '/doctor/profile' : '/doctor/pending'
+      const doctorStatus = payload.user.doctor_profile?.status
+      const next = doctorStatus === 'approved' ? '/doctor' : getDoctorPortalPath()
       navigate(next, { replace: true })
       return
     }

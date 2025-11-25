@@ -108,6 +108,7 @@ export const AdminDoctorFormPage = () => {
 
   const statusOptions = useMemo(
     () => [
+      { value: 'draft' as DoctorStatus, label: t('common.statuses.draft') },
       { value: 'pending' as DoctorStatus, label: t('common.statuses.pending') },
       { value: 'approved' as DoctorStatus, label: t('common.statuses.approved') },
       { value: 'rejected' as DoctorStatus, label: t('common.statuses.rejected') },

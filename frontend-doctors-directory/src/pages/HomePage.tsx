@@ -3,10 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { SearchBar } from '@/components/common/SearchBar'
 import { StatsHighlights } from '@/components/common/StatsHighlights'
 import { Button } from '@/components/ui/Button'
+import { cn } from '@/lib/utils'
 
 export const HomePage = () => {
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const direction = i18n.dir()
+  const isRTL = direction === 'rtl'
   const featuredSpecialties = t('home.featured', { returnObjects: true }) as Array<{ title: string; description: string }>
 
   const handleSearch = (filters: { q?: string; city?: string; specialty?: string }) => {
@@ -18,15 +21,15 @@ export const HomePage = () => {
   }
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-16" dir={direction}>
       <section className="container grid gap-10 rounded-[32px] border border-slate-100 bg-gradient-to-b from-white to-slate-50 p-8 md:grid-cols-2 md:p-16">
-        <div className="space-y-6">
+        <div className={cn('space-y-6', isRTL ? 'text-right' : 'text-left')}>
           <p className="text-xs font-semibold uppercase tracking-widest text-primary-600">
             {t('home.trustedPlatform')}
           </p>
           <h1 className="text-4xl font-semibold leading-[1.3] text-slate-900 md:text-5xl">{t('hero.title')}</h1>
           <p className="text-lg text-slate-600">{t('hero.subtitle')}</p>
-          <div className="flex flex-wrap gap-3">
+          <div className={cn('flex flex-wrap gap-3', isRTL ? 'justify-end' : 'justify-start')}>
             <Button onClick={() => navigate('/search')}>{t('hero.cta')}</Button>
             <Button variant="outline" onClick={() => navigate('/auth/register')}>
               {t('hero.doctorCta')}
@@ -40,7 +43,7 @@ export const HomePage = () => {
       </section>
 
       <section className="container">
-        <div className="flex items-center justify-between">
+        <div className={cn('flex items-center justify-between', isRTL && 'flex-row-reverse')}>
           <h2 className="section-title">{t('home.featuredTitle')}</h2>
           <Button variant="ghost" onClick={() => navigate('/search')}>
             {t('home.featuredAll')}
@@ -58,7 +61,7 @@ export const HomePage = () => {
 
       <section className="container rounded-[32px] bg-slate-900 p-10 text-white">
         <div className="grid gap-6 md:grid-cols-2">
-          <div>
+          <div className={cn(isRTL && 'text-right')}>
             <p className="text-sm uppercase tracking-widest text-slate-300">{t('home.doctorsTag')}</p>
             <h3 className="mt-2 text-3xl font-semibold">
               {t('home.doctorCtaHeading')}
@@ -67,7 +70,7 @@ export const HomePage = () => {
               {t('home.doctorCtaBody')}
             </p>
           </div>
-          <div className="flex items-center justify-end">
+          <div className={cn('flex items-center', isRTL ? 'justify-start' : 'justify-end')}>
             <Button className="bg-white text-slate-900 hover:bg-white/90" onClick={() => navigate('/auth/register')}>
               {t('home.doctorCtaAction')}
             </Button>

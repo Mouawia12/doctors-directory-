@@ -48,6 +48,7 @@ export const AdminLayout = () => {
         ],
       },
       { id: 'categories', label: t('adminLayout.nav.categories'), icon: Layers, to: '/admin/categories' },
+      { id: 'security', label: t('adminLayout.nav.security'), icon: UserRound, to: '/admin/password' },
     ],
     [t, i18n.language],
   )

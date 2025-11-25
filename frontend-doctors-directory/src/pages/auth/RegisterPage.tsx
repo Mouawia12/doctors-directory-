@@ -2,7 +2,6 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { useRegisterMutation } from '@/features/auth/hooks'
 import { queryClient } from '@/lib/queryClient'
@@ -14,6 +13,8 @@ import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
+import clsx from 'clsx'
+import { getDoctorPortalPath } from '@/features/doctor/utils'
 
 const buildSchema = (t: TFunction) =>
   z
@@ -35,7 +36,7 @@ export const RegisterPage = () => {
   const { t } = useTranslation()
   const schema = useMemo(() => buildSchema(t), [t])
   const navigate = useNavigate()
-  const { register, handleSubmit, formState, watch } = useForm<RegisterForm>({
+  const { register, handleSubmit, formState, watch, setValue } = useForm<RegisterForm>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: '',
@@ -46,7 +47,27 @@ export const RegisterPage = () => {
     },
   })
   const accountType = watch('type')
+  const typeField = register('type')
   const mutation = useRegisterMutation()
+  const typeOptions = useMemo(
+    () => [
+      {
+        value: 'doctor' as const,
+        label: t('auth.register.doctorButton'),
+      },
+      {
+        value: 'user' as const,
+        label: t('auth.register.userButton'),
+      },
+    ],
+    [t],
+  )
+  const googleLabel =
+    accountType === 'doctor' ? t('auth.register.googleDoctor') : t('auth.register.googleUser')
+  const headingCopy =
+    accountType === 'doctor' ? t('auth.register.doctorHeading') : t('auth.register.userHeading')
+  const descriptionCopy =
+    accountType === 'doctor' ? t('auth.register.doctorDescription') : t('auth.register.userDescription')
 
   const handleAuthSuccess = (payload: AuthSuccessPayload) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.auth })
@@ -54,7 +75,8 @@ export const RegisterPage = () => {
     toast.success(t('auth.register.success'))
 
     if (roles.includes('doctor')) {
-      const next = payload.user.doctor_profile?.status === 'approved' ? '/doctor/profile' : '/doctor/pending'
+      const doctorStatus = payload.user.doctor_profile?.status
+      const next = doctorStatus === 'approved' ? '/doctor' : getDoctorPortalPath()
       navigate(next, { replace: true })
       return
     }
@@ -76,9 +98,9 @@ export const RegisterPage = () => {
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
-      <div>
-        <h2 className="text-2xl font-semibold text-slate-900">{t('auth.register.heading')}</h2>
-        <p className="text-sm text-slate-500">{t('auth.register.description')}</p>
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold text-slate-900">{headingCopy}</h2>
+        <p className="text-sm text-slate-500">{descriptionCopy}</p>
       </div>
       <div className="space-y-2">
         <label className="text-xs text-slate-500">{t('auth.register.name')}</label>
@@ -89,13 +111,6 @@ export const RegisterPage = () => {
         <label className="text-xs text-slate-500">{t('auth.register.email')}</label>
         <Input type="email" placeholder="name@email.com" {...register('email')} />
         {formState.errors.email && <p className="text-xs text-red-500">{formState.errors.email.message}</p>}
-      </div>
-      <div className="space-y-2">
-        <label className="text-xs text-slate-500">{t('auth.register.accountType')}</label>
-        <Select {...register('type')}>
-          <option value="doctor">{t('auth.register.doctor')}</option>
-          <option value="user">{t('auth.register.user')}</option>
-        </Select>
       </div>
       <div className="space-y-2">
         <label className="text-xs text-slate-500">{t('auth.register.password')}</label>
@@ -109,10 +124,35 @@ export const RegisterPage = () => {
           <p className="text-xs text-red-500">{formState.errors.password_confirmation.message}</p>
         )}
       </div>
+      <div className="space-y-3">
+        <label className="text-xs text-slate-500">{t('auth.register.accountType')}</label>
+        <div className="rounded-3xl bg-slate-100 p-1">
+          <div className="grid grid-cols-2 gap-1">
+            {typeOptions.map((option) => {
+              const isActive = accountType === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setValue('type', option.value, { shouldDirty: true })}
+                  className={clsx(
+                    'rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-300',
+                    isActive ? 'bg-white text-primary-600 shadow-card' : 'text-slate-500 hover:text-slate-700',
+                  )}
+                  aria-pressed={isActive}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        <input type="hidden" value={accountType} readOnly {...typeField} />
+      </div>
       <Button type="submit" className="w-full" disabled={mutation.isPending}>
         {mutation.isPending ? t('auth.register.submitting') : t('auth.register.submit')}
       </Button>
-      <GoogleAuthButton type={accountType} onSuccess={handleAuthSuccess} label={t('auth.register.google')} />
+      <GoogleAuthButton type={accountType} onSuccess={handleAuthSuccess} label={googleLabel} />
     </form>
   )
 }

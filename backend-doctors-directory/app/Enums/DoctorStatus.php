@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum DoctorStatus: string
 {
+    case Draft = 'draft';
     case Pending = 'pending';
     case Approved = 'approved';
     case Rejected = 'rejected';

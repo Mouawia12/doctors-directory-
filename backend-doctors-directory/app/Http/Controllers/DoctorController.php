@@ -19,7 +19,7 @@ class DoctorController extends Controller
             ->with([
                 'clinics',
                 'categories',
-                'media' => fn ($q) => $q->where('collection_name', 'gallery'),
+                'media' => fn ($q) => $q->whereIn('collection_name', ['gallery', 'avatar']),
             ])
             ->withCount('favorites')
             ->latest();

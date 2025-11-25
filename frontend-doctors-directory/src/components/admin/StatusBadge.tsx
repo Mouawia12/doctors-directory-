@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 import type { DoctorStatus } from '@/types/doctor'
 
 const toneMap: Record<DoctorStatus, string> = {
+  draft: 'bg-slate-100 text-slate-600',
   pending: 'bg-amber-50 text-amber-700',
   approved: 'bg-emerald-50 text-emerald-700',
   rejected: 'bg-rose-50 text-rose-700',
@@ -11,6 +12,7 @@ const toneMap: Record<DoctorStatus, string> = {
 export const StatusBadge = ({ status }: { status: DoctorStatus }) => {
   const { t } = useTranslation()
   const labelMap: Record<DoctorStatus, string> = {
+    draft: t('common.statuses.draft'),
     pending: t('common.statuses.pending'),
     approved: t('common.statuses.approved'),
     rejected: t('common.statuses.rejected'),

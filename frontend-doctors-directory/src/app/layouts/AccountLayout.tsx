@@ -1,11 +1,12 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { ClipboardSignature, ShieldCheck, Home, LogOut } from 'lucide-react'
+import { ClipboardSignature, ShieldCheck, Home, LogOut, UserRound } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useLogoutMutation } from '@/features/auth/hooks'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 
 const tabs = [
+  { to: '/doctor', labelKey: 'accountLayout.tabs.overview', icon: UserRound },
   { to: '/doctor/profile', labelKey: 'accountLayout.tabs.profile', icon: ClipboardSignature },
   { to: '/doctor/pending', labelKey: 'accountLayout.tabs.review', icon: ShieldCheck },
 ]

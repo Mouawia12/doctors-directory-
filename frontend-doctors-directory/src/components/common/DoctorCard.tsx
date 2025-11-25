@@ -19,7 +19,7 @@ export const DoctorCard = ({ doctor, compact = false, profilePath }: DoctorCardP
   const { mutate: toggleFavorite, isPending } = useToggleFavorite()
   const { t } = useTranslation()
 
-  const galleryCover = doctor.media?.gallery?.[0]?.url
+  const galleryCover = doctor.media?.avatar?.url ?? doctor.media?.gallery?.[0]?.url
   const targetProfile = profilePath ?? `/doctors/${doctor.id}`
 
   return (
