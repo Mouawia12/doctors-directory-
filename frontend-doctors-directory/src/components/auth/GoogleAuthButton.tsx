@@ -16,7 +16,7 @@ interface GoogleAuthButtonProps {
 
 export const GoogleAuthButton = ({ type, onSuccess, label, className }: GoogleAuthButtonProps) => {
   const mutation = useGoogleSocialAuth()
-  const [buttonWidth, setButtonWidth] = useState('0')
+  const [buttonWidth, setButtonWidth] = useState('240')
   const containerRef = useRef<HTMLDivElement | null>(null)
   const { t, i18n } = useTranslation()
   const resolvedLabel = label ?? t('googleAuth.defaultLabel')
@@ -25,11 +25,17 @@ export const GoogleAuthButton = ({ type, onSuccess, label, className }: GoogleAu
     if (typeof window === 'undefined' || !containerRef.current) return
     const el = containerRef.current
     const computeWidth = () => {
-      const available = el.clientWidth - 16 // account for inner padding
+      const available = el.clientWidth - 24
       const clamped = Math.min(320, Math.max(220, available))
       setButtonWidth(String(clamped))
     }
-    const resizeObserver = new ResizeObserver(computeWidth)
+
+    if (!('ResizeObserver' in window)) {
+      computeWidth()
+      return
+    }
+
+    const resizeObserver = new window.ResizeObserver(computeWidth)
     resizeObserver.observe(el)
     computeWidth()
     return () => resizeObserver.disconnect()
@@ -40,14 +46,18 @@ export const GoogleAuthButton = ({ type, onSuccess, label, className }: GoogleAu
   }
 
   return (
-    <div className={cn('space-y-2', className)}>
-      <p className="text-center text-xs text-slate-500">{resolvedLabel}</p>
+    <div className={cn('space-y-3', className)}>
+      <div className="flex items-center gap-3 text-xs text-slate-500">
+        <span className="h-px flex-1 bg-slate-200" />
+        <span>{resolvedLabel}</span>
+        <span className="h-px flex-1 bg-slate-200" />
+      </div>
       <div className="flex justify-center">
         <div
           ref={containerRef}
-          className="flex w-full max-w-sm items-center justify-center rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 shadow-inner"
+          className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-inner"
         >
-          {buttonWidth !== '0' && (
+          <div className="flex justify-center">
             <GoogleLogin
               width={buttonWidth}
               locale={i18n.language}
@@ -73,7 +83,7 @@ export const GoogleAuthButton = ({ type, onSuccess, label, className }: GoogleAu
               }}
               onError={() => toast.error(t('googleAuth.connectionError'))}
             />
-          )}
+          </div>
         </div>
       </div>
     </div>

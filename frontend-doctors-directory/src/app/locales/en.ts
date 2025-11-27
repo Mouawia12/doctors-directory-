@@ -13,6 +13,15 @@ export const en = {
       required: 'Required',
       currency: 'SAR',
       comma: ', ',
+      days: {
+        sunday: 'Sunday',
+        monday: 'Monday',
+        tuesday: 'Tuesday',
+        wednesday: 'Wednesday',
+        thursday: 'Thursday',
+        friday: 'Friday',
+        saturday: 'Saturday',
+      },
       actions: {
         add: 'Add',
         edit: 'Edit',
@@ -109,6 +118,7 @@ export const en = {
         loading: 'Loading results...',
         emptyTitle: 'No doctors matched your search',
         emptyDescription: 'Try adjusting the filters to get more results.',
+        mapTitle: 'Therapists on the map',
       },
     },
     searchBar: {
@@ -339,10 +349,13 @@ export const en = {
       whatsapp: 'WhatsApp',
       email: 'Email',
       website: 'Website',
+      websiteLabel: 'Website',
       therapistNote: 'Therapist note',
       defaultNote:
         'I welcome you to this safe space to work on your goals. Reach out for an introductory session.',
       serviceBadge: 'Verified',
+      hoursClosed: 'Closed',
+      hoursNotProvided: 'No hours provided',
     },
     doctorProfilePage: {
       verifiedChip: 'Verified',

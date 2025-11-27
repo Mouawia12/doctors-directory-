@@ -4,11 +4,14 @@ import { Heart, Phone, Globe, Mail, Video } from 'lucide-react'
 import { useDoctorQuery } from '@/features/doctors/hooks'
 import { useAuthQuery } from '@/features/auth/hooks'
 import { MapWidget } from '@/components/common/MapWidget'
+import { ClinicWorkHours } from '@/components/common/ClinicWorkHours'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { useTranslation } from 'react-i18next'
+import { PhoneNumber } from '@/components/common/PhoneNumber'
+import { buildTelLink, buildWhatsAppLink } from '@/lib/phone'
 
 export const DoctorProfilePage = () => {
   const { id } = useParams()
@@ -69,6 +72,9 @@ export const DoctorProfilePage = () => {
   const insurances = doctor.insurances ?? []
   const introVideo = doctor.media?.intro_video?.url
   const newClientsIntro = doctor.new_clients_intro
+  const telHref = buildTelLink(doctor.phone)
+  const whatsappHref = buildWhatsAppLink(doctor.whatsapp)
+  const bookingLink = whatsappHref ?? telHref
   const formatCurrency = (value?: number) =>
     typeof value === 'number' && !Number.isNaN(value)
       ? `${value.toLocaleString()} ${t('doctorProfile.feeCurrency')}`
@@ -149,8 +155,8 @@ export const DoctorProfilePage = () => {
               {doctor.phone && (
                 <div className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-white/70 p-3">
                   <Phone className="h-4 w-4 text-primary-500" />
-                  <a href={`tel:${doctor.phone}`} className="font-medium text-slate-900">
-                    {doctor.phone}
+                  <a href={telHref} className="font-medium text-slate-900">
+                    <PhoneNumber value={doctor.phone} />
                   </a>
                 </div>
               )}
@@ -172,11 +178,15 @@ export const DoctorProfilePage = () => {
               )}
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button asChild>
-                <a href={doctor.whatsapp ? `https://wa.me/${doctor.whatsapp}` : `tel:${doctor.phone}`}>
-                  {t('doctorProfile.book')}
-                </a>
-              </Button>
+              {bookingLink ? (
+                <Button asChild>
+                  <a href={bookingLink} target={bookingLink.startsWith('https://') ? '_blank' : undefined} rel={bookingLink.startsWith('https://') ? 'noreferrer' : undefined}>
+                    {t('doctorProfile.book')}
+                  </a>
+                </Button>
+              ) : (
+                <Button disabled>{t('doctorProfile.book')}</Button>
+              )}
               {canEdit && (
                 <>
                   <Button variant="outline" asChild>
@@ -436,11 +446,10 @@ export const DoctorProfilePage = () => {
                 <div key={clinic.id} className="rounded-2xl border border-slate-100 p-4">
                   <p className="font-semibold text-slate-800">{clinic.city}</p>
                   <p className="text-sm text-slate-500">{clinic.address}</p>
-                  {clinic.work_hours && (
-                    <p className="mt-2 text-xs text-slate-500">
-                      {t('doctorProfile.workingHours')}: {JSON.stringify(clinic.work_hours)}
-                    </p>
-                  )}
+                  <div className="mt-3">
+                    <p className="text-xs text-slate-500">{t('doctorProfile.workingHours')}</p>
+                    <ClinicWorkHours workHours={clinic.work_hours} className="mt-2" />
+                  </div>
                 </div>
               ))}
             </div>
@@ -476,8 +485,16 @@ export const DoctorProfilePage = () => {
         <div>
           <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.contactTitle')}</h2>
           <div className="mt-4 space-y-2 text-sm text-slate-600">
-            {doctor.phone && <p>{t('doctorProfile.phone')}: {doctor.phone}</p>}
-            {doctor.whatsapp && <p>{t('doctorProfile.whatsapp')}: {doctor.whatsapp}</p>}
+            {doctor.phone && (
+              <p>
+                {t('doctorProfile.phone')}: <PhoneNumber value={doctor.phone} className="text-slate-900" />
+              </p>
+            )}
+            {doctor.whatsapp && (
+              <p>
+                {t('doctorProfile.whatsapp')}: <PhoneNumber value={doctor.whatsapp} className="text-slate-900" />
+              </p>
+            )}
             {doctor.email && <p>{t('doctorProfile.email')}: {doctor.email}</p>}
             {doctor.website && (
               <p>

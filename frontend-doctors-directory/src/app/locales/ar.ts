@@ -13,6 +13,15 @@ export const ar = {
       required: 'مطلوب',
       currency: 'ر.س',
       comma: '، ',
+      days: {
+        sunday: 'الأحد',
+        monday: 'الإثنين',
+        tuesday: 'الثلاثاء',
+        wednesday: 'الأربعاء',
+        thursday: 'الخميس',
+        friday: 'الجمعة',
+        saturday: 'السبت',
+      },
       actions: {
         add: 'إضافة',
         edit: 'تعديل',
@@ -109,6 +118,7 @@ export const ar = {
         loading: 'جارٍ تحميل النتائج...',
         emptyTitle: 'لا يوجد أطباء يطابقون البحث',
         emptyDescription: 'حاول تعديل الفلاتر للحصول على نتائج أكثر.',
+        mapTitle: 'الأطباء على الخريطة',
       },
     },
     searchBar: {
@@ -338,10 +348,13 @@ export const ar = {
       whatsapp: 'واتساب',
       email: 'البريد الإلكتروني',
       website: 'الموقع الإلكتروني',
+      websiteLabel: 'الموقع الإلكتروني',
       therapistNote: 'رسالة المعالج',
       defaultNote:
         'أرحّب بك في مساحتك الآمنة للتعبير والعمل على أهدافك النفسية. يمكنك التواصل لحجز جلسة تعريفية.',
       serviceBadge: 'موثق',
+      hoursClosed: 'مغلق',
+      hoursNotProvided: 'لم يتم تحديد ساعات العمل',
     },
     doctorProfilePage: {
       verifiedChip: 'موثق',

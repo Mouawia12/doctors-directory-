@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useDoctorProfileQuery } from '@/features/doctor/hooks'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -8,6 +8,8 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { useTranslation } from 'react-i18next'
 import { Loader2, Mail, Phone, Globe, MapPin } from 'lucide-react'
 import { ChangePasswordForm } from '@/components/account/ChangePasswordForm'
+import { PhoneNumber } from '@/components/common/PhoneNumber'
+import { buildTelLink } from '@/lib/phone'
 
 const buildAvatar = (name: string) =>
   `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D7DF5&color=fff`
@@ -19,7 +21,7 @@ const InfoCard = ({ label, value }: { label: string; value: React.ReactNode }) =
   </div>
 )
 
-const ContactRow = ({ icon: Icon, label, value, href }: { icon: typeof Mail; label: string; value?: string | null; href?: string }) => {
+const ContactRow = ({ icon: Icon, label, value, href }: { icon: typeof Mail; label: string; value?: ReactNode; href?: string }) => {
   if (!value) return null
   const content = href ? (
     <a href={href} className="font-medium text-primary-700 hover:underline">{value}</a>
@@ -73,9 +75,24 @@ const DoctorProfileOverviewPage = () => {
   ]
 
   const contactRows = [
-    { icon: Phone, label: t('doctorProfile.phone'), value: doctor.phone, href: doctor.phone ? `tel:${doctor.phone}` : undefined },
-    { icon: Mail, label: t('doctorProfile.email'), value: doctor.email, href: doctor.email ? `mailto:${doctor.email}` : undefined },
-    { icon: Globe, label: t('doctorProfile.websiteLabel'), value: doctor.website, href: doctor.website ?? undefined },
+    {
+      icon: Phone,
+      label: t('doctorProfile.phone'),
+      value: doctor.phone ? <PhoneNumber value={doctor.phone} /> : null,
+      href: buildTelLink(doctor.phone),
+    },
+    {
+      icon: Mail,
+      label: t('doctorProfile.email'),
+      value: doctor.email,
+      href: doctor.email ? `mailto:${doctor.email}` : undefined,
+    },
+    {
+      icon: Globe,
+      label: t('doctorProfile.websiteLabel'),
+      value: doctor.website,
+      href: doctor.website ?? undefined,
+    },
   ]
 
   return (

@@ -12,9 +12,11 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/common/EmptyState'
 import { MapWidget } from '@/components/common/MapWidget'
+import { ClinicWorkHours } from '@/components/common/ClinicWorkHours'
 import { Textarea } from '@/components/ui/Textarea'
 import { Card } from '@/components/ui/Card'
 import { useTranslation } from 'react-i18next'
+import { PhoneNumber } from '@/components/common/PhoneNumber'
 
 const formatDate = (value?: string) => (value ? dayjs(value).format('DD MMM YYYY') : '—')
 
@@ -193,10 +195,10 @@ export const AdminDoctorDetailsPage = () => {
         <h2 className="mb-4 text-lg font-semibold text-slate-900">{t('adminDoctorDetails.contactInfo')}</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <p className="text-sm text-slate-600">
-            {t('doctorProfile.phone')}: {doctor.phone || '—'}
+            {t('doctorProfile.phone')}: {doctor.phone ? <PhoneNumber value={doctor.phone} className="text-slate-900" /> : '—'}
           </p>
           <p className="text-sm text-slate-600">
-            {t('doctorProfile.whatsapp')}: {doctor.whatsapp || '—'}
+            {t('doctorProfile.whatsapp')}: {doctor.whatsapp ? <PhoneNumber value={doctor.whatsapp} className="text-slate-900" /> : '—'}
           </p>
           <p className="text-sm text-slate-600">
             {t('doctorProfile.email')}: {doctor.email || '—'}
@@ -225,11 +227,10 @@ export const AdminDoctorDetailsPage = () => {
                 <div key={clinic.id} className="rounded-2xl border border-slate-100 p-4">
                   <p className="font-semibold text-slate-800">{clinic.city}</p>
                   <p className="text-sm text-slate-500">{clinic.address}</p>
-                  {clinic.work_hours && (
-                    <p className="mt-2 text-xs text-slate-500">
-                      {t('doctorProfile.workingHours')}: {JSON.stringify(clinic.work_hours)}
-                    </p>
-                  )}
+                  <div className="mt-3">
+                    <p className="text-xs text-slate-500">{t('doctorProfile.workingHours')}</p>
+                    <ClinicWorkHours workHours={clinic.work_hours} className="mt-2" />
+                  </div>
                 </div>
               ))}
             </div>

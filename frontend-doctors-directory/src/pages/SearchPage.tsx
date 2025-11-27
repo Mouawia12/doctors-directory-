@@ -127,6 +127,17 @@ export const SearchPage = () => {
     }))
   }, [data, favoriteIds])
   const pagination = data?.pagination
+  const mapMarkers = useMemo(
+    () =>
+      doctors
+        .filter((doctor) => doctor.lat && doctor.lng)
+        .map((doctor) => ({
+          lat: doctor.lat as number,
+          lng: doctor.lng as number,
+          title: doctor.full_name,
+        })),
+    [doctors],
+  )
 
   return (
     <div className="container grid gap-8 lg:grid-cols-[320px,1fr] lg:items-start">
@@ -192,6 +203,12 @@ export const SearchPage = () => {
       </aside>
 
       <section className="space-y-4">
+        {mapMarkers.length > 0 && (
+          <div className="space-y-3 rounded-3xl border border-slate-100 bg-white p-4 shadow-card">
+            <p className="text-sm font-semibold text-slate-800">{t('searchPage.results.mapTitle')}</p>
+            <MapWidget markers={mapMarkers} className="h-72 w-full rounded-2xl border border-slate-100" />
+          </div>
+        )}
         <FilterChips filters={activeFilters} onRemove={removeFilter} labels={filterLabels} />
         {isLoading ? (
           <div className="rounded-3xl border border-slate-100 bg-white p-6 text-center text-slate-500 shadow-card">
@@ -217,17 +234,6 @@ export const SearchPage = () => {
                 onChange={updatePage}
               />
             )}
-            <div className="mt-8">
-              <MapWidget
-                markers={doctors
-                  .filter((doctor) => doctor.lat && doctor.lng)
-                  .map((doctor) => ({
-                    lat: doctor.lat as number,
-                    lng: doctor.lng as number,
-                    title: doctor.full_name,
-                  }))}
-              />
-            </div>
           </>
         )}
       </section>

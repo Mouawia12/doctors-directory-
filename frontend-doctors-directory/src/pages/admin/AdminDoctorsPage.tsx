@@ -16,6 +16,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 import { Card } from '@/components/ui/Card'
 import type { DoctorStatus, Doctor } from '@/types/doctor'
 import { useTranslation } from 'react-i18next'
+import { PhoneNumber } from '@/components/common/PhoneNumber'
 
 const formatDate = (value?: string) =>
   value ? dayjs(value).format('DD MMM YYYY') : '—'
@@ -184,7 +185,11 @@ export const AdminDoctorsPage = () => {
                       {t('adminDoctors.lastUpdated')}: {formatDate(doctor.updated_at)}
                     </span>
                     {doctor.city && <span>{t('adminDoctors.city')}: {doctor.city}</span>}
-                    {doctor.phone && <span>{t('adminDoctors.phone')}: {doctor.phone}</span>}
+                    {doctor.phone && (
+                      <span>
+                        {t('adminDoctors.phone')}: <PhoneNumber value={doctor.phone} className="text-slate-900" />
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
