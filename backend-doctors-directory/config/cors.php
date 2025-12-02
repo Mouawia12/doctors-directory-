@@ -1,5 +1,14 @@
 <?php
 
+$frontendUrls = env('FRONTEND_URLS', env('FRONTEND_URL', ''));
+$allowedOrigins = array_values(array_unique(array_filter(array_merge(
+    array_map('trim', explode(',', (string) $frontendUrls)),
+    [
+        'http://localhost:5173',
+        'http://localhost:5174',
+    ]
+))));
+
 return [
 
     /*
@@ -19,9 +28,12 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => array_filter(array_map('trim', explode(',', env('FRONTEND_URLS', env('FRONTEND_URL', 'http://localhost:5173'))))),
+    'allowed_origins' => $allowedOrigins,
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '#^https?://([a-z0-9-]+\.)?souftech\.com$#i',
+        '#^https?://([a-z0-9-]+\.)?souftec\.com$#i',
+    ],
 
     'allowed_headers' => ['*'],
 
