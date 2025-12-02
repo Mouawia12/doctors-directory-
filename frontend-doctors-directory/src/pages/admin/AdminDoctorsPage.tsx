@@ -1,5 +1,5 @@
-import { useMemo, useState, type ChangeEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { toast } from 'sonner'
 import { Filter, Plus, Search } from 'lucide-react'
@@ -25,8 +25,10 @@ export const AdminDoctorsPage = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [status, setStatus] = useState<DoctorStatus | 'all'>('pending')
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const paramsKey = searchParams.toString()
+  const [search, setSearch] = useState(searchParams.get('q') ?? '')
+  const [page, setPage] = useState(Number(searchParams.get('page') ?? '1') || 1)
   const perPage = 10
 
   const statusFilters: { label: string; value: DoctorStatus | 'all' }[] = [
@@ -46,6 +48,13 @@ export const AdminDoctorsPage = () => {
     }),
     [status, search, page, perPage],
   )
+
+  useEffect(() => {
+    const paramSearch = searchParams.get('q') ?? ''
+    setSearch(paramSearch)
+    const paramPage = Number(searchParams.get('page') ?? '1') || 1
+    setPage(paramPage)
+  }, [paramsKey])
 
   const { data, isLoading, isFetching } = useAdminDoctors(filters)
   const moderationMutation = useAdminDoctorModeration()
@@ -89,11 +98,22 @@ export const AdminDoctorsPage = () => {
   const onChangeStatus = (next: DoctorStatus | 'all') => {
     setStatus(next)
     setPage(1)
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('page')
+    setSearchParams(nextParams)
   }
 
   const onSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value)
     setPage(1)
+    const nextParams = new URLSearchParams(searchParams)
+    if (event.target.value.trim()) {
+      nextParams.set('q', event.target.value)
+    } else {
+      nextParams.delete('q')
+    }
+    nextParams.delete('page')
+    setSearchParams(nextParams)
   }
 
   return (
@@ -142,6 +162,10 @@ export const AdminDoctorsPage = () => {
                 onClick={() => {
                   setSearch('')
                   setPage(1)
+                  const nextParams = new URLSearchParams(searchParams)
+                  nextParams.delete('q')
+                  nextParams.delete('page')
+                  setSearchParams(nextParams)
                 }}
                 className="justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:text-primary-600 sm:w-32"
               >
@@ -207,21 +231,25 @@ export const AdminDoctorsPage = () => {
                   >
                     {t('adminDoctors.edit')}
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 min-w-[120px]"
-                    disabled={moderationMutation.isPending}
-                    onClick={() => handleModeration(doctor, 'reject')}
-                  >
-                    {t('adminDoctors.reject')}
-                  </Button>
-                  <Button
-                    className="flex-1 min-w-[120px]"
-                    disabled={moderationMutation.isPending}
-                    onClick={() => handleModeration(doctor, 'approve')}
-                  >
-                    {t('adminDoctors.approve')}
-                  </Button>
+                  {doctor.status !== 'rejected' && (
+                    <Button
+                      variant="outline"
+                      className="flex-1 min-w-[120px]"
+                      disabled={moderationMutation.isPending}
+                      onClick={() => handleModeration(doctor, 'reject')}
+                    >
+                      {t('adminDoctors.reject')}
+                    </Button>
+                  )}
+                  {doctor.status !== 'approved' && (
+                    <Button
+                      className="flex-1 min-w-[120px]"
+                      disabled={moderationMutation.isPending}
+                      onClick={() => handleModeration(doctor, 'approve')}
+                    >
+                      {t('adminDoctors.approve')}
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     className="flex-1 min-w-[120px] text-rose-600 hover:bg-rose-50"
@@ -245,7 +273,16 @@ export const AdminDoctorsPage = () => {
           page={pagination.page}
           perPage={pagination.per_page}
           total={pagination.total}
-          onChange={setPage}
+          onChange={(nextPage) => {
+            setPage(nextPage)
+            const nextParams = new URLSearchParams(searchParams)
+            if (nextPage > 1) {
+              nextParams.set('page', String(nextPage))
+            } else {
+              nextParams.delete('page')
+            }
+            setSearchParams(nextParams)
+          }}
         />
       )}
     </div>

@@ -1,15 +1,17 @@
 import { Link } from 'react-router-dom'
 import { useState, type ReactNode } from 'react'
 import { useDoctorProfileQuery } from '@/features/doctor/hooks'
+import { useNotificationsQuery, useMarkNotificationRead } from '@/features/notifications/hooks'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { EmptyState } from '@/components/common/EmptyState'
 import { useTranslation } from 'react-i18next'
-import { Loader2, Mail, Phone, Globe, MapPin } from 'lucide-react'
+import { Loader2, Mail, Phone, Globe, MapPin, X } from 'lucide-react'
 import { ChangePasswordForm } from '@/components/account/ChangePasswordForm'
 import { PhoneNumber } from '@/components/common/PhoneNumber'
 import { buildTelLink } from '@/lib/phone'
+import { cn } from '@/lib/utils'
 
 const buildAvatar = (name: string) =>
   `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D7DF5&color=fff`
@@ -42,8 +44,11 @@ const ContactRow = ({ icon: Icon, label, value, href }: { icon: typeof Mail; lab
 
 const DoctorProfileOverviewPage = () => {
   const { data: doctor, isLoading } = useDoctorProfileQuery()
-  const { t } = useTranslation()
+  const notificationsQuery = useNotificationsQuery()
+  const markNotificationRead = useMarkNotificationRead()
+  const { t, i18n } = useTranslation()
   const [showPassword, setShowPassword] = useState(false)
+  const dir = i18n.dir()
 
   if (isLoading) {
     return (
@@ -55,7 +60,7 @@ const DoctorProfileOverviewPage = () => {
 
   if (!doctor) {
     return (
-      <div className="container py-10">
+      <div className="container py-10" dir={dir}>
         <EmptyState title={t('doctorProfile.notFound')} description={t('doctorProfile.emptyState')} />
         <div className="mt-6 flex justify-center">
           <Button asChild>
@@ -68,6 +73,8 @@ const DoctorProfileOverviewPage = () => {
 
   const heroImage = doctor.media?.avatar?.url || doctor.media?.gallery?.[0]?.url || buildAvatar(doctor.full_name)
   const city = doctor.clinics?.[0]?.city
+  const isRejected = doctor.status === 'rejected'
+  const notifications = notificationsQuery.data?.items ?? []
   const stats = [
     { label: t('doctorProfile.experience'), value: `${doctor.years_of_experience ?? 0} ${t('doctorProfile.years')}` },
     { label: t('doctorProfile.license'), value: doctor.license_number || t('doctorProfile.notProvided') },
@@ -96,7 +103,7 @@ const DoctorProfileOverviewPage = () => {
   ]
 
   return (
-    <div className="container space-y-8 py-8">
+    <div className="container space-y-8 py-8" dir={dir}>
       <section className="rounded-[32px] border border-slate-100 bg-gradient-to-br from-white to-slate-50 p-6 shadow-card">
         <div className="grid gap-6 md:grid-cols-[240px,1fr]">
           <div className="relative">
@@ -142,6 +149,25 @@ const DoctorProfileOverviewPage = () => {
         </section>
       ) : (
         <>
+          {isRejected && (
+            <section className="rounded-3xl border border-rose-200 bg-rose-50 p-6 shadow-card">
+              <div className="flex items-start gap-3">
+                <div className="rounded-2xl bg-white/80 p-3 text-rose-600">
+                  <X className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-rose-900">{t('doctorProfile.rejectedTitle')}</h2>
+                  <p className="text-sm text-rose-700">{t('doctorProfile.rejectedDescription')}</p>
+                  {doctor.status_note && (
+                    <p className="mt-2 text-sm font-medium text-rose-800">
+                      {t('doctorForm.rejectedBanner.notePrefix')} {doctor.status_note}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
           <section className="grid gap-4 md:grid-cols-3">
             {stats.map((stat) => (
               <InfoCard key={stat.label} label={stat.label} value={stat.value} />
@@ -156,6 +182,56 @@ const DoctorProfileOverviewPage = () => {
                 <ContactRow key={row.label} {...row} />
               ))}
             </div>
+          </section>
+
+          <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.notificationsTitle')}</h2>
+                <p className="text-sm text-slate-500">{t('doctorProfile.notificationsDescription')}</p>
+              </div>
+            </div>
+            {notificationsQuery.isLoading ? (
+              <p className="mt-4 text-sm text-slate-500">{t('common.loadingShort')}</p>
+            ) : notifications.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-500">{t('doctorProfile.notificationsEmpty')}</p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={cn(
+                      'flex flex-col gap-2 rounded-2xl border p-4 md:flex-row md:items-center md:justify-between',
+                      notification.read_at ? 'border-slate-100 bg-slate-50' : 'border-primary-100 bg-primary-50/50',
+                    )}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{notification.data.title}</p>
+                      <p className="text-sm text-slate-600">{notification.data.message}</p>
+                      {notification.data.note && (
+                        <p className="text-xs text-slate-500">
+                          {t('doctorForm.rejectedBanner.notePrefix')} {notification.data.note}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-400">
+                        {new Date(notification.created_at).toLocaleString(i18n.language)}
+                      </p>
+                    </div>
+                    {!notification.read_at && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="self-start text-xs text-primary-700 hover:bg-transparent"
+                        onClick={() => markNotificationRead.mutate(notification.id)}
+                        disabled={markNotificationRead.isPending}
+                      >
+                        {t('doctorProfile.notificationsMarkRead')}
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </>
       )}

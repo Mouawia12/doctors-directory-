@@ -19,6 +19,11 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'avatar_url' => $this->avatar_url,
             'roles' => $this->getRoleNames(),
+            'is_disabled' => (bool) $this->is_disabled,
+            'last_login_at' => $this->last_login_at?->toIso8601String(),
+            'created_at' => $this->created_at?->toIso8601String(),
+            'favorites_count' => $this->whenCounted('favorites'),
+            'favorites' => FavoriteResource::collection($this->whenLoaded('favorites')),
             'doctor_profile' => $this->whenLoaded('doctorProfile', fn () => new DoctorResource($this->doctorProfile)),
         ];
     }

@@ -10,6 +10,8 @@ import DoctorProfilePage from '@/pages/DoctorProfilePage'
 import FavoritesPage from '@/pages/FavoritesPage'
 import LoginPage from '@/pages/auth/LoginPage'
 import RegisterPage from '@/pages/auth/RegisterPage'
+import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
+import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import DoctorProfileFormPage from '@/pages/doctor/DoctorProfileFormPage'
 import DoctorProfileOverviewPage from '@/pages/doctor/DoctorProfileOverviewPage'
 import DoctorPendingReviewPage from '@/pages/doctor/DoctorPendingReviewPage'
@@ -19,6 +21,7 @@ import AdminDoctorsPage from '@/pages/admin/AdminDoctorsPage'
 import AdminDoctorDetailsPage from '@/pages/admin/AdminDoctorDetailsPage'
 import AdminDoctorFormPage from '@/pages/admin/AdminDoctorFormPage'
 import AdminCategoriesPage from '@/pages/admin/AdminCategoriesPage'
+import AdminUsersPage from '@/pages/admin/AdminUsersPage'
 import AdminPasswordPage from '@/pages/admin/AdminPasswordPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
@@ -46,6 +49,8 @@ export const router = createBrowserRouter([
     children: [
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
+      { path: 'forgot-password', element: <ForgotPasswordPage /> },
+      { path: 'reset-password', element: <ResetPasswordPage /> },
     ],
   },
   {
@@ -83,6 +88,7 @@ export const router = createBrowserRouter([
       { path: 'doctors/:doctorId', element: <AdminDoctorDetailsPage /> },
       { path: 'doctors/:doctorId/edit', element: <AdminDoctorFormPage /> },
       { path: 'categories', element: <AdminCategoriesPage /> },
+      { path: 'users', element: <AdminUsersPage /> },
       { path: 'password', element: <AdminPasswordPage /> },
     ],
   },

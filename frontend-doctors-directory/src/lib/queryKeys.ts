@@ -7,4 +7,6 @@ export const queryKeys = {
   categories: ['categories'] as const,
   adminDoctors: (filters?: Record<string, unknown>) => ['admin-doctors', filters ?? {}] as const,
   adminDoctor: (id: number | string) => ['admin-doctor', id] as const,
+  adminUsers: (filters?: Record<string, unknown>) => ['admin-users', filters ?? {}] as const,
+  notifications: ['notifications'] as const,
 }

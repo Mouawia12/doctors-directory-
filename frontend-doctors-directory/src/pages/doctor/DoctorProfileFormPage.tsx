@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
+import { useEffect, useMemo, useRef, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import type { FieldErrors } from 'react-hook-form'
 import { z } from 'zod'
@@ -24,6 +24,47 @@ import type { User } from '@/types/user'
 
 const sectionOrder = ['about', 'finances', 'qualifications', 'specialties', 'clientFocus', 'treatment'] as const
 type SectionId = (typeof sectionOrder)[number]
+
+const RequiredAsterisk = () => <span className="text-rose-500" aria-hidden="true">*</span>
+
+const calculateScore = (flags: boolean[]) => {
+  if (flags.length === 0) return 0
+  const completed = flags.filter(Boolean).length
+  return completed / flags.length
+}
+
+const weekDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+type DayKey = (typeof weekDays)[number]
+
+type ClinicWorkHoursState = Record<DayKey, { from: string; to: string; enabled: boolean }>
+
+const createWorkHoursState = (existing?: Record<string, string[] | undefined>): ClinicWorkHoursState =>
+  weekDays.reduce((acc, day) => {
+    const [from, to] = existing?.[day] ?? []
+    acc[day] = {
+      from: from ?? '09:00',
+      to: to ?? '17:00',
+      enabled: Boolean(existing?.[day]),
+    }
+    return acc
+  }, {} as ClinicWorkHoursState)
+
+const serializeWorkHours = (state?: ClinicWorkHoursState) => {
+  if (!state) return undefined
+  const payload: Record<string, string[]> = {}
+  weekDays.forEach((day) => {
+    const entry = state[day]
+    if (entry?.enabled && entry.from && entry.to) {
+      payload[day] = [entry.from, entry.to]
+    }
+  })
+  return Object.keys(payload).length ? payload : undefined
+}
+
+const languageChoices = ['ar', 'en'] as const
+type LanguageCode = (typeof languageChoices)[number]
+const isLanguageCode = (value: string): value is LanguageCode =>
+  languageChoices.includes(value as LanguageCode)
 
 
 const buildSchema = (t: TFunction) =>
@@ -108,6 +149,7 @@ interface ClinicForm {
   city: string
   lat?: number
   lng?: number
+  work_hours?: ClinicWorkHoursState
 }
 
 const flattenCategories = (tree: Category[] = [], depth = 0): Array<Category & { depth: number }> => {
@@ -122,6 +164,15 @@ const safeStringArray = (value: unknown): string[] => {
   return value.filter((item): item is string => typeof item === 'string')
 }
 
+const createBlankClinic = (): ClinicForm => ({
+  address: '',
+  city: '',
+  work_hours: createWorkHoursState(),
+})
+
+type MediaCollection = 'avatar' | 'intro_video' | 'documents' | 'gallery'
+type PendingMediaFile = { file: File; preview?: string }
+
 export const DoctorProfileFormPage = () => {
   const { data: doctor, isLoading } = useDoctorProfileQuery()
   const categoriesQuery = useCategoriesQuery()
@@ -131,7 +182,7 @@ export const DoctorProfileFormPage = () => {
   const { t, i18n } = useTranslation()
   const schema = useMemo(() => buildSchema(t), [t])
 
-  const [clinics, setClinics] = useState<ClinicForm[]>([{ address: '', city: '' }])
+  const [clinics, setClinics] = useState<ClinicForm[]>([createBlankClinic()])
   const [selectedCategories, setSelectedCategories] = useState<number[]>([])
   const [paymentMethods, setPaymentMethods] = useState<string[]>([])
   const [clientParticipants, setClientParticipants] = useState<string[]>([])
@@ -143,6 +194,22 @@ export const DoctorProfileFormPage = () => {
   const [ethnicities, setEthnicities] = useState<string[]>([])
   const [lgbtqIdentities, setLgbtqIdentities] = useState<string[]>([])
   const [additionalCredentials, setAdditionalCredentials] = useState<string[]>([''])
+  const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>(['ar'])
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<PendingMediaFile | null>(null)
+  const [pendingIntroVideoFile, setPendingIntroVideoFile] = useState<PendingMediaFile | null>(null)
+  const [pendingDocumentFiles, setPendingDocumentFiles] = useState<PendingMediaFile[]>([])
+  const [pendingGalleryFiles, setPendingGalleryFiles] = useState<PendingMediaFile[]>([])
+  const pendingAvatarRef = useRef<PendingMediaFile | null>(null)
+  const pendingIntroVideoRef = useRef<PendingMediaFile | null>(null)
+  const pendingDocumentRef = useRef<PendingMediaFile[]>([])
+  const pendingGalleryRef = useRef<PendingMediaFile[]>([])
+  const [mediaErrors, setMediaErrors] = useState<Record<MediaCollection, string | null>>({
+    avatar: null,
+    intro_video: null,
+    documents: null,
+    gallery: null,
+  })
+  const [isMediaUploading, setMediaUploading] = useState(false)
   const pronounOptions = useMemo(() => ['she', 'he', 'they'], [])
   const serviceDeliveryOptions = useMemo(() => ['in_person', 'online', 'hybrid'] as const, [])
   const newClientsStatusOptions = useMemo(() => ['accepting', 'waitlist', 'not_accepting'] as const, [])
@@ -168,6 +235,43 @@ export const DoctorProfileFormPage = () => {
   const identityEthnicityOptions = useMemo(() => ['arab', 'white', 'black', 'asian', 'latino', 'mixed'], [])
   const identityLgbtqOptions = useMemo(() => ['lgbtq', 'ally', 'questioning'], [])
   const [activeSection, setActiveSection] = useState<SectionId | null>(null)
+  const lastHydratedDoctorId = useRef<number | null>(null)
+  const isSaving = saveProfile.isPending || isMediaUploading
+  const revokePreview = (item?: PendingMediaFile | null) => {
+    if (item?.preview) {
+      URL.revokeObjectURL(item.preview)
+    }
+  }
+
+  const createPendingMedia = (file: File): PendingMediaFile => ({
+    file,
+    preview: file.type.startsWith('image/') || file.type.startsWith('video/') ? URL.createObjectURL(file) : undefined,
+  })
+
+  const resetMediaError = (collection: MediaCollection) =>
+    setMediaErrors((prev) => ({ ...prev, [collection]: null }))
+
+  const isUnsupportedImage = (file: File) => file.type === 'image/webp' || file.name.toLowerCase().endsWith('.webp')
+  useEffect(() => {
+    pendingAvatarRef.current = pendingAvatarFile
+  }, [pendingAvatarFile])
+  useEffect(() => {
+    pendingIntroVideoRef.current = pendingIntroVideoFile
+  }, [pendingIntroVideoFile])
+  useEffect(() => {
+    pendingDocumentRef.current = pendingDocumentFiles
+  }, [pendingDocumentFiles])
+  useEffect(() => {
+    pendingGalleryRef.current = pendingGalleryFiles
+  }, [pendingGalleryFiles])
+  useEffect(() => {
+    return () => {
+      revokePreview(pendingAvatarRef.current)
+      revokePreview(pendingIntroVideoRef.current)
+      pendingDocumentRef.current.forEach((item) => revokePreview(item))
+      pendingGalleryRef.current.forEach((item) => revokePreview(item))
+    }
+  }, [])
 
   const flattenedCategories = useMemo(
     () => flattenCategories(categoriesQuery.data ?? []),
@@ -180,6 +284,7 @@ export const DoctorProfileFormPage = () => {
     reset,
     watch,
     control,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -201,6 +306,10 @@ export const DoctorProfileFormPage = () => {
     },
   })
 
+  useEffect(() => {
+    setValue('languages', selectedLanguages.join(', '), { shouldValidate: true })
+  }, [selectedLanguages, setValue])
+
   const displayPreference = watch('display_name_preference')
   const watchedValues = useWatch({ control })
   const selectClasses = (hasError?: boolean) =>
@@ -211,6 +320,8 @@ export const DoctorProfileFormPage = () => {
 
   useEffect(() => {
     if (!doctor) return
+    if (doctor.id === lastHydratedDoctorId.current) return
+    lastHydratedDoctorId.current = doctor.id
 
     reset({
       full_name: doctor.full_name ?? '',
@@ -280,7 +391,8 @@ export const DoctorProfileFormPage = () => {
         city: clinic.city,
         lat: clinic.lat ?? undefined,
         lng: clinic.lng ?? undefined,
-      })) ?? [{ address: '', city: '' }],
+        work_hours: createWorkHoursState(clinic.work_hours ?? undefined),
+      })) ?? [createBlankClinic()],
     )
     setSelectedCategories(doctor.categories?.map((category) => category.id) ?? [])
     setPaymentMethods(doctor.payment_methods ?? [])
@@ -297,6 +409,8 @@ export const DoctorProfileFormPage = () => {
         ? doctor.additional_credentials
         : [''],
     )
+    const normalizedLanguages = (doctor.languages ?? []).filter(isLanguageCode)
+    setSelectedLanguages(normalizedLanguages.length > 0 ? [...new Set(normalizedLanguages)] : ['ar'])
   }, [doctor, reset])
 
   const handleFormErrors = (formErrors: FieldErrors<FormValues>) => {
@@ -334,7 +448,7 @@ export const DoctorProfileFormPage = () => {
       .filter((item) => item.length > 0)
   }
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = async (values: FormValues) => {
     const {
       qualifications_text,
       insurances_text,
@@ -344,8 +458,7 @@ export const DoctorProfileFormPage = () => {
       ...baseValues
     } = values
 
-    const languagesList =
-      values.languages?.split(',').map((lang) => lang.trim()).filter((lang) => lang.length > 0) ?? []
+    const languagesList = selectedLanguages
 
     if (languagesList.length === 0) {
       toast.error(t('doctorForm.validation.languageRequired'))
@@ -354,9 +467,12 @@ export const DoctorProfileFormPage = () => {
 
     const cleanedClinics = clinics
       .map((clinic) => ({
-        ...clinic,
+        id: clinic.id,
         address: clinic.address.trim(),
         city: clinic.city.trim(),
+        lat: clinic.lat ?? null,
+        lng: clinic.lng ?? null,
+        work_hours: serializeWorkHours(clinic.work_hours),
       }))
       .filter((clinic) => clinic.address !== '' && clinic.city !== '')
 
@@ -407,18 +523,16 @@ export const DoctorProfileFormPage = () => {
       faith_orientation: faithOrientation !== 'any' ? faithOrientation : null,
     }
 
-    saveProfile.mutate(payload, {
-      onSuccess: (savedDoctor) => {
-        toast.success(t('doctorForm.toasts.saveSuccess'))
-        setActiveSection(null)
-        queryClient.setQueryData<User | null>(queryKeys.auth, (prev) =>
-          prev ? { ...prev, doctor_profile: savedDoctor } : prev,
-        )
-      },
-      onError: (error) => {
-        toast.error(getErrorMessage(error, t('doctorForm.toasts.saveError')))
-      },
-    })
+    try {
+      const savedDoctor = await saveProfile.mutateAsync(payload)
+      toast.success(t('doctorForm.toasts.saveSuccess'))
+      setActiveSection(null)
+      queryClient.setQueryData<User | null>(queryKeys.auth, (prev) =>
+        prev ? { ...prev, doctor_profile: savedDoctor } : prev,
+      )
+    } catch (error) {
+      toast.error(getErrorMessage(error, t('doctorForm.toasts.saveError')))
+    }
   }
 
   const handleCategoryToggle = (categoryId: number) => {
@@ -437,6 +551,19 @@ export const DoctorProfileFormPage = () => {
         return prev
       }
       return [...prev, value]
+    })
+  }
+
+  const toggleLanguage = (lang: LanguageCode) => {
+    setSelectedLanguages((prev) => {
+      if (prev.includes(lang)) {
+        if (prev.length === 1) {
+          toast.warning(t('doctorForm.contact.languageMin'))
+          return prev
+        }
+        return prev.filter((item) => item !== lang)
+      }
+      return [...prev, lang]
     })
   }
 
@@ -460,21 +587,207 @@ export const DoctorProfileFormPage = () => {
   }
 
   const addClinic = () => {
-    setClinics((prev) => [...prev, { address: '', city: '' }])
+    setClinics((prev) => [...prev, createBlankClinic()])
   }
 
-  const handleMediaUpload = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    collection: 'documents' | 'gallery' | 'avatar' | 'intro_video',
-  ) => {
-    if (!event.target.files?.length) return
-    const formData = new FormData()
-    formData.append('collection', collection)
-    Array.from(event.target.files).forEach((file) => formData.append('files[]', file))
-    mediaUpload.mutate(formData, {
-      onSuccess: () => toast.success(t('doctorForm.toasts.uploadSuccess')),
-      onError: () => toast.error(t('doctorForm.toasts.uploadError')),
+  const removeClinic = (index: number) => {
+    if (!window.confirm(t('doctorForm.clinics.removeConfirm'))) return
+    setClinics((prev) => prev.filter((_, idx) => idx !== index))
+  }
+
+  const handleWorkHoursToggle = (clinicIndex: number, day: DayKey, enabled: boolean) => {
+    setClinics((prev) =>
+      prev.map((clinic, idx) => {
+        if (idx !== clinicIndex) return clinic
+        const workHours = clinic.work_hours ?? createWorkHoursState()
+        return {
+          ...clinic,
+          work_hours: {
+            ...workHours,
+            [day]: {
+              ...workHours[day],
+              enabled,
+            },
+          },
+        }
+      }),
+    )
+  }
+
+  const handleWorkHoursTimeChange = (clinicIndex: number, day: DayKey, field: 'from' | 'to', value: string) => {
+    setClinics((prev) =>
+      prev.map((clinic, idx) => {
+        if (idx !== clinicIndex) return clinic
+        const workHours = clinic.work_hours ?? createWorkHoursState()
+        return {
+          ...clinic,
+          work_hours: {
+            ...workHours,
+            [day]: {
+              ...workHours[day],
+              [field]: value,
+            },
+          },
+        }
+      }),
+    )
+  }
+
+  const handleAvatarSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (isUnsupportedImage(file)) {
+      toast.error(t('doctorForm.media.webpUnsupported'))
+      event.target.value = ''
+      return
+    }
+    const pending = createPendingMedia(file)
+    setPendingAvatarFile((prev) => {
+      revokePreview(prev)
+      return pending
     })
+    resetMediaError('avatar')
+    event.target.value = ''
+  }
+
+  const removePendingAvatarFile = () => {
+    setPendingAvatarFile((prev) => {
+      revokePreview(prev)
+      return null
+    })
+  }
+
+  const handleIntroVideoSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const pending = createPendingMedia(file)
+    setPendingIntroVideoFile((prev) => {
+      revokePreview(prev)
+      return pending
+    })
+    resetMediaError('intro_video')
+    event.target.value = ''
+  }
+
+  const removePendingIntroVideoFile = () => {
+    setPendingIntroVideoFile((prev) => {
+      revokePreview(prev)
+      return null
+    })
+  }
+
+  const handleDocumentSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (isUnsupportedImage(file)) {
+      toast.error(t('doctorForm.media.webpUnsupported'))
+      event.target.value = ''
+      return
+    }
+    setPendingDocumentFiles([createPendingMedia(file)])
+    resetMediaError('documents')
+    event.target.value = ''
+  }
+
+  const removePendingDocumentFile = (index: number) => {
+    setPendingDocumentFiles((prev) => {
+      const target = prev[index]
+      revokePreview(target)
+      return prev.filter((_, idx) => idx !== index)
+    })
+  }
+
+  const handleGallerySelection = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files?.length) return
+    const files = Array.from(event.target.files).reduce<PendingMediaFile[]>((acc, file) => {
+      if (isUnsupportedImage(file) && file.type.startsWith('image/')) {
+        toast.error(t('doctorForm.media.webpUnsupported'))
+        return acc
+      }
+      acc.push(createPendingMedia(file))
+      return acc
+    }, [])
+    if (files.length === 0) {
+      event.target.value = ''
+      return
+    }
+    setPendingGalleryFiles((prev) => [...prev, ...files])
+    resetMediaError('gallery')
+    event.target.value = ''
+  }
+
+  const removePendingGalleryFile = (index: number) => {
+    setPendingGalleryFiles((prev) => {
+      const target = prev[index]
+      revokePreview(target)
+      return prev.filter((_, idx) => idx !== index)
+    })
+  }
+
+  const clearPendingCollection = (collection: MediaCollection) => {
+    setMediaErrors((prev) => ({ ...prev, [collection]: null }))
+    switch (collection) {
+      case 'avatar':
+        setPendingAvatarFile((prev) => {
+          revokePreview(prev)
+          return null
+        })
+        break
+      case 'intro_video':
+        setPendingIntroVideoFile((prev) => {
+          revokePreview(prev)
+          return null
+        })
+        break
+      case 'documents':
+        setPendingDocumentFiles((prev) => {
+          prev.forEach((item) => revokePreview(item))
+          return []
+        })
+        break
+      case 'gallery':
+        setPendingGalleryFiles((prev) => {
+          prev.forEach((item) => revokePreview(item))
+          return []
+        })
+        break
+      default:
+        break
+    }
+  }
+
+  const uploadPendingMedia = async () => {
+    const payloads: Array<{ collection: MediaCollection; files: File[] }> = []
+    if (pendingAvatarFile) payloads.push({ collection: 'avatar', files: [pendingAvatarFile.file] })
+    if (pendingIntroVideoFile) payloads.push({ collection: 'intro_video', files: [pendingIntroVideoFile.file] })
+    if (pendingDocumentFiles.length > 0)
+      payloads.push({ collection: 'documents', files: pendingDocumentFiles.map((item) => item.file) })
+    if (pendingGalleryFiles.length > 0)
+      payloads.push({ collection: 'gallery', files: pendingGalleryFiles.map((item) => item.file) })
+
+    if (payloads.length === 0) return true
+    setMediaUploading(true)
+    let currentCollection: MediaCollection | null = null
+    try {
+      for (const payload of payloads) {
+        currentCollection = payload.collection
+        const formData = new FormData()
+        formData.append('collection', payload.collection)
+        payload.files.forEach((file) => formData.append('files[]', file))
+        await mediaUpload.mutateAsync(formData)
+        clearPendingCollection(payload.collection)
+      }
+      return true
+    } catch (error) {
+      const message = getErrorMessage(error, t('doctorForm.toasts.uploadError'))
+      if (currentCollection) {
+        setMediaErrors((prev) => ({ ...prev, [currentCollection]: message }))
+      }
+      toast.error(message)
+      return false
+    } finally {
+      setMediaUploading(false)
+    }
   }
 
   const handleMediaDelete = (mediaId: number) => {
@@ -487,11 +800,7 @@ export const DoctorProfileFormPage = () => {
     return <div className="text-slate-500">{t('doctorForm.loading')}</div>
   }
 
-  const languagesCount =
-    watchedValues.languages
-      ?.split(',')
-      .map((lang) => lang.trim())
-      .filter((lang) => lang.length > 0).length ?? 0
+  const languagesCount = selectedLanguages.length
   const hasParagraph =
     Boolean(
       watchedValues.bio?.trim() ||
@@ -502,31 +811,65 @@ export const DoctorProfileFormPage = () => {
   const hasClinics = clinics.some(
     (clinic) => clinic.address.trim().length > 0 && clinic.city.trim().length > 0,
   )
-  const sectionCompletion: Record<SectionId, boolean> = {
-    about:
-      Boolean(watchedValues.full_name?.trim()) &&
-      Boolean(watchedValues.specialty?.trim()) &&
-      Boolean(watchedValues.phone?.trim()) &&
-      Boolean(watchedValues.city?.trim()) &&
-      languagesCount > 0 &&
-      hasParagraph &&
-      hasClinics,
-    finances:
-      paymentMethods.length > 0 &&
-      Boolean(watchedValues.fee_individual?.trim()) &&
-      Boolean(watchedValues.insurances_text?.trim()),
-    qualifications:
-      Boolean(watchedValues.qualifications_text?.trim()) &&
-      Boolean(watchedValues.education_institution?.trim()),
-    specialties: selectedCategories.length > 0,
-    clientFocus:
-      clientParticipants.length > 0 && clientAgeGroups.length > 0 && alliedCommunities.length > 0,
-    treatment: therapyModalities.length > 0 || Boolean(watchedValues.treatment_note?.trim()),
+  const aboutScore = calculateScore([
+    Boolean(watchedValues.full_name?.trim()),
+    Boolean(watchedValues.specialty?.trim()),
+    Boolean(watchedValues.phone?.trim()),
+    Boolean(watchedValues.city?.trim()),
+    languagesCount > 0,
+    hasParagraph,
+    hasClinics,
+  ])
+  const financesScore = calculateScore([
+    paymentMethods.length > 0,
+    Boolean(watchedValues.fee_individual?.trim()),
+    Boolean(watchedValues.insurances_text?.trim()),
+  ])
+  const qualificationsScore = calculateScore([
+    Boolean(watchedValues.qualifications_text?.trim()),
+    Boolean(watchedValues.education_institution?.trim()),
+  ])
+  const specialtiesScore = selectedCategories.length > 0 ? 1 : 0
+  const clientFocusScore = calculateScore([
+    clientParticipants.length > 0,
+    clientAgeGroups.length > 0,
+    alliedCommunities.length > 0,
+  ])
+  const treatmentScore = calculateScore([
+    therapyModalities.length > 0,
+    Boolean(watchedValues.treatment_note?.trim()),
+  ])
+
+  const sectionScores: Record<SectionId, number> = {
+    about: aboutScore,
+    finances: financesScore,
+    qualifications: qualificationsScore,
+    specialties: specialtiesScore,
+    clientFocus: clientFocusScore,
+    treatment: treatmentScore,
   }
-  const completionValues = Object.values(sectionCompletion)
-  const completedSections = completionValues.filter(Boolean).length
+
+  const sectionCompletion = Object.entries(sectionScores).reduce(
+    (acc, [key, value]) => {
+      acc[key as SectionId] = value >= 1
+      return acc
+    },
+    {} as Record<SectionId, boolean>,
+  )
+  const sectionProgress = sectionOrder.reduce(
+    (acc, section) => {
+      acc[section] = Math.round((sectionScores[section] || 0) * 100)
+      return acc
+    },
+    {} as Record<SectionId, number>,
+  )
+
+  const completionValues = Object.values(sectionScores)
+  const completedSections = Object.values(sectionCompletion).filter(Boolean).length
   const completionPercentage =
-    Math.round((completedSections / Math.max(completionValues.length, 1)) * 100) || 0
+    Math.round(
+      (completionValues.reduce((sum, value) => sum + value, 0) / Math.max(completionValues.length, 1)) * 100,
+    ) || 0
 
   const summaryFallback = t('doctorForm.summary.empty')
   const sectionSummaries: Record<SectionId, string> = {
@@ -558,8 +901,11 @@ export const DoctorProfileFormPage = () => {
 
   const isNewDoctor = !doctor
   const isUnderReview = doctor?.status === 'pending'
+  const isRejected = doctor?.status === 'rejected'
   const avatarMedia = doctor?.media?.avatar ?? null
   const introVideoMedia = doctor?.media?.intro_video ?? null
+  const documentsMedia = doctor?.media?.documents ?? []
+  const galleryMedia = doctor?.media?.gallery ?? []
 
   const renderSectionContent = (section: SectionId) => {
     switch (section) {
@@ -568,11 +914,14 @@ export const DoctorProfileFormPage = () => {
           <>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.fullPublicName')}</label>
+                <label className="text-xs text-slate-500">
+                  {t('doctorForm.about.labels.fullPublicName')} <RequiredAsterisk />
+                </label>
                 <Input
                   {...register('full_name')}
                   placeholder={t('doctorForm.about.placeholders.fullPublicName')}
                   aria-invalid={!!errors.full_name}
+                  aria-required="true"
                 />
               </div>
               <div>
@@ -652,8 +1001,10 @@ export const DoctorProfileFormPage = () => {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.primarySpecialty')}</label>
-                <Input {...register('specialty')} aria-invalid={!!errors.specialty} />
+                <label className="text-xs text-slate-500">
+                  {t('doctorForm.about.labels.primarySpecialty')} <RequiredAsterisk />
+                </label>
+                <Input {...register('specialty')} aria-invalid={!!errors.specialty} aria-required="true" />
               </div>
               <div>
                 <label className="text-xs text-slate-500">{t('doctorForm.about.labels.secondarySpecialty')}</label>
@@ -664,8 +1015,10 @@ export const DoctorProfileFormPage = () => {
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseNumber')}</label>
-                <Input {...register('license_number')} aria-invalid={!!errors.license_number} />
+                <label className="text-xs text-slate-500">
+                  {t('doctorForm.about.labels.licenseNumber')} <RequiredAsterisk />
+                </label>
+                <Input {...register('license_number')} aria-invalid={!!errors.license_number} aria-required="true" />
               </div>
               <div>
                 <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseState')}</label>
@@ -732,7 +1085,29 @@ export const DoctorProfileFormPage = () => {
                 <p className="font-semibold text-slate-900">{t('doctorForm.media.headshotTitle')}</p>
                 <p className="text-xs text-slate-500">{t('doctorForm.media.headshotHint')}</p>
                 <div className="mt-3 space-y-2">
-                  {avatarMedia ? (
+                  {pendingAvatarFile ? (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        {pendingAvatarFile.preview ? (
+                          <img
+                            src={pendingAvatarFile.preview}
+                            alt={pendingAvatarFile.file.name}
+                            className="h-48 w-full rounded-2xl object-cover"
+                          />
+                        ) : (
+                          <p className="text-xs text-slate-500 truncate">{pendingAvatarFile.file.name}</p>
+                        )}
+                        <button
+                          type="button"
+                          className="absolute right-3 top-3 rounded-full bg-white/80 px-2 py-1 text-xs text-red-500"
+                          onClick={removePendingAvatarFile}
+                        >
+                          {t('doctorForm.media.galleryPendingRemove')}
+                        </button>
+                      </div>
+                      <p className="text-xs text-slate-500">{t('doctorForm.media.pendingUploadNote')}</p>
+                    </div>
+                  ) : avatarMedia ? (
                     <div className="relative">
                       <img src={avatarMedia.url} alt={avatarMedia.name} className="h-48 w-full rounded-2xl object-cover" />
                       <button
@@ -746,14 +1121,40 @@ export const DoctorProfileFormPage = () => {
                   ) : (
                     <p className="text-xs text-slate-500">{t('doctorForm.media.noImage')}</p>
                   )}
-                  <Input type="file" accept="image/*" onChange={(event) => handleMediaUpload(event, 'avatar')} />
+                  <Input type="file" accept="image/*" onChange={handleAvatarSelection} disabled={isMediaUploading} />
+                  {isMediaUploading && pendingAvatarFile && (
+                    <p className="text-xs text-primary-600">{t('doctorForm.media.mediaUploading')}</p>
+                  )}
+                  {mediaErrors.avatar && (
+                    <p className="text-xs text-rose-600">
+                      {t('doctorForm.media.uploadErrorLabel')}: {mediaErrors.avatar}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="rounded-2xl border border-slate-100 p-4">
                 <p className="font-semibold text-slate-900">{t('doctorForm.media.introVideoTitle')}</p>
                 <p className="text-xs text-slate-500">{t('doctorForm.media.introVideoHint')}</p>
                 <div className="mt-3 space-y-2">
-                  {introVideoMedia ? (
+                  {pendingIntroVideoFile ? (
+                    <div className="space-y-2">
+                      {pendingIntroVideoFile.preview ? (
+                        <video controls className="w-full rounded-2xl" src={pendingIntroVideoFile.preview} />
+                      ) : (
+                        <p className="text-xs text-slate-500 truncate">{pendingIntroVideoFile.file.name}</p>
+                      )}
+                      <div className="flex items-center justify-between text-xs text-slate-500">
+                        <span>{t('doctorForm.media.pendingUploadNote')}</span>
+                        <button
+                          type="button"
+                          className="text-rose-600 hover:underline"
+                          onClick={removePendingIntroVideoFile}
+                        >
+                          {t('doctorForm.media.galleryPendingRemove')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : introVideoMedia ? (
                     <div className="space-y-2">
                       <video controls className="w-full rounded-2xl" src={introVideoMedia.url} />
                       <button
@@ -770,8 +1171,17 @@ export const DoctorProfileFormPage = () => {
                   <Input
                     type="file"
                     accept="video/mp4,video/quicktime"
-                    onChange={(event) => handleMediaUpload(event, 'intro_video')}
+                    onChange={handleIntroVideoSelection}
+                    disabled={isMediaUploading}
                   />
+                  {isMediaUploading && pendingIntroVideoFile && (
+                    <p className="text-xs text-primary-600">{t('doctorForm.media.mediaUploading')}</p>
+                  )}
+                  {mediaErrors.intro_video && (
+                    <p className="text-xs text-rose-600">
+                      {t('doctorForm.media.uploadErrorLabel')}: {mediaErrors.intro_video}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -781,15 +1191,164 @@ export const DoctorProfileFormPage = () => {
                 <p className="font-semibold text-slate-900">{t('doctorForm.media.documentsTitle')}</p>
                 <p className="text-xs text-slate-500">{t('doctorForm.media.documentsHint')}</p>
               </div>
-              <Input type="file" accept="image/*,application/pdf" onChange={(event) => handleMediaUpload(event, 'documents')} />
+              <Input
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={handleDocumentSelection}
+                disabled={isMediaUploading}
+              />
             </div>
-
-            <div className="flex items-center justify-between rounded-2xl border border-slate-100 p-4">
-              <div>
-                <p className="font-semibold text-slate-900">{t('doctorForm.media.galleryTitle')}</p>
-                <p className="text-xs text-slate-500">{t('doctorForm.media.galleryHint')}</p>
+            {documentsMedia.length > 0 && (
+              <div className="rounded-2xl border border-slate-100 p-4 text-xs text-slate-600">
+                <p className="font-semibold text-slate-700">{t('doctorForm.media.uploadedMediaTitle')}</p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {documentsMedia.map((document) => (
+                    <div
+                      key={document.id}
+                      className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2"
+                    >
+                      <a
+                        href={document.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="truncate text-primary-700 underline"
+                      >
+                        {document.name}
+                      </a>
+                      <button
+                        type="button"
+                        className="text-rose-600 hover:underline"
+                        onClick={() => handleMediaDelete(document.id)}
+                      >
+                        {t('doctorForm.media.delete')}
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <Input type="file" multiple onChange={(event) => handleMediaUpload(event, 'gallery')} />
+            )}
+              {pendingDocumentFiles.length > 0 && (
+                <div className="rounded-2xl border border-slate-100 p-4 text-xs text-slate-600">
+                  <p className="font-semibold text-slate-700">{t('doctorForm.media.documentsPendingTitle')}</p>
+                  <p className="text-[11px] text-slate-500">
+                    {t('doctorForm.media.documentsPendingHint', { count: pendingDocumentFiles.length })}
+                  </p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {pendingDocumentFiles.map((item, index) => {
+                      const fileExt = item.file.name.split('.').pop()?.toUpperCase()
+                      const isImage = item.file.type.startsWith('image/')
+                      return (
+                        <div
+                          key={`${item.file.name}-${index}`}
+                          className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2"
+                        >
+                          <div className="flex items-center gap-3">
+                            {isImage && item.preview ? (
+                              <img src={item.preview} alt={item.file.name} className="h-10 w-10 rounded-xl object-cover" />
+                            ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 text-[11px] font-semibold text-slate-600">
+                              {fileExt ?? 'FILE'}
+                            </div>
+                          )}
+                          <span className="truncate text-slate-700">{item.file.name}</span>
+                        </div>
+                          <button
+                            type="button"
+                            className="text-rose-600 hover:underline"
+                            onClick={() => removePendingDocumentFile(index)}
+                          >
+                            {t('doctorForm.media.galleryPendingRemove')}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <p className="mt-2 text-[11px] text-slate-500">{t('doctorForm.media.pendingUploadNote')}</p>
+                  {isMediaUploading && pendingDocumentFiles.length > 0 && (
+                    <p className="mt-2 text-xs text-primary-600">{t('doctorForm.media.mediaUploading')}</p>
+                  )}
+                </div>
+            )}
+            {mediaErrors.documents && (
+              <p className="text-xs text-rose-600">
+                {t('doctorForm.media.uploadErrorLabel')}: {mediaErrors.documents}
+              </p>
+            )}
+
+            <div className="rounded-2xl border border-slate-100 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-slate-900">{t('doctorForm.media.galleryTitle')}</p>
+                  <p className="text-xs text-slate-500">{t('doctorForm.media.galleryHint')}</p>
+                </div>
+                <Input type="file" multiple onChange={handleGallerySelection} disabled={isMediaUploading} />
+              </div>
+              {galleryMedia.length > 0 && (
+                <div className="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
+                  {galleryMedia.map((media) => (
+                    <div key={media.id} className="relative">
+                      <img src={media.url} alt={media.name} className="h-24 w-full rounded-2xl object-cover" />
+                      <button
+                        type="button"
+                        className="absolute right-2 top-2 rounded-full bg-white/80 px-2 py-1 text-[10px] text-rose-500"
+                        onClick={() => handleMediaDelete(media.id)}
+                      >
+                        {t('doctorForm.media.delete')}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {pendingGalleryFiles.length > 0 && (
+                <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                  <p className="font-semibold text-slate-700">{t('doctorForm.media.galleryPendingTitle')}</p>
+                  <p className="text-[11px] text-slate-500">
+                    {t('doctorForm.media.galleryPendingHint', { count: pendingGalleryFiles.length })}
+                  </p>
+                  <div className="mt-2 grid gap-2 grid-cols-2 sm:grid-cols-3">
+                    {pendingGalleryFiles.map((item, index) => {
+                      const isImage = item.file.type.startsWith('image/')
+                      const isVideo = item.file.type.startsWith('video/')
+                      return (
+                        <div
+                          key={`${item.file.name}-${index}`}
+                          className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-1"
+                        >
+                          <div className="flex items-center gap-2">
+                            {item.preview && (isImage || isVideo) ? (
+                              isImage ? (
+                                <img src={item.preview} alt={item.file.name} className="h-10 w-10 rounded-xl object-cover" />
+                              ) : (
+                                <video src={item.preview} className="h-10 w-10 rounded-xl object-cover" muted loop />
+                              )
+                            ) : (
+                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 text-[11px] font-semibold text-slate-600">
+                                {item.file.name.split('.').pop()?.toUpperCase() ?? 'FILE'}
+                              </div>
+                            )}
+                            <span className="truncate text-slate-700">{item.file.name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="text-rose-600 hover:underline"
+                            onClick={() => removePendingGalleryFile(index)}
+                          >
+                            {t('doctorForm.media.galleryPendingRemove')}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              {isMediaUploading && pendingGalleryFiles.length > 0 && (
+                <p className="mt-2 text-xs text-primary-600">{t('doctorForm.media.mediaUploading')}</p>
+              )}
+              {mediaErrors.gallery && (
+                <p className="mt-2 text-xs text-rose-600">
+                  {t('doctorForm.media.uploadErrorLabel')}: {mediaErrors.gallery}
+                </p>
+              )}
             </div>
 
             <div>
@@ -798,8 +1357,15 @@ export const DoctorProfileFormPage = () => {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.contact.mainPhone')}</label>
-                <Input {...register('phone')} placeholder="+966..." aria-invalid={!!errors.phone} />
+                <label className="text-xs text-slate-500">
+                  {t('doctorForm.contact.mainPhone')} <RequiredAsterisk />
+                </label>
+                <Input
+                  {...register('phone')}
+                  placeholder="+966..."
+                  aria-invalid={!!errors.phone}
+                  aria-required="true"
+                />
               </div>
               <div>
                 <label className="text-xs text-slate-500">{t('doctorForm.contact.mobilePhone')}</label>
@@ -878,12 +1444,37 @@ export const DoctorProfileFormPage = () => {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.contact.baseCity')}</label>
-                <Input {...register('city')} aria-invalid={!!errors.city} />
+                <label className="text-xs text-slate-500">
+                  {t('doctorForm.contact.baseCity')} <RequiredAsterisk />
+                </label>
+                <Input {...register('city')} aria-invalid={!!errors.city} aria-required="true" />
               </div>
               <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.contact.languages')}</label>
-                <Input {...register('languages')} placeholder="ar, en, fr" aria-invalid={!!errors.languages} />
+                <label className="text-xs text-slate-500">
+                  {t('doctorForm.contact.languages')} <RequiredAsterisk />
+                </label>
+                <p className="text-xs text-slate-500">{t('doctorForm.contact.languageSelectHint')}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {languageChoices.map((lang) => {
+                    const active = selectedLanguages.includes(lang)
+                    return (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => toggleLanguage(lang)}
+                        className={cn(
+                          'rounded-full px-3 py-1 text-xs transition',
+                          active ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                        )}
+                        aria-pressed={active}
+                      >
+                        {t(`doctorForm.contact.languageOptions.${lang}`)}
+                      </button>
+                    )
+                  })}
+                </div>
+                <input type="hidden" {...register('languages')} />
+                {errors.languages && <p className="text-xs text-rose-500">{errors.languages.message}</p>}
               </div>
               <div>
                 <label className="text-xs text-slate-500">{t('doctorForm.contact.yearsExperience')}</label>
@@ -905,16 +1496,45 @@ export const DoctorProfileFormPage = () => {
                 </Button>
               </div>
               {clinics.map((clinic, index) => (
-                <div key={index} className="grid gap-4 rounded-2xl border border-slate-100 p-4 md:grid-cols-2">
-                  <div>
-                    <label className="text-xs text-slate-500">{t('doctorForm.clinics.city')}</label>
-                    <Input value={clinic.city} onChange={(e) => handleClinicChange(index, 'city', e.target.value)} />
+                <div key={index} className="space-y-3 rounded-2xl border border-slate-100 p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {t('doctorForm.clinics.city')} {index + 1}
+                    </p>
+                    {clinics.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="text-xs text-rose-600 hover:bg-rose-50"
+                        onClick={() => removeClinic(index)}
+                      >
+                        {t('doctorForm.clinics.remove')}
+                      </Button>
+                    )}
                   </div>
-                  <div>
-                    <label className="text-xs text-slate-500">{t('doctorForm.clinics.address')}</label>
-                    <Input value={clinic.address} onChange={(e) => handleClinicChange(index, 'address', e.target.value)} />
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="text-xs text-slate-500">
+                        {t('doctorForm.clinics.city')} <RequiredAsterisk />
+                      </label>
+                      <Input
+                        value={clinic.city}
+                        onChange={(e) => handleClinicChange(index, 'city', e.target.value)}
+                        aria-required="true"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500">
+                        {t('doctorForm.clinics.address')} <RequiredAsterisk />
+                      </label>
+                      <Input
+                        value={clinic.address}
+                        onChange={(e) => handleClinicChange(index, 'address', e.target.value)}
+                        aria-required="true"
+                      />
+                    </div>
                   </div>
-                  <div className="md:col-span-2 space-y-2">
+                  <div className="space-y-2">
                     <label className="text-xs text-slate-500">{t('doctorForm.clinics.mapLabel')}</label>
                     <LocationPicker
                       value={{ lat: clinic.lat, lng: clinic.lng, address: clinic.address, city: clinic.city }}
@@ -927,6 +1547,41 @@ export const DoctorProfileFormPage = () => {
                         })
                       }
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-slate-500">{t('doctorForm.clinics.hoursTitle')}</p>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {weekDays.map((day) => {
+                        const hours = clinic.work_hours?.[day] ?? { from: '09:00', to: '17:00', enabled: false }
+                        return (
+                          <div key={day} className="space-y-1 rounded-2xl border border-dashed border-slate-200 p-3">
+                            <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                              <Checkbox
+                                checked={hours.enabled}
+                                onChange={(event) => handleWorkHoursToggle(index, day, event.target.checked)}
+                              />
+                              {t(`common.days.${day}`)}
+                            </label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Input
+                                type="time"
+                                value={hours.from}
+                                disabled={!hours.enabled}
+                                onChange={(event) => handleWorkHoursTimeChange(index, day, 'from', event.target.value)}
+                                aria-label={t('doctorForm.clinics.hoursFrom')}
+                              />
+                              <Input
+                                type="time"
+                                value={hours.to}
+                                disabled={!hours.enabled}
+                                onChange={(event) => handleWorkHoursTimeChange(index, day, 'to', event.target.value)}
+                                aria-label={t('doctorForm.clinics.hoursTo')}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -957,13 +1612,16 @@ export const DoctorProfileFormPage = () => {
                   aria-invalid={!!errors.fee_couples}
                 />
               </div>
-              <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2">
-                <Checkbox {...register('offers_sliding_scale')} />
-                <span className="text-xs text-slate-500">
-                  {watch('offers_sliding_scale')
-                    ? t('doctorForm.finances.slidingYes')
-                    : t('doctorForm.finances.slidingNo')}
-                </span>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.finances.slidingScale')}</label>
+                <div className="mt-1 flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2">
+                  <Checkbox {...register('offers_sliding_scale')} />
+                  <span className="text-xs text-slate-500">
+                    {watch('offers_sliding_scale')
+                      ? t('doctorForm.finances.slidingYes')
+                      : t('doctorForm.finances.slidingNo')}
+                  </span>
+                </div>
               </div>
             </div>
             <div className="rounded-2xl border border-slate-100 p-4">
@@ -1115,8 +1773,21 @@ export const DoctorProfileFormPage = () => {
                         checked={selectedCategories.includes(category.id)}
                         onChange={() => handleCategoryToggle(category.id)}
                       />
-                      <span className="flex-1" style={{ paddingInlineStart: `${category.depth * 12}px` }}>
-                        {category.name}
+                      <span
+                        className="flex flex-1 items-center justify-between gap-2 rounded-2xl bg-slate-50 px-3 py-1"
+                        style={{ marginInlineStart: `${category.depth * 12}px` }}
+                      >
+                        <span>{category.name}</span>
+                        <span
+                          className={cn(
+                            'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase',
+                            category.depth === 0 ? 'bg-primary-100 text-primary-600' : 'bg-slate-200 text-slate-600',
+                          )}
+                        >
+                          {category.depth === 0
+                            ? t('doctorForm.specialties.rootBadge')
+                            : t('doctorForm.specialties.childBadge')}
+                        </span>
                       </span>
                     </label>
                   ))}
@@ -1337,13 +2008,23 @@ export const DoctorProfileFormPage = () => {
   }
 
   const handleCloseDrawer = () => {
-    if (!saveProfile.isPending) {
+    if (!isSaving) {
       setActiveSection(null)
     }
   }
 
-  const handleDrawerSave = () => {
+  const handleDrawerSave = async () => {
+    if (isSaving) return
+    const uploaded = await uploadPendingMedia()
+    if (!uploaded) return
     handleSubmit(onSubmit, handleFormErrors)()
+  }
+
+  const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const uploaded = await uploadPendingMedia()
+    if (!uploaded) return
+    handleSubmit(onSubmit, handleFormErrors)(event)
   }
   const ActiveSectionIcon = activeSection ? sectionIcons[activeSection] : null
 
@@ -1362,6 +2043,22 @@ export const DoctorProfileFormPage = () => {
           <div>
             <p className="text-base font-semibold text-emerald-900">{t('doctorForm.reviewBanner.title')}</p>
             <p className="text-sm text-emerald-700">{t('doctorForm.reviewBanner.description')}</p>
+          </div>
+        </div>
+      )}
+      {isRejected && (
+        <div className="flex items-start gap-3 rounded-3xl border border-rose-200 bg-rose-50 p-4 text-rose-800">
+          <div className="rounded-2xl bg-white/80 p-2 text-rose-600">
+            <X className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-base font-semibold text-rose-900">{t('doctorForm.rejectedBanner.title')}</p>
+            <p className="text-sm text-rose-700">{t('doctorForm.rejectedBanner.description')}</p>
+            {doctor?.status_note && (
+              <p className="mt-2 text-sm font-medium text-rose-800">
+                {t('doctorForm.rejectedBanner.notePrefix')} {doctor.status_note}
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -1385,11 +2082,12 @@ export const DoctorProfileFormPage = () => {
           />
         </div>
       </div>
-      <form onSubmit={handleSubmit(onSubmit, handleFormErrors)} className="space-y-6">
+      <form onSubmit={handleFormSubmit} className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {sectionOrder.map((section) => {
             const completed = sectionCompletion[section]
             const Icon = sectionIcons[section]
+            const progressValue = sectionProgress[section] ?? 0
             return (
               <div key={section} className="rounded-3xl border border-slate-100 bg-white p-5 shadow-card">
                 <div className="flex items-start justify-between gap-4">
@@ -1407,6 +2105,24 @@ export const DoctorProfileFormPage = () => {
                   </div>
                 </div>
                 <p className="mt-4 text-sm text-slate-600">{sectionSummaries[section]}</p>
+                <div className="mt-4">
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>{t('doctorForm.sectionProgressLabel')}</span>
+                    <span>
+                      {progressValue}
+                      {t('doctorForm.completionPercentSuffix')}
+                    </span>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100" role="progressbar" aria-valuenow={progressValue} aria-valuemin={0} aria-valuemax={100}>
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all',
+                        completed ? 'bg-emerald-500' : 'bg-primary-400',
+                      )}
+                      style={{ width: `${progressValue}%` }}
+                    />
+                  </div>
+                </div>
                 <div className="mt-6 flex items-center justify-between text-xs">
                   <span className={completed ? 'text-emerald-600' : 'text-amber-600'}>
                     {completed ? t('doctorForm.summary.ready') : t('doctorForm.summary.todo')}
@@ -1420,30 +2136,11 @@ export const DoctorProfileFormPage = () => {
           })}
         </div>
         <div className="flex justify-end">
-          <Button type="submit" disabled={saveProfile.isPending}>
-            {saveProfile.isPending ? t('doctorForm.buttons.saving') : t('doctorForm.buttons.save')}
+          <Button type="submit" disabled={isSaving}>
+            {isSaving ? t('doctorForm.buttons.saving') : t('doctorForm.buttons.save')}
           </Button>
         </div>
       </form>
-      {doctor?.media && doctor.media.gallery.length > 0 && (
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
-          <h3 className="font-semibold text-slate-900">{t('doctorForm.media.uploadedMediaTitle')}</h3>
-          <div className="mt-4 grid gap-4 md:grid-cols-4">
-            {doctor.media.gallery.map((media) => (
-              <div key={media.id} className="relative">
-                <img src={media.url} alt={media.name} className="h-32 w-full rounded-2xl object-cover" />
-                <button
-                  type="button"
-                  className="absolute right-2 top-2 rounded-full bg-white/80 px-2 py-1 text-xs text-red-500"
-                  onClick={() => handleMediaDelete(media.id)}
-                >
-                  {t('doctorForm.media.delete')}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
       {activeSection && (
         <div className="fixed inset-0 z-40 flex">
           <div className="flex-1 bg-slate-900/40" onClick={handleCloseDrawer} />
@@ -1473,8 +2170,8 @@ export const DoctorProfileFormPage = () => {
               <Button type="button" variant="ghost" onClick={handleCloseDrawer}>
                 {t('common.actions.close')}
               </Button>
-              <Button type="button" onClick={handleDrawerSave} disabled={saveProfile.isPending}>
-                {saveProfile.isPending ? t('doctorForm.buttons.saving') : t('doctorForm.buttons.sectionSave')}
+              <Button type="button" onClick={handleDrawerSave} disabled={isSaving}>
+                {isSaving ? t('doctorForm.buttons.saving') : t('doctorForm.buttons.sectionSave')}
               </Button>
             </div>
           </div>

@@ -25,3 +25,8 @@ export const uploadDoctorMedia = async (formData: FormData) => {
 export const deleteDoctorMedia = async (mediaId: number) => {
   await api.delete(`/api/doctor/media/${mediaId}`)
 }
+
+export const joinDoctorProgram = async () => {
+  const { data } = await api.post<ApiResponse<Doctor>>('/api/doctor/join')
+  return data.data
+}

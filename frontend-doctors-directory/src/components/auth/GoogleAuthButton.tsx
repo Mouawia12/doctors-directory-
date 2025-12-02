@@ -53,10 +53,7 @@ export const GoogleAuthButton = ({ type, onSuccess, label, className }: GoogleAu
         <span className="h-px flex-1 bg-slate-200" />
       </div>
       <div className="flex justify-center">
-        <div
-          ref={containerRef}
-          className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-inner"
-        >
+        <div ref={containerRef} className="w-full max-w-sm px-4 py-3">
           <div className="flex justify-center">
             <GoogleLogin
               width={buttonWidth}

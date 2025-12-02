@@ -32,10 +32,10 @@ class DoctorResource extends JsonResource
 
         $mediaLoaded = $doctor->relationLoaded('media');
         $documents = $mediaLoaded
-            ? $doctor->media->where('collection_name', 'documents')
+            ? $doctor->media->where('collection_name', 'documents')->values()
             : collect();
         $gallery = $mediaLoaded
-            ? $doctor->media->where('collection_name', 'gallery')
+            ? $doctor->media->where('collection_name', 'gallery')->values()
             : collect();
         $avatar = $mediaLoaded
             ? $doctor->media->firstWhere('collection_name', 'avatar')
@@ -132,17 +132,17 @@ class DoctorResource extends JsonResource
                     'url' => $media->getFullUrl(),
                     'mime_type' => $media->mime_type,
                     'size' => $media->size,
-                ]),
+                ])->values(),
                 'gallery' => $gallery->map(fn ($media) => [
                     'id' => $media->id,
                     'name' => $media->name,
                     'url' => $media->getFullUrl(),
                     'thumb_url' => $media->hasGeneratedConversion('thumb')
                         ? $media->getFullUrl('thumb')
-                        : $media->getFullUrl(),
+                    : $media->getFullUrl(),
                     'mime_type' => $media->mime_type,
                     'size' => $media->size,
-                ]),
+                ])->values(),
                 'intro_video' => $introVideo
                     ? [
                         'id' => $introVideo->id,

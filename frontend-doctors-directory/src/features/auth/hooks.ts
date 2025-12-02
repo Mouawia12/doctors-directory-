@@ -5,12 +5,16 @@ import {
   loginWithGoogle,
   logout,
   register,
+  requestPasswordReset,
+  resetPassword,
   updatePassword,
   type AuthSuccessPayload,
   type LoginPayload,
   type RegisterPayload,
   type SocialLoginPayload,
   type UpdatePasswordPayload,
+  type ForgotPasswordPayload,
+  type ResetPasswordPayload,
 } from '@/features/auth/api'
 import { queryClient } from '@/lib/queryClient'
 import { queryKeys } from '@/lib/queryKeys'
@@ -60,6 +64,16 @@ export const useLogoutMutation = () => {
 export const useUpdatePasswordMutation = () =>
   useMutation({
     mutationFn: (payload: UpdatePasswordPayload) => updatePassword(payload),
+  })
+
+export const useForgotPasswordMutation = () =>
+  useMutation({
+    mutationFn: (payload: ForgotPasswordPayload) => requestPasswordReset(payload),
+  })
+
+export const useResetPasswordMutation = () =>
+  useMutation({
+    mutationFn: (payload: ResetPasswordPayload) => resetPassword(payload),
   })
 
 const handleAuthState = ({ user, token }: AuthSuccessPayload) => {

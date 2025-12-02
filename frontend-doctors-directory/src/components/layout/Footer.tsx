@@ -14,7 +14,9 @@ export const Footer = () => {
           <a href="mailto:care@doctors.directory" className="hover:text-primary-600">
             care@doctors.directory
           </a>
-          <span>+966 55 555 5555</span>
+          <span dir="ltr" className="font-mono text-slate-700">
+            +966 55 555 5555
+          </span>
         </div>
       </div>
     </footer>

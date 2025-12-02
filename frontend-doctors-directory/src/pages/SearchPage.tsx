@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { MapWidget } from '@/components/common/MapWidget'
 import { useTranslation } from 'react-i18next'
 
-const languageOptions = ['ar', 'en', 'fr']
+const languageOptions = ['ar', 'en']
 
 export const SearchPage = () => {
   const [params, setParams] = useSearchParams()

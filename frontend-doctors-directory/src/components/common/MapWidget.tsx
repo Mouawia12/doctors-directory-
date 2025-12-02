@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader'
 import { env } from '@/lib/env'
+import { useTranslation } from 'react-i18next'
 
 export interface Marker {
   lat: number
@@ -17,9 +18,14 @@ interface MapWidgetProps {
 export const MapWidget = ({ markers, zoom = 12, className }: MapWidgetProps) => {
   const mapRef = useRef<HTMLDivElement | null>(null)
   const loaderConfigured = useRef(false)
+  const [hasError, setHasError] = useState(false)
+  const { t } = useTranslation()
 
   useEffect(() => {
-    if (!env.mapsKey || !mapRef.current) return
+    if (!env.mapsKey || !mapRef.current) {
+      setHasError(true)
+      return
+    }
     let isMounted = true
 
     const initMap = async () => {
@@ -55,6 +61,9 @@ export const MapWidget = ({ markers, zoom = 12, className }: MapWidgetProps) => 
         })
       } catch (error) {
         console.error('تعذّر تحميل خريطة Google', error)
+        if (isMounted) {
+          setHasError(true)
+        }
       }
     }
 
@@ -65,12 +74,11 @@ export const MapWidget = ({ markers, zoom = 12, className }: MapWidgetProps) => 
     }
   }, [markers, zoom])
 
-  if (!env.mapsKey) {
-    return (
-      <div className="flex h-72 items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white text-sm text-slate-500">
-        يرجى إضافة مفتاح خرائط Google لعرض الخريطة.
-      </div>
-    )
+  if (!env.mapsKey || hasError) {
+    const baseFallback =
+      'flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white px-4 text-center text-sm text-slate-500'
+    const fallbackClassName = className ? `${className} ${baseFallback}` : `${baseFallback} h-72 w-full`
+    return <div className={fallbackClassName}>{env.mapsKey ? t('mapWidget.error') : t('mapWidget.missingKey')}</div>
   }
 
   return <div ref={mapRef} className={className ?? 'h-72 w-full rounded-3xl border border-slate-100'} />

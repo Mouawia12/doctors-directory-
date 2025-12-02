@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader'
 import { env } from '@/lib/env'
 import clsx from 'clsx'
@@ -25,9 +25,13 @@ export const LocationPicker = ({ value, onChange }: LocationPickerProps) => {
   const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
   const loaderConfigured = useRef(false)
   const { t } = useTranslation()
+  const [mapUnavailable, setMapUnavailable] = useState(!env.mapsKey)
 
   useEffect(() => {
-    if (!env.mapsKey || !mapRef.current) return
+    if (!env.mapsKey || !mapRef.current) {
+      setMapUnavailable(true)
+      return
+    }
     let listeners: google.maps.MapsEventListener[] = []
     let autocompleteListener: google.maps.MapsEventListener | null = null
     let isMounted = true
@@ -59,6 +63,7 @@ export const LocationPicker = ({ value, onChange }: LocationPickerProps) => {
           disableDefaultUI: false,
         })
         mapInstance.current = map
+        setMapUnavailable(false)
 
         const marker = new AdvancedMarkerElement({
           map,
@@ -105,6 +110,7 @@ export const LocationPicker = ({ value, onChange }: LocationPickerProps) => {
         }
       } catch (error) {
         console.error(t('locationPicker.error'), error)
+        setMapUnavailable(true)
       }
     }
 
@@ -117,8 +123,38 @@ export const LocationPicker = ({ value, onChange }: LocationPickerProps) => {
     }
   }, [value?.lat, value?.lng, value?.address, value?.city, onChange])
 
-  if (!env.mapsKey) {
-    return null
+  const handleManualChange = (field: 'address' | 'city', nextValue: string) => {
+    onChange({
+      ...value,
+      [field]: nextValue,
+    })
+  }
+
+  if (mapUnavailable) {
+    return (
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+        <p>{env.mapsKey ? t('locationPicker.errorFallback') : t('locationPicker.missingKeyMessage')}</p>
+        <div>
+          <label className="text-xs text-slate-500">{t('locationPicker.manualAddressLabel')}</label>
+          <input
+            type="text"
+            value={value?.address ?? ''}
+            onChange={(event) => handleManualChange('address', event.target.value)}
+            placeholder={t('locationPicker.placeholder')}
+            className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-slate-500">{t('locationPicker.manualCityLabel')}</label>
+          <input
+            type="text"
+            value={value?.city ?? ''}
+            onChange={(event) => handleManualChange('city', event.target.value)}
+            className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400"
+          />
+        </div>
+      </div>
+    )
   }
 
   return (

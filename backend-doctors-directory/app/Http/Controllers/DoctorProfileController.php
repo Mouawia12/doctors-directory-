@@ -5,13 +5,42 @@ namespace App\Http\Controllers;
 use App\Enums\DoctorStatus;
 use App\Http\Requests\Doctor\DoctorProfileRequest;
 use App\Http\Resources\DoctorResource;
-use App\Models\Clinic;
 use App\Models\Doctor;
+use App\Models\Clinic;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class DoctorProfileController extends Controller
 {
+    public function join(): JsonResponse
+    {
+        /** @var Authenticatable&\App\Models\User|null $user */
+        $user = request()->user();
+
+        if (! $user) {
+            abort(401);
+        }
+
+        if (! $user->hasRole('doctor')) {
+            $user->assignRole('doctor');
+        }
+
+        $doctor = $user->doctorProfile;
+
+        if (! $doctor) {
+            $doctor = Doctor::create([
+                'user_id' => $user->id,
+                'full_name' => $user->name,
+                'specialty' => 'غير محدد',
+                'status' => DoctorStatus::Draft->value,
+                'languages' => ['ar'],
+            ]);
+        }
+
+        return $this->respond(new DoctorResource($doctor->fresh(['clinics', 'categories', 'media'])));
+    }
+
     public function show(): JsonResponse
     {
         /** @var Doctor|null $doctor */

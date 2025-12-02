@@ -13,11 +13,14 @@ import { useTranslation } from 'react-i18next'
 import { PhoneNumber } from '@/components/common/PhoneNumber'
 import { buildTelLink, buildWhatsAppLink } from '@/lib/phone'
 
+const asIdentityArray = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+
 export const DoctorProfilePage = () => {
   const { id } = useParams()
   const { data: doctor, isLoading } = useDoctorQuery(id ?? '')
   const { data: authUser } = useAuthQuery()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const canEdit = authUser?.id && doctor?.user?.id && authUser.id === doctor.user.id
   const languages = doctor?.languages ?? []
@@ -70,6 +73,18 @@ export const DoctorProfilePage = () => {
   const clientParticipants = doctor.client_participants ?? []
   const clientAgeGroups = doctor.client_age_groups ?? []
   const insurances = doctor.insurances ?? []
+  const identityTraits = (doctor.identity_traits as Record<string, unknown> | undefined) ?? {}
+  const identityGender = asIdentityArray(identityTraits.gender_identity)
+  const identityEthnicity = asIdentityArray(identityTraits.ethnicity)
+  const identityLgbtq = asIdentityArray(identityTraits.lgbtqia)
+  const identityNote =
+    typeof identityTraits.other === 'string' && identityTraits.other.trim().length > 0
+      ? identityTraits.other.trim()
+      : null
+  const identityBirthYear =
+    typeof identityTraits.birth_year === 'number' || typeof identityTraits.birth_year === 'string'
+      ? identityTraits.birth_year
+      : null
   const introVideo = doctor.media?.intro_video?.url
   const newClientsIntro = doctor.new_clients_intro
   const telHref = buildTelLink(doctor.phone)
@@ -98,7 +113,7 @@ export const DoctorProfilePage = () => {
   }
 
   return (
-    <div className="container space-y-8">
+    <div className="container space-y-8" dir={i18n.dir()}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       <section className="rounded-[32px] border border-slate-100 bg-gradient-to-br from-white to-slate-50 p-6 shadow-card">
@@ -304,14 +319,19 @@ export const DoctorProfilePage = () => {
               <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.paymentEmpty')}</p>
             )}
           </div>
-          <div className="rounded-2xl border border-slate-100 p-4">
+          <div className="rounded-2xl border border-slate-100 p-4 overflow-hidden">
             <p className="text-xs text-slate-500">{t('doctorProfile.insurance')}</p>
             {insurances.length > 0 ? (
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              <div className="mt-2 flex flex-wrap gap-2" data-testid="doctor-insurances">
                 {insurances.map((insurance) => (
-                  <li key={insurance}>{insurance}</li>
+                  <span
+                    key={insurance}
+                    className="break-words rounded-full bg-slate-900/5 px-3 py-1 text-center text-xs text-slate-700"
+                  >
+                    {insurance}
+                  </span>
                 ))}
-              </ul>
+              </div>
             ) : (
               <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.insuranceEmpty')}</p>
             )}
@@ -410,6 +430,66 @@ export const DoctorProfilePage = () => {
             </div>
           ) : (
             <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.alliedEmpty')}</p>
+          )}
+        </div>
+        <div className="mt-4 rounded-2xl border border-slate-100 p-4">
+          <p className="text-xs text-slate-500">{t('doctorProfile.identityTitle')}</p>
+          <p className="text-xs text-slate-400">{t('doctorProfile.identityCopy')}</p>
+          {identityGender.length === 0 &&
+          identityEthnicity.length === 0 &&
+          identityLgbtq.length === 0 &&
+          !identityNote &&
+          !identityBirthYear ? (
+            <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.identityEmpty')}</p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {identityGender.length > 0 && (
+                <div>
+                  <p className="text-[11px] uppercase text-slate-400">{t('doctorProfile.identityGender')}</p>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {identityGender.map((item) => (
+                      <span key={item} className="rounded-full bg-slate-900/5 px-3 py-1 text-xs text-slate-700">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {identityEthnicity.length > 0 && (
+                <div>
+                  <p className="text-[11px] uppercase text-slate-400">{t('doctorProfile.identityEthnicity')}</p>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {identityEthnicity.map((item) => (
+                      <span key={item} className="rounded-full bg-slate-900/5 px-3 py-1 text-xs text-slate-700">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {identityLgbtq.length > 0 && (
+                <div>
+                  <p className="text-[11px] uppercase text-slate-400">{t('doctorProfile.identityLgbtq')}</p>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {identityLgbtq.map((item) => (
+                      <span key={item} className="rounded-full bg-slate-900/5 px-3 py-1 text-xs text-slate-700">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {identityBirthYear && (
+                <p className="text-xs text-slate-500">
+                  {t('doctorProfile.identityBirthYear')}: <span className="font-semibold text-slate-900">{identityBirthYear}</span>
+                </p>
+              )}
+              {identityNote && (
+                <p className="text-xs text-slate-500">
+                  {t('doctorProfile.identityOther')}: <span className="font-semibold text-slate-900">{identityNote}</span>
+                </p>
+              )}
+            </div>
           )}
         </div>
       </section>

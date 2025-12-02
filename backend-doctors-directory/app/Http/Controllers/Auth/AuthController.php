@@ -61,6 +61,7 @@ class AuthController extends Controller
         $request->authenticate();
         /** @var \App\Models\User $user */
         $user = $request->user();
+        $user->forceFill(['last_login_at' => now()])->save();
         $token = $user->createToken('spa')->plainTextToken;
 
         return $this->respond([

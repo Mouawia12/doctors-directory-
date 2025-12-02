@@ -1,18 +1,16 @@
-import { useEffect, useMemo, useState, type ComponentType } from 'react'
+import { useEffect, useMemo, useState, type ComponentType, type FormEvent } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  Bell,
   ChevronDown,
   LayoutDashboard,
   Layers,
   LogOut,
-  Mail,
   Menu,
-  MessageSquare,
   Search,
   Stethoscope,
   UserRound,
   Home,
+  Users,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { Input } from '@/components/ui/Input'
@@ -47,6 +45,7 @@ export const AdminLayout = () => {
           { id: 'doctors-create', label: t('adminLayout.nav.doctorsCreate'), to: '/admin/doctors/new' },
         ],
       },
+      { id: 'users', label: t('adminLayout.nav.users'), icon: Users, to: '/admin/users' },
       { id: 'categories', label: t('adminLayout.nav.categories'), icon: Layers, to: '/admin/categories' },
       { id: 'security', label: t('adminLayout.nav.security'), icon: UserRound, to: '/admin/password' },
     ],
@@ -54,12 +53,7 @@ export const AdminLayout = () => {
   )
 
   const headerActions = useMemo(
-    () => [
-      { id: 'home', icon: Home, label: t('adminLayout.nav.home'), to: '/admin' },
-      { id: 'chat', icon: MessageSquare, label: t('adminLayout.nav.chat') },
-      { id: 'mail', icon: Mail, label: t('adminLayout.nav.mail') },
-      { id: 'notifications', icon: Bell, label: t('adminLayout.nav.notifications'), badge: true },
-    ],
+    () => [{ id: 'home', icon: Home, label: t('adminLayout.nav.home'), to: '/admin' }],
     [t, i18n.language],
   )
 
@@ -77,8 +71,18 @@ export const AdminLayout = () => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(initialGroups)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
   const currentDir = i18n.dir()
   const isRTL = currentDir === 'rtl'
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/admin/doctors')) {
+      const params = new URLSearchParams(location.search)
+      setSearchTerm(params.get('q') ?? '')
+    } else {
+      setSearchTerm('')
+    }
+  }, [location.pathname, location.search])
 
   useEffect(() => {
     setOpenGroups((prev) => {
@@ -183,9 +187,18 @@ export const AdminLayout = () => {
     </div>
   )
 
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const trimmed = searchTerm.trim()
+    const params = trimmed ? `?q=${encodeURIComponent(trimmed)}` : ''
+    navigate(`/admin/doctors${params}`)
+  }
+
   const headerSearch = (
-    <div className="relative w-full max-w-xs">
+    <form className="relative w-full max-w-xs" onSubmit={handleSearchSubmit}>
       <Input
+        value={searchTerm}
+        onChange={(event) => setSearchTerm(event.target.value)}
         placeholder={t('adminLayout.searchPlaceholder')}
         className={clsx(
           'h-11 rounded-2xl border-transparent bg-slate-100 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary-400',
@@ -198,7 +211,7 @@ export const AdminLayout = () => {
           isRTL ? 'right-3' : 'left-3',
         )}
       />
-    </div>
+    </form>
   )
 
   return (
@@ -222,7 +235,7 @@ export const AdminLayout = () => {
       </aside>
 
       <div className="flex flex-1 flex-col">
-        <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
+        <header className="relative z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
           <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-10">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -255,23 +268,15 @@ export const AdminLayout = () => {
                         title={action.label}
                       >
                         <action.icon className="h-5 w-5" />
-                        {action.badge && (
-                          <span
-                            className={clsx(
-                              'absolute top-2 inline-flex h-2 w-2 rounded-full bg-rose-500',
-                              isRTL ? 'left-2' : 'right-2',
-                            )}
-                          />
-                        )}
                       </button>
                     ))}
                   </div>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setUserMenuOpen((prev) => !prev)}
-                      className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-primary-600 shadow-sm"
-                      aria-label={t('adminLayout.userMenu')}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setUserMenuOpen((prev) => !prev)}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-primary-600 shadow-sm"
+              aria-label={t('adminLayout.userMenu')}
                     >
                       {user?.name ? (
                         <span className="text-sm font-semibold">{user.name.slice(0, 1)}</span>
@@ -288,10 +293,8 @@ export const AdminLayout = () => {
                     {userMenuOpen && (
                       <div
                         className={clsx(
-                          'absolute z-20 mt-4 w-56 rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-xl',
-                          isRTL
-                            ? 'right-1/2 translate-x-1/2'
-                            : 'left-1/2 -translate-x-1/2',
+                          'absolute z-40 mt-4 w-56 rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-2xl',
+                          isRTL ? 'left-0' : 'right-0',
                         )}
                       >
                         <div className="rounded-2xl bg-slate-50 p-3 text-right text-xs text-slate-500">

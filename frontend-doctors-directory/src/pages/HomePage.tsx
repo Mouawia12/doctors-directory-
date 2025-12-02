@@ -4,13 +4,23 @@ import { SearchBar } from '@/components/common/SearchBar'
 import { StatsHighlights } from '@/components/common/StatsHighlights'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import { useAuthQuery } from '@/features/auth/hooks'
+import { useJoinDoctorMutation } from '@/features/doctor/hooks'
+import { toast } from 'sonner'
 
 export const HomePage = () => {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
+  const { data: user } = useAuthQuery()
+  const joinMutation = useJoinDoctorMutation()
   const direction = i18n.dir()
   const isRTL = direction === 'rtl'
   const featuredSpecialties = t('home.featured', { returnObjects: true }) as Array<{ title: string; description: string }>
+  const featuredTitleLabel = t('home.featuredTitle')
+  const featuredButtonLabel = t('home.featuredAll')
+  const isLoggedIn = Boolean(user)
+  const isDoctor = Boolean(user?.roles.includes('doctor'))
+  const dashboardPath = isDoctor ? '/doctor' : '/account'
 
   const handleSearch = (filters: { q?: string; city?: string; specialty?: string }) => {
     const params = new URLSearchParams()
@@ -19,6 +29,50 @@ export const HomePage = () => {
     })
     navigate(`/search?${params.toString()}`)
   }
+
+  const handleDoctorJoin = () => {
+    if (!user) {
+      navigate('/auth/register')
+      return
+    }
+
+    if (user.roles.includes('doctor')) {
+      navigate('/doctor')
+      return
+    }
+
+    joinMutation.mutate(undefined, {
+      onSuccess: () => {
+        toast.success(t('doctorForm.join.success'))
+        navigate('/doctor/profile')
+      },
+      onError: () => toast.error(t('doctorForm.join.error')),
+    })
+  }
+
+  const heroSecondaryCta = isLoggedIn
+    ? {
+        label: isDoctor ? t('nav.myProfile') : t('nav.userDashboard'),
+        onClick: () => navigate(dashboardPath),
+        disabled: false,
+      }
+    : {
+        label: joinMutation.isPending ? t('doctorForm.join.loading') : t('hero.doctorCta'),
+        onClick: handleDoctorJoin,
+        disabled: joinMutation.isPending,
+      }
+
+  const doctorSectionCta = isLoggedIn
+    ? {
+        label: isDoctor ? t('nav.myProfile') : t('nav.userDashboard'),
+        onClick: () => navigate(dashboardPath),
+        disabled: false,
+      }
+    : {
+        label: joinMutation.isPending ? t('doctorForm.join.loading') : t('home.doctorCtaAction'),
+        onClick: handleDoctorJoin,
+        disabled: joinMutation.isPending,
+      }
 
   return (
     <div className="space-y-16" dir={direction}>
@@ -31,8 +85,8 @@ export const HomePage = () => {
           <p className="text-lg text-slate-600">{t('hero.subtitle')}</p>
           <div className={cn('flex flex-wrap gap-3', isRTL ? 'justify-end' : 'justify-start')}>
             <Button onClick={() => navigate('/search')}>{t('hero.cta')}</Button>
-            <Button variant="outline" onClick={() => navigate('/auth/register')}>
-              {t('hero.doctorCta')}
+            <Button variant="outline" onClick={heroSecondaryCta.onClick} disabled={heroSecondaryCta.disabled}>
+              {heroSecondaryCta.label}
             </Button>
           </div>
         </div>
@@ -43,19 +97,26 @@ export const HomePage = () => {
       </section>
 
       <section className="container">
-        <div className={cn('flex items-center justify-between', isRTL && 'flex-row-reverse')}>
-          <h2 className="section-title">{t('home.featuredTitle')}</h2>
+        <div className={cn('flex items-center gap-4 justify-between', isRTL && 'text-right')}>
+          <h2 className="section-title">{featuredTitleLabel}</h2>
           <Button variant="ghost" onClick={() => navigate('/search')}>
-            {t('home.featuredAll')}
+            {featuredButtonLabel}
           </Button>
         </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-4">
-          {featuredSpecialties.map((item) => (
-            <div key={item.title} className="rounded-3xl border border-slate-100 bg-white/80 p-5 shadow-card">
-              <p className="text-base font-semibold text-slate-800">{item.title}</p>
-              <p className="text-sm text-slate-500">{item.description}</p>
-            </div>
-          ))}
+        <div className="mt-6">
+          <div
+            className={cn(
+              'grid gap-4 md:grid-cols-4',
+              isRTL ? 'justify-end justify-items-end text-right' : 'justify-start justify-items-start text-left',
+            )}
+          >
+            {featuredSpecialties.map((item) => (
+              <div key={item.title} className="rounded-3xl border border-slate-100 bg-white/80 p-5 shadow-card">
+                <p className="text-base font-semibold text-slate-800">{item.title}</p>
+                <p className="text-sm text-slate-500">{item.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -71,8 +132,12 @@ export const HomePage = () => {
             </p>
           </div>
           <div className={cn('flex items-center', isRTL ? 'justify-start' : 'justify-end')}>
-            <Button className="bg-white text-slate-900 hover:bg-white/90" onClick={() => navigate('/auth/register')}>
-              {t('home.doctorCtaAction')}
+            <Button
+              className="bg-white text-slate-900 hover:bg-white/90"
+              onClick={doctorSectionCta.onClick}
+              disabled={doctorSectionCta.disabled}
+            >
+              {doctorSectionCta.label}
             </Button>
           </div>
         </div>

@@ -83,6 +83,11 @@ export const LoginPage = () => {
         <label className="text-xs text-slate-500">{t('auth.login.password')}</label>
         <Input type="password" placeholder="••••••••" {...register('password')} />
         {formState.errors.password && <p className="text-xs text-red-500">{formState.errors.password.message}</p>}
+        <div className="text-right">
+          <Link to="/auth/forgot-password" className="text-xs text-primary-600 hover:underline">
+            {t('auth.login.forgotPassword')}
+          </Link>
+        </div>
       </div>
       <Button type="submit" className="w-full" disabled={mutation.isPending}>
         {mutation.isPending ? t('auth.login.submitting') : t('auth.login.submit')}

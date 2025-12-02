@@ -46,6 +46,15 @@ class SocialAuthController extends Controller
             );
         }
 
+        if ($user->is_disabled) {
+            return $this->respondWithError(
+                ['email' => __('تم تعطيل هذا الحساب، يرجى التواصل مع الدعم.')],
+                __('لا يمكن تسجيل الدخول بالحساب المعطّل'),
+                423
+            );
+        }
+
+        $user->forceFill(['last_login_at' => now()])->save();
         $user->load('doctorProfile');
 
         $token = $user->createToken('spa')->plainTextToken;

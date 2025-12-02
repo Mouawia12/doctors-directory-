@@ -32,6 +32,17 @@ export interface UpdatePasswordPayload {
   password_confirmation: string
 }
 
+export interface ForgotPasswordPayload {
+  email: string
+}
+
+export interface ResetPasswordPayload {
+  token: string
+  email: string
+  password: string
+  password_confirmation: string
+}
+
 export const fetchCurrentUser = async (): Promise<User | null> => {
   try {
     const { data } = await api.get<ApiResponse<User>>('/api/auth/me')
@@ -65,4 +76,12 @@ export const logout = async (): Promise<void> => {
 
 export const updatePassword = async (payload: UpdatePasswordPayload): Promise<void> => {
   await api.put('/api/auth/password', payload)
+}
+
+export const requestPasswordReset = async (payload: ForgotPasswordPayload): Promise<void> => {
+  await api.post('/api/auth/forgot-password', payload)
+}
+
+export const resetPassword = async (payload: ResetPasswordPayload): Promise<void> => {
+  await api.post('/api/auth/reset-password', payload)
 }

@@ -1,6 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import { useAuthQuery } from '@/features/auth/hooks'
 import { ChangePasswordForm } from '@/components/account/ChangePasswordForm'
+import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/layout/Footer'
+import { Button } from '@/components/ui/Button'
+import { useNavigate } from 'react-router-dom'
 
 const buildAvatar = (name: string) =>
   `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D7DF5&color=fff`
@@ -8,6 +12,7 @@ const buildAvatar = (name: string) =>
 export const UserProfilePage = () => {
   const { data: user } = useAuthQuery()
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const dir = i18n.dir()
 
   if (!user) {
@@ -18,8 +23,16 @@ export const UserProfilePage = () => {
   const roleLabel = user.roles.includes('doctor') ? t('account.profile.roles.doctor') : t('account.profile.roles.user')
 
   return (
-    <div className="container space-y-8 py-8" dir={dir}>
-      <section className="grid gap-6 rounded-[32px] border border-slate-100 bg-white p-6 shadow-card md:grid-cols-[240px,1fr]">
+    <div className="flex min-h-screen flex-col" dir={dir}>
+      <Navbar />
+      <main className="flex-1">
+        <div className="container space-y-8 py-8">
+          <div className="flex justify-start">
+            <Button variant="ghost" className="px-3 py-1.5 text-sm" onClick={() => navigate(-1)}>
+              {t('common.actions.back')}
+            </Button>
+          </div>
+          <section className="grid gap-6 rounded-[32px] border border-slate-100 bg-white p-6 shadow-card md:grid-cols-[240px,1fr]">
         <div className="flex flex-col items-center gap-3 text-center">
           <img src={avatar} alt={user.name} className="h-40 w-40 rounded-[32px] object-cover" loading="lazy" />
           <h1 className="text-2xl font-semibold text-slate-900">{user.name}</h1>
@@ -50,6 +63,9 @@ export const UserProfilePage = () => {
           <ChangePasswordForm />
         </div>
       </section>
+        </div>
+      </main>
+      <Footer />
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { useCategoryMutations } from '@/features/admin/hooks'
 import { useCategoriesQuery } from '@/features/categories/hooks'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { Select } from '@/components/ui/Select'
 import { toast } from 'sonner'
 import type { Category } from '@/types/doctor'
 import { useTranslation } from 'react-i18next'
@@ -19,14 +20,29 @@ export const AdminCategoriesPage = () => {
   const { t } = useTranslation()
 
   const [name, setName] = useState('')
+  const [parentMode, setParentMode] = useState<'root' | 'child'>('root')
+  const [selectedParent, setSelectedParent] = useState('')
+  const flattenedCategories = useMemo(() => flattenCategories(categories ?? []), [categories])
 
   const handleCreate = () => {
     if (!name) return
+    if (parentMode === 'child' && !selectedParent) {
+      toast.error(t('adminCategories.parentRequired'))
+      return
+    }
     mutation.mutate(
-      { type: 'create', payload: { name } },
+      {
+        type: 'create',
+        payload: {
+          name,
+          parent_id: parentMode === 'child' ? Number(selectedParent) : null,
+        },
+      },
       {
         onSuccess: () => {
           setName('')
+          setSelectedParent('')
+          setParentMode('root')
           toast.success(t('adminCategories.createSuccess'))
         },
       },
@@ -42,11 +58,36 @@ export const AdminCategoriesPage = () => {
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="mb-4 text-lg font-semibold text-slate-900">{t('adminCategories.addTitle')}</h2>
-        <div className="flex flex-col gap-3 md:flex-row">
-          <Input placeholder={t('adminCategories.namePlaceholder')} value={name} onChange={(event) => setName(event.target.value)} />
-          <Button onClick={handleCreate} disabled={mutation.isPending}>
-            {t('adminCategories.addAction')}
-          </Button>
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-xs text-slate-500">{t('adminCategories.namePlaceholder')}</label>
+            <Input value={name} onChange={(event) => setName(event.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs text-slate-500">{t('adminCategories.typeLabel')}</label>
+            <Select value={parentMode} onChange={(event) => setParentMode(event.target.value as 'root' | 'child')}>
+              <option value="root">{t('adminCategories.typeOptions.root')}</option>
+              <option value="child">{t('adminCategories.typeOptions.child')}</option>
+            </Select>
+          </div>
+          {parentMode === 'child' && (
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-xs text-slate-500">{t('adminCategories.parentLabel')}</label>
+              <Select value={selectedParent} onChange={(event) => setSelectedParent(event.target.value)}>
+                <option value="">{t('adminCategories.parentPlaceholder')}</option>
+                {flattenedCategories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {'-'.repeat(category.depth)} {category.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
+          <div className="md:col-span-2">
+            <Button onClick={handleCreate} disabled={mutation.isPending} className="w-full md:w-auto">
+              {t('adminCategories.addAction')}
+            </Button>
+          </div>
         </div>
       </div>
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">

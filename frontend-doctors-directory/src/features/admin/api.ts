@@ -1,7 +1,7 @@
 import { api } from '@/lib/http'
 import type { ApiListResponse, ApiResponse } from '@/types/api'
 import type { Category, Doctor } from '@/types/doctor'
-import type { AdminDoctorFilters, AdminDoctorPayload } from '@/features/admin/types'
+import type { AdminDoctorFilters, AdminDoctorPayload, AdminDoctorResponseData } from '@/features/admin/types'
 
 export const fetchAdminDoctors = async (filters: AdminDoctorFilters = {}) => {
   const { status, q, page = 1, perPage = 10 } = filters
@@ -22,12 +22,12 @@ export const fetchAdminDoctor = async (doctorId: number | string) => {
 }
 
 export const createAdminDoctor = async (payload: AdminDoctorPayload) => {
-  const { data } = await api.post<ApiResponse<Doctor>>('/api/admin/doctors', payload)
+  const { data } = await api.post<ApiResponse<AdminDoctorResponseData>>('/api/admin/doctors', payload)
   return data.data
 }
 
 export const updateAdminDoctor = async (doctorId: number, payload: AdminDoctorPayload) => {
-  const { data } = await api.put<ApiResponse<Doctor>>(`/api/admin/doctors/${doctorId}`, payload)
+  const { data } = await api.put<ApiResponse<AdminDoctorResponseData>>(`/api/admin/doctors/${doctorId}`, payload)
   return data.data
 }
 

@@ -8,10 +8,14 @@ use App\Http\Requests\Admin\DoctorRequest;
 use App\Http\Resources\DoctorResource;
 use App\Models\Clinic;
 use App\Models\Doctor;
+use App\Models\User;
+use App\Notifications\DoctorStatusUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DoctorController extends Controller
 {
@@ -49,16 +53,25 @@ class DoctorController extends Controller
 
     public function store(DoctorRequest $request): JsonResponse
     {
-        $doctor = DB::transaction(function () use ($request): Doctor {
+        [$doctor, $generatedPassword] = DB::transaction(function () use ($request): array {
             $doctor = Doctor::create($this->doctorAttributes($request));
 
             $doctor->categories()->sync($request->categories());
             $this->syncClinics($doctor, $request->clinics());
+            $password = $this->ensureDoctorUser($doctor, $request);
 
-            return $doctor->fresh(['clinics', 'categories', 'media', 'user']);
+            return [$doctor->fresh(['clinics', 'categories', 'media', 'user']), $password];
         });
 
-        return $this->respond(new DoctorResource($doctor), __('تم إنشاء الطبيب بنجاح'), null, 201);
+        return $this->respond(
+            [
+                'doctor' => new DoctorResource($doctor),
+                'generated_password' => $generatedPassword,
+            ],
+            __('تم إنشاء الطبيب بنجاح'),
+            null,
+            201,
+        );
     }
 
     public function show(Doctor $doctor): JsonResponse
@@ -71,17 +84,24 @@ class DoctorController extends Controller
 
     public function update(DoctorRequest $request, Doctor $doctor): JsonResponse
     {
-        $doctor = DB::transaction(function () use ($request, $doctor): Doctor {
+        [$doctor, $generatedPassword] = DB::transaction(function () use ($request, $doctor): array {
             $doctor->fill($this->doctorAttributes($request));
             $doctor->save();
 
             $doctor->categories()->sync($request->categories());
             $this->syncClinics($doctor, $request->clinics());
+            $password = $this->ensureDoctorUser($doctor, $request);
 
-            return $doctor->fresh(['clinics', 'categories', 'media', 'user']);
+            return [$doctor->fresh(['clinics', 'categories', 'media', 'user']), $password];
         });
 
-        return $this->respond(new DoctorResource($doctor), __('تم تحديث بيانات الطبيب'));
+        return $this->respond(
+            [
+                'doctor' => new DoctorResource($doctor),
+                'generated_password' => $generatedPassword,
+            ],
+            __('تم تحديث بيانات الطبيب'),
+        );
     }
 
     public function destroy(Doctor $doctor): JsonResponse
@@ -99,6 +119,8 @@ class DoctorController extends Controller
             'is_verified' => true,
         ]);
 
+        $this->notifyDoctorStatusChange($doctor);
+
         return $this->respond(new DoctorResource($doctor->fresh(['clinics', 'categories'])), __('تمت الموافقة على الطبيب'));
     }
 
@@ -113,6 +135,8 @@ class DoctorController extends Controller
             'status_note' => $validated['note'] ?? __('يرجى تحديث البيانات وإعادة الإرسال'),
             'is_verified' => false,
         ]);
+
+        $this->notifyDoctorStatusChange($doctor);
 
         return $this->respond(new DoctorResource($doctor->fresh(['clinics', 'categories'])), __('تم رفض الطلب'));
     }
@@ -165,5 +189,52 @@ class DoctorController extends Controller
                 $doctor->clinics()->create($attributes);
             }
         });
+    }
+
+    protected function notifyDoctorStatusChange(Doctor $doctor): void
+    {
+        $doctor->loadMissing('user');
+
+        if ($doctor->user) {
+            $doctor->user->notify(new DoctorStatusUpdated($doctor));
+        }
+    }
+
+    protected function ensureDoctorUser(Doctor $doctor, DoctorRequest $request): ?string
+    {
+        if ($doctor->user_id || $request->filled('user_id')) {
+            return null;
+        }
+
+        $email = $request->input('email') ?: $request->input('appointment_email');
+
+        if (! $email) {
+            return null;
+        }
+
+        $existingUser = User::where('email', $email)->first();
+
+        if ($existingUser) {
+            $doctor->update(['user_id' => $existingUser->id]);
+            if (! $existingUser->hasRole('doctor')) {
+                $existingUser->assignRole('doctor');
+            }
+
+            return null;
+        }
+
+        $password = Str::of('12345678')->shuffle()->toString();
+
+        $user = User::create([
+            'name' => $doctor->full_name,
+            'email' => $email,
+            'password' => Hash::make($password),
+        ]);
+
+        $user->assignRole('doctor');
+
+        $doctor->update(['user_id' => $user->id]);
+
+        return $password;
     }
 }

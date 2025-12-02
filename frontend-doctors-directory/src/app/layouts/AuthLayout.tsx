@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 export const AuthLayout = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const dir = i18n.dir()
 
   return (
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2" dir={dir}>
       <div className="relative hidden flex-col justify-between bg-gradient-to-br from-primary-600 to-primary-800 p-10 text-white lg:flex">
         <div>
           <Link to="/" className="text-2xl font-semibold text-white">
