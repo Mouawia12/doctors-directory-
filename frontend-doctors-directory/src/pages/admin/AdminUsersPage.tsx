@@ -12,7 +12,7 @@ import { useAdminUserDeleteMutation, useAdminUserResetPasswordMutation, useAdmin
 import type { AdminUserFilters } from '@/features/adminUsers/types'
 import type { User } from '@/types/user'
 import { useTranslation } from 'react-i18next'
-import { Filter, Mail, RefreshCcw, Search, Shield, Trash2, UserMinus, UserPlus, Users } from 'lucide-react'
+import { Filter, RefreshCcw, Search, Shield, Trash2, UserMinus, UserPlus, Users } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 
 const formatDate = (value?: string | null) => (value ? dayjs(value).format('DD MMM YYYY HH:mm') : '—')
@@ -230,7 +230,7 @@ export const AdminUsersPage = () => {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {user.roles?.map((role) => (
-                      <Badge key={role} variant="outline" className="rounded-full px-3 py-1 text-xs capitalize">
+                      <Badge key={role} className="rounded-full border border-slate-200 px-3 py-1 text-xs capitalize">
                         {role}
                       </Badge>
                     ))}

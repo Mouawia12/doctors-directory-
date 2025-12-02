@@ -5,7 +5,7 @@ import {
   resetAdminUserPassword,
   updateAdminUserStatus,
 } from '@/features/adminUsers/api'
-import type { AdminUserFilters, AdminUserListResponse } from '@/features/adminUsers/types'
+import type { AdminUserFilters } from '@/features/adminUsers/types'
 import { queryClient } from '@/lib/queryClient'
 import { queryKeys } from '@/lib/queryKeys'
 import type { User } from '@/types/user'
@@ -16,9 +16,6 @@ export const useAdminUsersQuery = (filters: AdminUserFilters = {}) => {
     queryKey: queryKeys.adminUsers(keyFilters),
     queryFn: () => fetchAdminUsers(filters),
     placeholderData: keepPreviousData,
-  } satisfies {
-    queryKey: ReturnType<typeof queryKeys.adminUsers>
-    queryFn: () => Promise<AdminUserListResponse>
   })
 }
 

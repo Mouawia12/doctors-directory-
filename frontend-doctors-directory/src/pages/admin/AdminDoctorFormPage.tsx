@@ -132,7 +132,7 @@ const createWorkHoursDefaults = (existing?: Record<string, string[]>): ClinicWor
       to: to ?? '17:00',
     }
     return acc
-  }, {})
+  }, {} as ClinicWorkHoursForm)
 }
 
 const serializeWorkHours = (state?: ClinicWorkHoursForm) => {
@@ -431,11 +431,6 @@ export const AdminDoctorFormPage = () => {
 
   const createMutation = useCreateAdminDoctor()
   const updateMutation = useUpdateAdminDoctor()
-  const avatarMedia = doctor?.media?.avatar ?? null
-  const introVideoMedia = doctor?.media?.intro_video ?? null
-  const documentsMedia = doctor?.media?.documents ?? []
-  const galleryMedia = doctor?.media?.gallery ?? []
-
   useEffect(() => {
     if (doctor && isEditMode) {
       const identityTraits = (doctor.identity_traits as Record<string, unknown> | undefined) ?? {}

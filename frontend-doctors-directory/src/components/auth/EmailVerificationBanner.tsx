@@ -33,8 +33,7 @@ export const EmailVerificationBanner = () => {
         </div>
         <Button
           variant="outline"
-          size="sm"
-          className="w-full border-amber-300 text-amber-900 hover:bg-amber-100 md:w-auto"
+          className="w-full border-amber-300 px-4 py-2 text-sm text-amber-900 hover:bg-amber-100 md:w-auto"
           disabled={resendMutation.isPending}
           onClick={handleResend}
         >

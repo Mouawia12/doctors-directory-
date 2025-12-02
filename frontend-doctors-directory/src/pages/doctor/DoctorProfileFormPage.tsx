@@ -781,7 +781,8 @@ export const DoctorProfileFormPage = () => {
     } catch (error) {
       const message = getErrorMessage(error, t('doctorForm.toasts.uploadError'))
       if (currentCollection) {
-        setMediaErrors((prev) => ({ ...prev, [currentCollection]: message }))
+        const failedCollection: MediaCollection = currentCollection
+        setMediaErrors((prev) => ({ ...prev, [failedCollection]: message }))
       }
       toast.error(message)
       return false
