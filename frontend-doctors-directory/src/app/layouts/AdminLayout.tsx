@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/Input'
 import { useAuthQuery, useLogoutMutation } from '@/features/auth/hooks'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
+import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner'
 
 type NavItem = {
   id: string
@@ -235,6 +236,7 @@ export const AdminLayout = () => {
       </aside>
 
       <div className="flex flex-1 flex-col">
+        <EmailVerificationBanner />
         <header className="relative z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
           <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-10">
             <div className="flex flex-wrap items-center justify-between gap-4">

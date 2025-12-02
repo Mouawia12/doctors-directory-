@@ -5,9 +5,10 @@ import { useAuthQuery } from '@/features/auth/hooks'
 interface ProtectedRouteProps {
   children: ReactNode
   roles?: string[]
+  allowUnverified?: boolean
 }
 
-export const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, roles, allowUnverified = false }: ProtectedRouteProps) => {
   const { data: user, status } = useAuthQuery()
   const location = useLocation()
 
@@ -21,6 +22,10 @@ export const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
 
   if (roles && !roles.some((role) => user.roles.includes(role))) {
     return <Navigate to="/" replace />
+  }
+
+  if (!allowUnverified && !user.email_verified_at) {
+    return <Navigate to="/verify-email" replace state={{ from: location.pathname }} />
   }
 
   return children

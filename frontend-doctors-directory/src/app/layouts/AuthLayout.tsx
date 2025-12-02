@@ -1,10 +1,12 @@
 import { Outlet } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { PropsWithChildren, ReactNode } from 'react'
 
-export const AuthLayout = () => {
+export const AuthLayout = ({ children }: PropsWithChildren<{ children?: ReactNode }>) => {
   const { t, i18n } = useTranslation()
   const dir = i18n.dir()
+  const content = children ?? <Outlet />
 
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2" dir={dir}>
@@ -24,7 +26,7 @@ export const AuthLayout = () => {
       </div>
       <div className="flex items-center justify-center bg-slate-50 p-6">
         <div className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-8 shadow-card">
-          <Outlet />
+          {content}
         </div>
       </div>
     </div>

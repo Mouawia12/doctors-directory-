@@ -48,7 +48,7 @@ const ResetPasswordPage = () => {
     return (
       <div className="space-y-3 text-center text-sm text-rose-500">
         <p>{t('auth.reset.missingToken')}</p>
-        <Button variant="ghost" onClick={() => navigate('/auth/forgot-password')}>
+        <Button variant="ghost" onClick={() => navigate('/forgot-password')}>
           {t('auth.reset.requestNew')}
         </Button>
       </div>

@@ -79,9 +79,13 @@ export const updatePassword = async (payload: UpdatePasswordPayload): Promise<vo
 }
 
 export const requestPasswordReset = async (payload: ForgotPasswordPayload): Promise<void> => {
-  await api.post('/api/auth/forgot-password', payload)
+  await api.post('/api/forgot-password', payload)
 }
 
 export const resetPassword = async (payload: ResetPasswordPayload): Promise<void> => {
-  await api.post('/api/auth/reset-password', payload)
+  await api.post('/api/reset-password', payload)
+}
+
+export const resendVerificationEmail = async (): Promise<void> => {
+  await api.post('/api/email/verification-notification')
 }

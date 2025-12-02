@@ -48,6 +48,9 @@ class NewPasswordController extends Controller
             ]);
         }
 
-        return response()->json(['status' => __($status)]);
+        return $this->respond(
+            ['status' => __($status)],
+            __('تم تحديث كلمة المرور بنجاح، يمكنك الآن تسجيل الدخول')
+        );
     }
 }

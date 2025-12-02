@@ -44,6 +44,8 @@ class AuthController extends Controller
             return $user->load('doctorProfile');
         });
 
+        $user->sendEmailVerificationNotification();
+
         $token = $user->createToken('spa')->plainTextToken;
 
         return $this->respond(

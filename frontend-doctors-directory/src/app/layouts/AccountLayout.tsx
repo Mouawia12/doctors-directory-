@@ -5,6 +5,7 @@ import { useLogoutMutation } from '@/features/auth/hooks'
 import { useTranslation } from 'react-i18next'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner'
 
 const tabs = [
   { to: '/doctor', labelKey: 'accountLayout.tabs.overview', icon: UserRound },
@@ -24,6 +25,7 @@ export const AccountLayout = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50" dir={dir}>
+      <EmailVerificationBanner />
       <Navbar />
       <main className="flex-1">
         <div className="container py-10">

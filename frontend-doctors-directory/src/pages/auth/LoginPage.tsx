@@ -84,7 +84,7 @@ export const LoginPage = () => {
         <Input type="password" placeholder="••••••••" {...register('password')} />
         {formState.errors.password && <p className="text-xs text-red-500">{formState.errors.password.message}</p>}
         <div className="text-right">
-          <Link to="/auth/forgot-password" className="text-xs text-primary-600 hover:underline">
+          <Link to="/forgot-password" className="text-xs text-primary-600 hover:underline">
             {t('auth.login.forgotPassword')}
           </Link>
         </div>

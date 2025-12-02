@@ -8,6 +8,7 @@ import {
   requestPasswordReset,
   resetPassword,
   updatePassword,
+  resendVerificationEmail,
   type AuthSuccessPayload,
   type LoginPayload,
   type RegisterPayload,
@@ -74,6 +75,14 @@ export const useForgotPasswordMutation = () =>
 export const useResetPasswordMutation = () =>
   useMutation({
     mutationFn: (payload: ResetPasswordPayload) => resetPassword(payload),
+  })
+
+export const useResendEmailVerificationMutation = () =>
+  useMutation({
+    mutationFn: () => resendVerificationEmail(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth })
+    },
   })
 
 const handleAuthState = ({ user, token }: AuthSuccessPayload) => {

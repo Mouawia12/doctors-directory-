@@ -25,11 +25,11 @@ class EmailVerificationTest extends TestCase
             ['id' => $user->id, 'hash' => sha1($user->email)]
         );
 
-        $response = $this->actingAs($user)->get($verificationUrl);
+        $response = $this->get($verificationUrl);
 
         Event::assertDispatched(Verified::class);
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
-        $response->assertRedirect(config('app.frontend_url').'/dashboard?verified=1');
+        $response->assertRedirect($this->verificationRedirectUrl('verified'));
     }
 
     public function test_email_is_not_verified_with_invalid_hash(): void
@@ -42,8 +42,15 @@ class EmailVerificationTest extends TestCase
             ['id' => $user->id, 'hash' => sha1('wrong-email')]
         );
 
-        $this->actingAs($user)->get($verificationUrl);
+        $this->get($verificationUrl)->assertRedirect($this->verificationRedirectUrl('invalid-link'));
 
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
+    }
+
+    protected function verificationRedirectUrl(string $status): string
+    {
+        $base = rtrim((string) config('app.frontend_url', config('app.url')), '/').'/verify-email/success';
+
+        return "{$base}?status={$status}";
     }
 }

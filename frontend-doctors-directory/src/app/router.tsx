@@ -12,6 +12,8 @@ import LoginPage from '@/pages/auth/LoginPage'
 import RegisterPage from '@/pages/auth/RegisterPage'
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
+import EmailVerificationPendingPage from '@/pages/auth/EmailVerificationPendingPage'
+import EmailVerificationSuccessPage from '@/pages/auth/EmailVerificationSuccessPage'
 import DoctorProfileFormPage from '@/pages/doctor/DoctorProfileFormPage'
 import DoctorProfileOverviewPage from '@/pages/doctor/DoctorProfileOverviewPage'
 import DoctorPendingReviewPage from '@/pages/doctor/DoctorPendingReviewPage'
@@ -49,9 +51,41 @@ export const router = createBrowserRouter([
     children: [
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
-      { path: 'forgot-password', element: <ForgotPasswordPage /> },
-      { path: 'reset-password', element: <ResetPasswordPage /> },
     ],
+  },
+  {
+    path: '/forgot-password',
+    element: (
+      <AuthLayout>
+        <ForgotPasswordPage />
+      </AuthLayout>
+    ),
+  },
+  {
+    path: '/reset-password',
+    element: (
+      <AuthLayout>
+        <ResetPasswordPage />
+      </AuthLayout>
+    ),
+  },
+  {
+    path: '/verify-email',
+    element: (
+      <AuthLayout>
+        <ProtectedRoute allowUnverified>
+          <EmailVerificationPendingPage />
+        </ProtectedRoute>
+      </AuthLayout>
+    ),
+  },
+  {
+    path: '/verify-email/success',
+    element: (
+      <AuthLayout>
+        <EmailVerificationSuccessPage />
+      </AuthLayout>
+    ),
   },
   {
     path: '/doctor',
