@@ -131,7 +131,7 @@ export const HomePage = () => {
               {t('home.doctorCtaBody')}
             </p>
           </div>
-          <div className={cn('flex items-center', isRTL ? 'justify-start' : 'justify-end')}>
+          <div className="flex items-center justify-end">
             <Button
               className="bg-white text-slate-900 hover:bg-white/90"
               onClick={doctorSectionCta.onClick}
