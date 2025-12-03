@@ -21,12 +21,13 @@ class RoleSeeder extends Seeder
         ])->map(fn (string $role) => Role::firstOrCreate(['name' => $role]));
 
         $admin = User::firstOrCreate(
-            ['email' => 'admin@doctors.local'],
+            ['email' => 'ymouawia10@yahoo.com'],
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('password'),
             ]
         );
+        $admin->forceFill(['email_verified_at' => now()])->save();
         $admin->assignRole('admin');
 
         $demoUser = User::firstOrCreate(
