@@ -5,11 +5,10 @@ namespace App\Notifications;
 use App\Enums\DoctorStatus;
 use App\Models\Doctor;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class DoctorStatusUpdated extends Notification implements ShouldQueue
+class DoctorStatusUpdated extends Notification
 {
     use Queueable;
 
