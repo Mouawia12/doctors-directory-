@@ -1,6 +1,5 @@
-import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Heart, Phone, Globe, Mail, Video } from 'lucide-react'
+import { Phone, Globe, Mail } from 'lucide-react'
 import { useDoctorQuery } from '@/features/doctors/hooks'
 import { useAuthQuery } from '@/features/auth/hooks'
 import { MapWidget } from '@/components/common/MapWidget'
@@ -24,14 +23,6 @@ export const DoctorProfilePage = () => {
 
   const canEdit = authUser?.id && doctor?.user?.id && authUser.id === doctor.user.id
   const languages = doctor?.languages ?? []
-  const therapyTags = useMemo(() => {
-    if (!doctor) return []
-    const tags: string[] = []
-    if (doctor.specialty) tags.push(doctor.specialty)
-    if (doctor.sub_specialty) tags.push(doctor.sub_specialty)
-    return [...tags, ...(doctor.qualifications ?? [])]
-  }, [doctor?.specialty, doctor?.sub_specialty, doctor?.qualifications])
-
   if (isLoading) {
     return (
       <div className="container text-center text-slate-500">
@@ -62,31 +53,9 @@ export const DoctorProfilePage = () => {
         defaultValue: t('doctorProfile.newClients.default'),
       })
     : t('doctorProfile.newClients.default')
-  const aboutParagraphs = [
-    doctor.about_paragraph_one,
-    doctor.about_paragraph_two,
-    doctor.about_paragraph_three,
-  ].filter((paragraph): paragraph is string => Boolean(paragraph))
   const paymentMethods = doctor.payment_methods ?? []
   const therapyModalities = doctor.therapy_modalities ?? []
-  const alliedCommunities = doctor.allied_communities ?? []
-  const clientParticipants = doctor.client_participants ?? []
-  const clientAgeGroups = doctor.client_age_groups ?? []
   const insurances = doctor.insurances ?? []
-  const identityTraits = (doctor.identity_traits as Record<string, unknown> | undefined) ?? {}
-  const identityGender = asIdentityArray(identityTraits.gender_identity)
-  const identityEthnicity = asIdentityArray(identityTraits.ethnicity)
-  const identityLgbtq = asIdentityArray(identityTraits.lgbtqia)
-  const identityNote =
-    typeof identityTraits.other === 'string' && identityTraits.other.trim().length > 0
-      ? identityTraits.other.trim()
-      : null
-  const identityBirthYear =
-    typeof identityTraits.birth_year === 'number' || typeof identityTraits.birth_year === 'string'
-      ? identityTraits.birth_year
-      : null
-  const introVideo = doctor.media?.intro_video?.url
-  const newClientsIntro = doctor.new_clients_intro
   const telHref = buildTelLink(doctor.phone)
   const whatsappHref = buildWhatsAppLink(doctor.whatsapp)
   const bookingLink = whatsappHref ?? telHref
