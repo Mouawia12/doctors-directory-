@@ -12,9 +12,6 @@ import { useTranslation } from 'react-i18next'
 import { PhoneNumber } from '@/components/common/PhoneNumber'
 import { buildTelLink, buildWhatsAppLink } from '@/lib/phone'
 
-const asIdentityArray = (value: unknown): string[] =>
-  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
-
 export const DoctorProfilePage = () => {
   const { id } = useParams()
   const { data: doctor, isLoading } = useDoctorQuery(id ?? '')
@@ -123,11 +120,6 @@ export const DoctorProfilePage = () => {
                 <p className="text-xs text-primary-600">{newClientsStatusLabel}</p>
               </div>
             </div>
-            {newClientsIntro && (
-              <div className="rounded-2xl border border-dashed border-primary-200 bg-primary-50/70 p-3 text-sm text-primary-900">
-                {newClientsIntro}
-              </div>
-            )}
             <div className="flex flex-wrap gap-2">
               {languages.map((language) => (
                 <span key={language} className="rounded-full bg-slate-900/5 px-3 py-1 text-xs text-slate-700">
