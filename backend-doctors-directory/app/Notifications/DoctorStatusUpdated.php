@@ -35,17 +35,17 @@ class DoctorStatusUpdated extends Notification implements ShouldQueue
 
         $portalUrl = rtrim((string) config('app.frontend_url', config('app.url')), '/').'/doctor';
 
-        $mailMessage = (new MailMessage())
+        return (new MailMessage())
             ->subject($subject)
-            ->greeting(__('Hello :name', ['name' => $notifiable->name]))
-            ->line($message)
-            ->action(__('Open doctor portal'), $portalUrl);
-
-        if ($this->doctor->status === DoctorStatus::Rejected->value && $this->doctor->status_note) {
-            $mailMessage->line(__('Review note: :note', ['note' => $this->doctor->status_note]));
-        }
-
-        return $mailMessage->line(__('Thank you for being part of Doctors Directory.'));
+            ->view('emails.doctor-status', [
+                'user' => $notifiable,
+                'doctor' => $this->doctor,
+                'subject' => $subject,
+                'messageBody' => $message,
+                'note' => $this->doctor->status_note,
+                'portalUrl' => $portalUrl,
+                'appName' => config('app.name'),
+            ]);
     }
 
     /**

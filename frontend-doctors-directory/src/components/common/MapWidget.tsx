@@ -13,9 +13,10 @@ interface MapWidgetProps {
   markers: Marker[]
   zoom?: number
   className?: string
+  fitToMarkers?: boolean
 }
 
-export const MapWidget = ({ markers, zoom = 12, className }: MapWidgetProps) => {
+export const MapWidget = ({ markers, zoom = 12, className, fitToMarkers = false }: MapWidgetProps) => {
   const mapRef = useRef<HTMLDivElement | null>(null)
   const loaderConfigured = useRef(false)
   const [hasError, setHasError] = useState(false)
@@ -37,9 +38,10 @@ export const MapWidget = ({ markers, zoom = 12, className }: MapWidgetProps) => 
           loaderConfigured.current = true
         }
 
-        const [{ Map }, { AdvancedMarkerElement }] = await Promise.all([
+        const [{ Map }, { AdvancedMarkerElement }, { LatLngBounds }] = await Promise.all([
           importLibrary('maps') as Promise<{ Map: typeof google.maps.Map }>,
           importLibrary('marker') as Promise<{ AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement }>,
+          importLibrary('core') as Promise<{ LatLngBounds: typeof google.maps.LatLngBounds }>,
         ])
 
         if (!isMounted || !mapRef.current) return
@@ -59,6 +61,12 @@ export const MapWidget = ({ markers, zoom = 12, className }: MapWidgetProps) => 
             title: marker.title,
           })
         })
+
+        if (fitToMarkers && markers.length > 1) {
+          const bounds = new LatLngBounds()
+          markers.forEach((marker) => bounds.extend({ lat: marker.lat, lng: marker.lng }))
+          map.fitBounds(bounds, 48)
+        }
       } catch (error) {
         console.error('تعذّر تحميل خريطة Google', error)
         if (isMounted) {
@@ -72,7 +80,7 @@ export const MapWidget = ({ markers, zoom = 12, className }: MapWidgetProps) => 
     return () => {
       isMounted = false
     }
-  }, [markers, zoom])
+  }, [markers, zoom, fitToMarkers])
 
   if (!env.mapsKey || hasError) {
     const baseFallback =

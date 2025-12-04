@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\ServiceProvider;
 
@@ -52,6 +53,19 @@ class AppServiceProvider extends ServiceProvider
                     'user' => $notifiable,
                     'appName' => config('app.name'),
                     'expiresInMinutes' => $expiresInMinutes,
+                ]);
+        });
+
+        VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
+            $expires = (int) config('auth.verification.expire', 60);
+
+            return (new MailMessage())
+                ->subject(__('تأكيد البريد الإلكتروني'))
+                ->view('emails.verify-email', [
+                    'verificationUrl' => $url,
+                    'user' => $notifiable,
+                    'appName' => config('app.name'),
+                    'expiresInMinutes' => $expires,
                 ]);
         });
     }

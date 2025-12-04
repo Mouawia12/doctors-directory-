@@ -206,7 +206,11 @@ export const SearchPage = () => {
         {mapMarkers.length > 0 && (
           <div className="space-y-3 rounded-3xl border border-slate-100 bg-white p-4 shadow-card">
             <p className="text-sm font-semibold text-slate-800">{t('searchPage.results.mapTitle')}</p>
-            <MapWidget markers={mapMarkers} className="h-72 w-full rounded-2xl border border-slate-100" />
+            <MapWidget
+              markers={mapMarkers}
+              className="h-72 w-full rounded-2xl border border-slate-100"
+              fitToMarkers={!filters.city}
+            />
           </div>
         )}
         <FilterChips filters={activeFilters} onRemove={removeFilter} labels={filterLabels} />

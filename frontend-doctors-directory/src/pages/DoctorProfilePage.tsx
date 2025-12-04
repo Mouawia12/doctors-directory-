@@ -216,72 +216,6 @@ export const DoctorProfilePage = () => {
 
       {(aboutParagraphs.length > 0 || doctor.bio) && (
         <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
-          <h2 className="text-xl font-semibold text-slate-900">
-            {t('doctorProfile.aboutTitle')}
-          </h2>
-          <p className="text-sm text-slate-500">
-            {t('doctorProfile.aboutCopy')}
-          </p>
-          <div className="mt-4 space-y-4 text-slate-700">
-            {aboutParagraphs.length > 0
-              ? aboutParagraphs.map((paragraph, index) => (
-                  <p key={index} className="leading-relaxed">
-                    {paragraph}
-                  </p>
-                ))
-              : doctor.bio && <p className="leading-relaxed">{doctor.bio}</p>}
-          </div>
-        </section>
-      )}
-
-      {introVideo && (
-        <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
-          <div className="flex items-center gap-3">
-            <Video className="h-5 w-5 text-primary-500" />
-            <div>
-              <h2 className="text-xl font-semibold text-slate-900">
-                {t('doctorProfile.introVideo')}
-              </h2>
-              <p className="text-sm text-slate-500">
-                {t('doctorProfile.newClientsIntro')}
-              </p>
-            </div>
-          </div>
-          <video controls className="mt-4 w-full rounded-3xl border border-slate-100" src={introVideo} />
-        </section>
-      )}
-
-      <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.focusTitle')}</h2>
-            <p className="text-sm text-slate-500">
-              {t('doctorProfile.focusCopy')}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-2 text-xs text-slate-500">
-            <Heart className="h-4 w-4" /> {t('doctorProfile.focusChip')}
-          </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {therapyTags.length > 0 ? (
-            therapyTags.map((tag) => (
-              <span key={tag} className="rounded-full bg-primary-50 px-4 py-1 text-xs text-primary-700">
-                {tag}
-              </span>
-            ))
-          ) : (
-            <p className="text-sm text-slate-500">
-              {t('doctorProfile.focusEmpty')}
-            </p>
-          )}
-        </div>
-        {doctor.specialties_note && (
-          <p className="mt-3 text-sm leading-relaxed text-slate-600">{doctor.specialties_note}</p>
-        )}
-      </section>
-
-      <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.financesTitle')}</h2>
         <p className="text-sm text-slate-500">
           {t('doctorProfile.financesCopy')}
@@ -361,6 +295,7 @@ export const DoctorProfilePage = () => {
         </div>
       </section>
 
+      {false && (
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.clientFocusTitle')}</h2>
         <p className="text-sm text-slate-500">{t('doctorProfile.clientFocusCopy')}</p>
@@ -493,6 +428,7 @@ export const DoctorProfilePage = () => {
           )}
         </div>
       </section>
+      )}
 
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.treatmentTitle')}</h2>

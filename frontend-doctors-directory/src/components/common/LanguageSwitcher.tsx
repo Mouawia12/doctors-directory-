@@ -21,6 +21,8 @@ export const LanguageSwitcher = ({
   const { i18n, t } = useTranslation()
   const isArabic = i18n.language === 'ar'
   const next = isArabic ? 'en' : 'ar'
+  const currentLabel = isArabic ? t('language.arabic') : t('language.english')
+  const nextLabel = isArabic ? t('language.english') : t('language.arabic')
 
   return (
     <Button
@@ -37,10 +39,11 @@ export const LanguageSwitcher = ({
       title={t('language.label')}
     >
       <Languages className={size === 'sm' ? 'h-4 w-4' : 'h-5 w-5'} aria-hidden="true" />
-      <span className="text-xs font-semibold uppercase tracking-wide">
-        {isArabic ? 'AR' : 'EN'}
-      </span>
-      {showLabel && <span className="text-xs text-slate-500">{t('language.label')}</span>}
+      <div className="flex flex-col leading-tight text-xs">
+        <span className="font-semibold text-slate-900">{currentLabel}</span>
+        <span className="text-[10px] text-slate-500">{t('language.label')}</span>
+      </div>
+      {showLabel && <span className="text-[11px] text-slate-500">{nextLabel}</span>}
     </Button>
   )
 }
