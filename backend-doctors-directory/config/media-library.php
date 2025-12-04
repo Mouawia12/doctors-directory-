@@ -120,7 +120,7 @@ return [
      * metadata and applying a little bit of compression. These are
      * the optimizers that will be used by default.
      */
-    'image_optimizers' => [
+    'image_optimizers' => function_exists('proc_open') ? [
         Spatie\ImageOptimizer\Optimizers\Jpegoptim::class => [
             '-m85', // set maximum quality to 85%
             '--force', // ensure that progressive generation is always done also if a little bigger
@@ -158,7 +158,7 @@ return [
             '-a end-usage=q', // rate control mode set to Constant Quality mode.
             '-a tune=ssim', // SSIM as tune the encoder for distortion metric.
         ],
-    ],
+    ] : [],
 
     /*
      * These generators will be used to create an image of media files.
