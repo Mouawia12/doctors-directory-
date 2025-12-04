@@ -31,17 +31,21 @@ class DoctorStatusUpdated extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        [$subject, $message] = $this->messageParts();
+        $parts = $this->messageParts();
 
         $portalUrl = rtrim((string) config('app.frontend_url', config('app.url')), '/').'/doctor';
 
         return (new MailMessage())
-            ->subject($subject)
+            ->subject($parts['subject'])
             ->view('emails.doctor-status', [
                 'user' => $notifiable,
                 'doctor' => $this->doctor,
-                'subject' => $subject,
-                'messageBody' => $message,
+                'subject' => $parts['subject'],
+                'subjectAr' => $parts['subject_ar'],
+                'subjectEn' => $parts['subject_en'],
+                'messageBody' => $parts['message'],
+                'messageAr' => $parts['message_ar'],
+                'messageEn' => $parts['message_en'],
                 'note' => $this->doctor->status_note,
                 'portalUrl' => $portalUrl,
                 'appName' => config('app.name'),
@@ -53,35 +57,57 @@ class DoctorStatusUpdated extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-        [$subject, $message] = $this->messageParts();
+        $parts = $this->messageParts();
 
         return [
             'doctor_id' => $this->doctor->id,
             'status' => $this->doctor->status,
-            'title' => $subject,
-            'message' => $message,
+            'title' => $parts['subject'],
+            'title_en' => $parts['subject_en'],
+            'title_ar' => $parts['subject_ar'],
+            'message' => $parts['message'],
+            'message_en' => $parts['message_en'],
+            'message_ar' => $parts['message_ar'],
             'note' => $this->doctor->status_note,
         ];
     }
 
     /**
-     * @return array{0: string, 1: string}
+     * @return array{
+     *     subject: string,
+     *     subject_ar: string,
+     *     subject_en: string,
+     *     message: string,
+     *     message_ar: string,
+     *     message_en: string
+     * }
      */
     protected function messageParts(): array
     {
-        return match ($this->doctor->status) {
+        $parts = match ($this->doctor->status) {
             DoctorStatus::Approved->value => [
-                __('Your doctor profile was approved'),
-                __('Your listing is now visible to patients. Keep your data up to date to maintain trust.'),
+                'subject_ar' => 'تمت الموافقة على حسابك كمعالج',
+                'subject_en' => 'Your doctor profile was approved',
+                'message_ar' => 'تمت مراجعة ملفك الطبي وتمت الموافقة عليه. حسابك أصبح مرئياً للمرضى ويمكنك استقبال الحجوزات.',
+                'message_en' => 'Your profile has been reviewed and approved. Your listing is now visible to patients so you can start receiving bookings.',
             ],
             DoctorStatus::Rejected->value => [
-                __('Your doctor profile needs updates'),
-                __('Please review the admin notes and update your information before resubmitting.'),
+                'subject_ar' => 'نعتذر، نحتاج إلى بعض التعديلات',
+                'subject_en' => 'Your doctor profile needs updates',
+                'message_ar' => 'بعد مراجعة ملفك، نحتاج إلى بعض التعديلات قبل النشر. راجع الملاحظات وأعد الإرسال متى كنت جاهزاً.',
+                'message_en' => 'We need a few updates before your profile can go live. Please review the notes from the team and resubmit when ready.',
             ],
             default => [
-                __('Your doctor profile was updated'),
-                __('Your profile status has changed.'),
+                'subject_ar' => 'تحديث على حالة حسابك',
+                'subject_en' => 'Your doctor profile was updated',
+                'message_ar' => 'تم تحديث حالة ملفك. يرجى مراجعة التفاصيل في لوحة التحكم.',
+                'message_en' => 'Your profile status has been updated. Please review the details in your portal.',
             ],
         };
+
+        $parts['subject'] = "{$parts['subject_ar']} | {$parts['subject_en']}";
+        $parts['message'] = "{$parts['message_ar']} | {$parts['message_en']}";
+
+        return $parts;
     }
 }
