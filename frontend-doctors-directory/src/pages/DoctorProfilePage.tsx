@@ -214,8 +214,8 @@ export const DoctorProfilePage = () => {
         </div>
       </section>
 
-      {(aboutParagraphs.length > 0 || doctor.bio) && (
-        <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
+
+      <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.financesTitle')}</h2>
         <p className="text-sm text-slate-500">
           {t('doctorProfile.financesCopy')}
@@ -318,38 +318,35 @@ export const DoctorProfilePage = () => {
         )}
       </section>
 
-      <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
-        <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.clinicsTitle')}</h2>
-        {doctor.clinics && doctor.clinics.length > 0 ? (
-          <>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              {doctor.clinics.map((clinic) => (
-                <div key={clinic.id} className="rounded-2xl border border-slate-100 p-4">
-                  <p className="font-semibold text-slate-800">{clinic.city}</p>
-                  <p className="text-sm text-slate-500">{clinic.address}</p>
-                  <div className="mt-3">
-                    <p className="text-xs text-slate-500">{t('doctorProfile.workingHours')}</p>
-                    <ClinicWorkHours workHours={clinic.work_hours} className="mt-2" />
-                  </div>
+      {doctor.clinics && doctor.clinics.length > 0 && (
+        <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
+          <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.clinicsTitle')}</h2>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {doctor.clinics.map((clinic) => (
+              <div key={clinic.id} className="rounded-2xl border border-slate-100 p-4">
+                <p className="font-semibold text-slate-800">{clinic.city}</p>
+                <p className="text-sm text-slate-500">{clinic.address}</p>
+                <div className="mt-3">
+                  <p className="text-xs text-slate-500">{t('doctorProfile.workingHours')}</p>
+                  <ClinicWorkHours workHours={clinic.work_hours} className="mt-2" />
                 </div>
-              ))}
-            </div>
-            <div className="mt-6">
-              <MapWidget
-                markers={doctor.clinics
-                  .filter((clinic) => clinic.lat && clinic.lng)
-                  .map((clinic) => ({
-                    lat: clinic.lat as number,
-                    lng: clinic.lng as number,
-                    title: clinic.city,
-                  }))}
-              />
-            </div>
-          </>
-        ) : (
-          <EmptyState title={t('doctorProfile.clinicsEmpty')} />
-        )}
-      </section>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6">
+            <MapWidget
+              markers={doctor.clinics
+                .filter((clinic) => clinic.lat && clinic.lng)
+                .map((clinic) => ({
+                  lat: clinic.lat as number,
+                  lng: clinic.lng as number,
+                  title: clinic.city,
+                }))}
+            />
+          </div>
+        </section>
+      )}
+
 
       {doctor.media && doctor.media.gallery.length > 0 && (
         <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
