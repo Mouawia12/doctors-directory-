@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { MapWidget } from '@/components/common/MapWidget'
+import { languageLabel } from '@/lib/language'
 import { useTranslation } from 'react-i18next'
 
 const languageOptions = ['ar', 'en']
@@ -120,12 +121,22 @@ export const SearchPage = () => {
 
   const doctors = useMemo(() => {
     const items = data?.items ?? []
-    if (!favoriteIds) return items
-    return items.map((doctor) => ({
-      ...doctor,
-      is_favorite: favoriteIds.has(doctor.id),
-    }))
-  }, [data, favoriteIds])
+    const withFavorites = favoriteIds
+      ? items.map((doctor) => ({
+          ...doctor,
+          is_favorite: favoriteIds.has(doctor.id),
+        }))
+      : items
+
+    if (filters.languages && filters.languages.length > 0) {
+      return withFavorites.filter((doctor) => {
+        const langs = doctor.languages ?? []
+        return filters.languages?.every((code) => langs.includes(code))
+      })
+    }
+
+    return withFavorites
+  }, [data, favoriteIds, filters.languages])
   const pagination = data?.pagination
   const mapMarkers = useMemo(
     () =>
@@ -191,7 +202,7 @@ export const SearchPage = () => {
                 onClick={() => handleLanguageToggle(lang)}
                 type="button"
               >
-                {lang.toUpperCase()}
+                {languageLabel(lang, t)}
               </button>
             ))}
           </div>

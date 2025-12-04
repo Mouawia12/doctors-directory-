@@ -11,6 +11,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 import { useTranslation } from 'react-i18next'
 import { PhoneNumber } from '@/components/common/PhoneNumber'
 import { buildTelLink, buildWhatsAppLink } from '@/lib/phone'
+import { languageLabel } from '@/lib/language'
 
 export const DoctorProfilePage = () => {
   const { id } = useParams()
@@ -123,7 +124,7 @@ export const DoctorProfilePage = () => {
             <div className="flex flex-wrap gap-2">
               {languages.map((language) => (
                 <span key={language} className="rounded-full bg-slate-900/5 px-3 py-1 text-xs text-slate-700">
-                  {language.toUpperCase()}
+                  {languageLabel(language, t)}
                 </span>
               ))}
             </div>

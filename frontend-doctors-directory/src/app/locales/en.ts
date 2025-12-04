@@ -13,6 +13,10 @@ export const en = {
       required: 'Required',
       currency: 'SAR',
       comma: ', ',
+      languageNames: {
+        ar: 'Arabic',
+        en: 'English',
+      },
       days: {
         sunday: 'Sunday',
         monday: 'Monday',

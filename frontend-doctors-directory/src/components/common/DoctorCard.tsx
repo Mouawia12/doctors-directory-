@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { useToggleFavorite } from '@/features/favorites/hooks'
 import { useAuthQuery } from '@/features/auth/hooks'
 import { cn } from '@/lib/utils'
+import { languageLabel } from '@/lib/language'
 import { useTranslation } from 'react-i18next'
 
 interface DoctorCardProps {
@@ -70,11 +71,14 @@ export const DoctorCard = ({ doctor, compact = false, profilePath }: DoctorCardP
               {doctor.city}
             </span>
           )}
-          {doctor.languages?.map((lang) => (
-            <span key={lang} className="rounded-full bg-slate-100 px-3 py-1">
-              {lang.toUpperCase()}
-            </span>
-          ))}
+          {doctor.languages?.map((lang) => {
+            const label = languageLabel(lang, t)
+            return (
+              <span key={lang} className="rounded-full bg-slate-100 px-3 py-1">
+                {label}
+              </span>
+            )
+          })}
         </div>
         {!compact && <p className="line-clamp-2 text-sm text-slate-600">{doctor.bio}</p>}
         <div className="mt-auto flex flex-wrap items-center gap-3">
