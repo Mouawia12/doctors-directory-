@@ -212,7 +212,7 @@ export const en = {
         years: 'Years of experience',
         languages: 'Languages',
         mediaOnly: 'Show doctors with media',
-        issues: 'Issues & specialties',
+        issues: 'Therapy specialties',
         therapyApproaches: 'Therapy approaches',
         ageGroups: 'Age groups',
         sessionTypes: 'Session type',
@@ -516,6 +516,7 @@ export const en = {
       licenseNumber: 'License number',
       notProvided: 'N/A',
       serviceDelivery: 'Service',
+      specialty: 'Specialty focus',
       deliveryModes: {
         in_person: 'In-person sessions',
         online: 'Online sessions',
@@ -965,6 +966,8 @@ export const en = {
       },
       placeholders: {
         optional: 'Optional',
+        specialty: 'Select specialty',
+        professionalRole: 'Select professional role',
       },
       validations: {
         required: 'Required',
@@ -1097,6 +1100,7 @@ export const en = {
           credentials: 'PhD, MA',
           businessName: 'Clinic or company name',
           tagline: '140 characters describing your style',
+          primarySpecialty: 'Select the primary specialty',
           secondarySpecialty: 'e.g., Anxiety disorders',
           licenseState: 'e.g., Dubai - DHA',
           professionalRole: 'Therapist, counselor...',

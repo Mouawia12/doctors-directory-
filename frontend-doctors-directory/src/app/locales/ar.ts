@@ -211,7 +211,7 @@ export const ar = {
         years: 'سنوات الخبرة',
         languages: 'اللغات',
         mediaOnly: 'عرض المختصين الذين لديهم وسائط',
-        issues: 'الحالات / المشكلات',
+        issues: 'التخصصات النفسية',
         therapyApproaches: 'الأساليب العلاجية',
         ageGroups: 'الفئات العمرية',
         sessionTypes: 'طريقة الجلسة',
@@ -514,6 +514,7 @@ export const ar = {
       licenseNumber: 'رقم الترخيص',
       notProvided: 'غير متوفر',
       serviceDelivery: 'نمط الخدمة',
+      specialty: 'التخصص',
       deliveryModes: {
         in_person: 'جلسات حضورية',
         online: 'جلسات عن بُعد',
@@ -963,6 +964,8 @@ export const ar = {
       },
       placeholders: {
         optional: 'اختياري',
+        specialty: 'اختر التخصص',
+        professionalRole: 'اختر الدور المهني',
       },
       validations: {
         required: 'مطلوب',
@@ -1095,6 +1098,7 @@ export const ar = {
           credentials: 'PhD, MA',
           businessName: 'اسم العيادة أو الشركة',
           tagline: '140 حرفاً تصف أسلوبك العلاجي',
+          primarySpecialty: 'اختر التخصص الرئيسي',
           secondarySpecialty: 'مثال: اضطرابات القلق',
           licenseState: 'مثال: دبي - هيئة الصحة',
           professionalRole: 'معالج نفسي، مستشار...',

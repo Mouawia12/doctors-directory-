@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
+import { Select } from '@/components/ui/Select'
 import { LocationPicker } from '@/components/common/LocationPicker'
 import { useDoctorProfileQuery, useSaveDoctorProfile, useDoctorMediaUpload, useDoctorMediaDelete } from '@/features/doctor/hooks'
 import { useCategoriesQuery } from '@/features/categories/hooks'
@@ -22,6 +23,8 @@ import { queryClient } from '@/lib/queryClient'
 import { queryKeys } from '@/lib/queryKeys'
 import type { User } from '@/types/user'
 import { therapyModalityLabels } from '@/data/therapyModalities'
+import { therapySpecialties } from '@/data/therapySpecialties'
+import { professionalRoles } from '@/data/professionalRoles'
 
 const sectionOrder = ['about', 'finances', 'qualifications', 'specialties', 'clientFocus', 'treatment'] as const
 type SectionId = (typeof sectionOrder)[number]
@@ -225,6 +228,24 @@ export const DoctorProfileFormPage = () => {
     [],
   )
   const therapyModalityOptions = useMemo(() => therapyModalityLabels, [])
+  const therapySpecialtyOptions = useMemo(
+    () =>
+      therapySpecialties.map((option) => ({
+        id: option.id,
+        value: option.ar,
+        label: i18n.language.startsWith('ar') ? option.ar : option.en,
+      })),
+    [i18n.language],
+  )
+  const professionalRoleOptions = useMemo(
+    () =>
+      professionalRoles.map((option) => ({
+        id: option.id,
+        value: option.ar,
+        label: i18n.language.startsWith('ar') ? option.ar : option.en,
+      })),
+    [i18n.language],
+  )
   const faithOrientationOptions = useMemo(
     () => ['any', 'islamic', 'christian', 'jewish', 'spiritual'],
     [],
@@ -1003,7 +1024,18 @@ export const DoctorProfileFormPage = () => {
                 <label className="text-xs text-slate-500">
                   {t('doctorForm.about.labels.primarySpecialty')} <RequiredAsterisk />
                 </label>
-                <Input {...register('specialty')} aria-invalid={!!errors.specialty} aria-required="true" />
+                <Select
+                  {...register('specialty', { required: t('doctorForm.validation.specialtyRequired') })}
+                  aria-invalid={!!errors.specialty}
+                >
+                  <option value="">{t('doctorForm.about.placeholders.primarySpecialty')}</option>
+                  {therapySpecialtyOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+                {errors.specialty && <p className="text-xs text-rose-500">{errors.specialty.message}</p>}
               </div>
               <div>
                 <label className="text-xs text-slate-500">{t('doctorForm.about.labels.secondarySpecialty')}</label>
@@ -1033,11 +1065,14 @@ export const DoctorProfileFormPage = () => {
               </div>
               <div>
                 <label className="text-xs text-slate-500">{t('doctorForm.about.labels.professionalRole')}</label>
-                <Input
-                  {...register('professional_role')}
-                  placeholder={t('doctorForm.about.placeholders.professionalRole')}
-                  aria-invalid={!!errors.professional_role}
-                />
+                <Select {...register('professional_role')} aria-invalid={!!errors.professional_role}>
+                  <option value="">{t('doctorForm.about.placeholders.professionalRole')}</option>
+                  {professionalRoleOptions.map((option) => (
+                    <option key={option.id} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
               </div>
               <div>
                 <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licensureStatus')}</label>

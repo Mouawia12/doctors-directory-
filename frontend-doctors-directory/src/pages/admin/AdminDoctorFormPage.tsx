@@ -14,6 +14,8 @@ import { EmptyState } from '@/components/common/EmptyState'
 import type { AdminDoctorPayload } from '@/features/admin/types'
 import { Card } from '@/components/ui/Card'
 import { therapyModalityLabels } from '@/data/therapyModalities'
+import { therapySpecialties } from '@/data/therapySpecialties'
+import { professionalRoles } from '@/data/professionalRoles'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { LocationPicker } from '@/components/common/LocationPicker'
@@ -259,7 +261,7 @@ const toNumber = (value?: string) => {
 const normalizeText = (value?: string) => (value && value.trim().length > 0 ? value.trim() : null)
 
 export const AdminDoctorFormPage = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { doctorId } = useParams()
   const isEditMode = Boolean(doctorId)
   const navigate = useNavigate()
@@ -269,6 +271,24 @@ export const AdminDoctorFormPage = () => {
   const categories = useMemo(
     () => flattenCategories(categoriesQuery.data ?? []),
     [categoriesQuery.data],
+  )
+  const specialtyOptions = useMemo(
+    () =>
+      therapySpecialties.map((option) => ({
+        id: option.id,
+        value: option.ar,
+        label: i18n.language.startsWith('ar') ? option.ar : option.en,
+      })),
+    [i18n.language],
+  )
+  const professionalRoleOptionsMemo = useMemo(
+    () =>
+      professionalRoles.map((option) => ({
+        id: option.id,
+        value: option.ar,
+        label: i18n.language.startsWith('ar') ? option.ar : option.en,
+      })),
+    [i18n.language],
   )
 
   const statusOptions = useMemo(
@@ -747,7 +767,17 @@ export const AdminDoctorFormPage = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.specialty')}</label>
-              <Input {...register('specialty', { required: t('adminDoctorForm.validations.required') })} />
+              <Select
+                {...register('specialty', { required: t('adminDoctorForm.validations.required') })}
+                defaultValue={defaultValues.specialty}
+              >
+                <option value="">{t('adminDoctorForm.placeholders.specialty')}</option>
+                {specialtyOptions.map((option) => (
+                  <option key={option.id} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
               {errors.specialty && <p className="text-xs text-rose-500">{errors.specialty.message}</p>}
             </div>
             <div>
@@ -756,7 +786,14 @@ export const AdminDoctorFormPage = () => {
             </div>
             <div>
               <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.professionalRole')}</label>
-              <Input {...register('professional_role')} />
+              <Select {...register('professional_role')} defaultValue={defaultValues.professional_role}>
+                <option value="">{t('adminDoctorForm.placeholders.professionalRole')}</option>
+                {professionalRoleOptionsMemo.map((option) => (
+                  <option key={option.id} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-4">

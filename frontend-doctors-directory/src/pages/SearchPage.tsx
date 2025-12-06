@@ -5,6 +5,7 @@ import { useDoctorsQuery } from '@/features/doctors/hooks'
 import { useFavoritesQuery } from '@/features/favorites/hooks'
 import { useCategoriesQuery } from '@/features/categories/hooks'
 import { therapyModalityOptions } from '@/data/therapyModalities'
+import { therapySpecialties } from '@/data/therapySpecialties'
 import type { Category } from '@/types/doctor'
 import { DoctorCard } from '@/components/common/DoctorCard'
 import { FilterChips, type FilterChipItem } from '@/components/common/FilterChips'
@@ -382,14 +383,16 @@ export const SearchPage = () => {
     { value: t('searchPage.options.ulla'), label: t('searchPage.options.ulla') },
   ]
 
-  const specialtyOptions = [
-    { value: '', label: t('searchPage.options.allSpecialties') },
-    { value: t('searchPage.options.individualTherapy'), label: t('searchPage.options.individualTherapy') },
-    { value: t('searchPage.options.familyTherapy'), label: t('searchPage.options.familyTherapy') },
-    { value: t('searchPage.options.cbt'), label: t('searchPage.options.cbt') },
-    { value: t('searchPage.options.addiction'), label: t('searchPage.options.addiction') },
-    { value: t('searchPage.options.childhood'), label: t('searchPage.options.childhood') },
-  ]
+  const specialtyOptions = useMemo(
+    () => [
+      { value: '', label: t('searchPage.options.allSpecialties') },
+      ...therapySpecialties.map((item) => ({
+        value: item.ar,
+        label: i18n.language.startsWith('ar') ? item.ar : item.en,
+      })),
+    ],
+    [t, i18n.language],
+  )
 
   const selectedLanguages = filters.languages ?? []
   const selectedIssues = filters.issues ?? []
