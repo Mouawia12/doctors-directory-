@@ -74,20 +74,134 @@ export const en = {
       doctorCta: 'Join as a licensed therapist',
     },
     home: {
-      trustedPlatform: 'Trusted platform',
-      featuredTitle: 'Featured specialties',
-      featuredAll: 'All specialties',
-      doctorsTag: 'For doctors',
-      doctorCtaHeading: 'Join and manage your profile with smart tools',
-      doctorCtaBody:
-        'Manage data and appointments, upload licenses and clinic media, and follow approval status in one place.',
-      doctorCtaAction: 'Get started',
-      featured: [
-        { title: 'Individual therapy', description: 'Supportive sessions for anxiety & depression.' },
-        { title: 'Family & couples therapy', description: 'Improve communication & relationship skills.' },
-        { title: 'Addiction counseling', description: 'Comprehensive, confidential recovery plans.' },
-        { title: 'Child & teen support', description: 'Specialists in childhood & learning disorders.' },
+      trustedPlatform: 'Trusted mental health platform',
+      heroBadge: 'Licensed psychologists & counselors',
+      heroTitle: 'Therapy made personal for every journey',
+      heroSubtitle:
+        'Browse verified counselors, compare therapy specialties, and book secure sessions or intro calls in minutes.',
+      heroSlides: [
+        { title: 'Anxiety & burnout support', description: 'Structured CBT & ACT plans for high-performing professionals.' },
+        { title: 'Family and relationship care', description: 'Evidence-based therapy for couples, attachment, and parenting.' },
+        { title: 'Trauma & PTSD recovery', description: 'Compassionate somatic, EMDR, and exposure therapists at your side.' },
       ],
+      heroStats: [
+        { value: '350+', label: 'Licensed therapists' },
+        { value: '120+', label: 'Cities & clinics' },
+        { value: '98%', label: 'Clients feel more clarity' },
+      ],
+      serviceHighlightsTitle: 'Therapy services crafted for modern life',
+      serviceHighlightsDescription: 'Discover specialists across individual, couples, workplace wellness, and trauma recovery.',
+      serviceHighlights: [
+        {
+          title: 'Personal therapy',
+          description: 'Adaptive CBT, DBT, and ACT journeys tailored to your wellness plan.',
+          icon: 'heart',
+        },
+        {
+          title: 'Couples & family care',
+          description: 'Strengthen communication, attachment, and parenting strategies.',
+          icon: 'users',
+        },
+        {
+          title: 'Trauma recovery',
+          description: 'EMDR, somatic, and narrative therapy for survivors and first responders.',
+          icon: 'sparkles',
+        },
+        {
+          title: 'Workplace wellbeing',
+          description: 'Executive coaching, burnout prevention, and EAP partnerships.',
+          icon: 'shield',
+        },
+      ],
+      issues: {
+        title: 'Popular topics clients search for',
+        description: 'Filter by lived experiences, cultural background, and age focus.',
+        list: [
+          'Anxiety & panic',
+          'Depression',
+          'Relationship conflict',
+          'Trauma & PTSD',
+          'ADHD & focus',
+          'Burnout',
+          'Grief & loss',
+          'Self-esteem',
+        ],
+      },
+      therapy: {
+        title: 'Therapy approaches explained',
+        description: 'Every profile showcases modalities and how sessions unfold.',
+        methods: [
+          {
+            title: 'Cognitive Behavioral Therapy',
+            subtitle: 'CBT',
+            description: 'Reframe thinking patterns with structured homework and measurable goals.',
+            icon: 'brain',
+          },
+          {
+            title: 'Dialectical Behavior Therapy',
+            subtitle: 'DBT',
+            description: 'Emotion regulation, distress tolerance, and mindfulness-in-action.',
+            icon: 'balance',
+          },
+          {
+            title: 'Somatic & Trauma-focused',
+            subtitle: 'EMDR, SE, ACT',
+            description: 'Body-informed processing with grounding, exposure, and compassion techniques.',
+            icon: 'sparkles',
+          },
+        ],
+      },
+      featuredExperts: {
+        title: 'Featured therapists this week',
+        description: 'Editorial picks that combine deep expertise with culturally competent care.',
+        items: [
+          {
+            name: 'Dr. Rawan Alsubaie',
+            specialty: 'Certified CBT & EMDR specialist',
+            focus: 'Anxiety, burnout, trauma',
+            experience: '9 yrs experience',
+            languages: 'Arabic · English',
+          },
+          {
+            name: 'Ahmad Al Khateeb',
+            specialty: 'Family & couples therapist',
+            focus: 'Attachment repair, parenting',
+            experience: '12 yrs experience',
+            languages: 'Arabic',
+          },
+          {
+            name: 'Sara Al Mutairi',
+            specialty: 'Child & adolescent psychologist',
+            focus: 'ADHD, learning, regulation',
+            experience: '8 yrs experience',
+            languages: 'Arabic · English',
+          },
+        ],
+      },
+      platform: {
+        title: 'Why clients trust Doctors Directory',
+        subtitle: 'Every therapist is verified manually and matches your location, language, and identity needs.',
+        features: [
+          {
+            title: 'Human verification',
+            description: 'Licenses, specialties, and experience vetted by our clinical review team.',
+          },
+          {
+            title: 'Smart filters',
+            description: 'Search by therapy modality, age focus, session type, price, and insurance acceptance.',
+          },
+          {
+            title: 'Secure messaging',
+            description: 'Contact therapists safely with controlled sharing of your personal information.',
+          },
+        ],
+      },
+      cta: {
+        title: 'Bring therapy within reach',
+        subtitle: 'Compare profiles, read bios, and book introduction calls without pressure.',
+        primary: 'Start searching',
+        secondary: 'Join as therapist',
+      },
     },
     searchPage: {
       title: 'Quick therapy search',
@@ -203,7 +317,26 @@ export const en = {
     },
     footer: {
       title: 'Doctors Directory',
-      description: 'A unified platform to find the best doctors in your area.',
+      description: 'A unified platform to discover trusted therapists, compare care options, and book confidently.',
+      quickLinksTitle: 'Quick links',
+      quickLinks: {
+        about: 'About us',
+        terms: 'Terms of use',
+        privacy: 'Privacy policy',
+        contact: 'Contact us',
+        faq: 'FAQ',
+      },
+      contactTitle: 'Contact',
+      contactPhone: '+966 55 555 5555',
+      contactEmail: 'care@doctors.directory',
+      newsletterTitle: 'Mental health in your inbox',
+      newsletterDescription: 'Monthly therapist tips, product updates, and early feature previews.',
+      newsletterPlaceholder: 'Enter your email',
+      newsletterCta: 'Subscribe',
+      newsletterSuccess: 'Thanks! You are now on the list.',
+      newsletterError: 'Please enter a valid email address.',
+      socialTitle: 'Follow us',
+      rights: 'All rights reserved.',
     },
     authLayout: {
       tagline: 'Doctors Directory',
