@@ -48,6 +48,27 @@ class DoctorFactory extends Factory
 
         $selectedCity = fake()->randomElement($cities);
         $specialty = fake()->randomElement($specialties);
+        $sessionTypes = ['in_person', 'online', 'hybrid'];
+        $therapyModalities = [
+            'العلاج المعرفي السلوكي / Cognitive Behavioral Therapy (CBT)',
+            'العلاج الجدلي السلوكي / Dialectical Behavior Therapy (DBT)',
+            'العلاج بالقبول والالتزام / Acceptance and Commitment Therapy (ACT)',
+            'العلاج الأسري / Family Therapy',
+            'العلاج السردي / Narrative Therapy',
+            'العلاج باليقظة الذهنية / Mindfulness-Based Therapy',
+            'العلاج السوماتي / Somatic Therapy',
+            'العلاج بالتعريض المطوّل / Prolonged Exposure Therapy (PE)',
+        ];
+        $ageGroups = ['kids', 'teens', 'adults'];
+        $insuranceProviders = [
+            'التعاونية للتأمين',
+            'بوبا العربية',
+            'شركة ملاذ للتأمين',
+            'تكافل الراجحي',
+            'ميدغلف',
+            'أكسا الخليج',
+        ];
+        $paymentMethods = ['Visa', 'Mastercard', 'مدى', 'تحويل بنكي', 'نقد', 'Apple Pay'];
 
         return [
             'full_name' => fake('ar_SA')->name(),
@@ -62,13 +83,16 @@ class DoctorFactory extends Factory
             'languages' => fake()->randomElements(['ar', 'en', 'fr'], fake()->numberBetween(1, 3)),
             'gender' => fake()->randomElement(['male', 'female']),
             'years_of_experience' => fake()->numberBetween(3, 30),
-            'insurances' => fake()->randomElements([
-                'جلسات فردية حضورية',
-                'جلسات أونلاين',
-                'برنامج دعم الشركات',
-                'خطة تأهيل قصيرة المدى',
-                'متابعة ما بعد العلاج',
-            ], fake()->numberBetween(1, 3)),
+            'service_delivery' => fake()->randomElement($sessionTypes),
+            'new_clients_status' => fake()->randomElement(['accepting', 'not_accepting', 'waitlist']),
+            'offers_intro_call' => fake()->boolean(60),
+            'fee_individual' => fake()->numberBetween(200, 650),
+            'fee_couples' => fake()->numberBetween(300, 800),
+            'offers_sliding_scale' => fake()->boolean(30),
+            'payment_methods' => fake()->randomElements($paymentMethods, fake()->numberBetween(2, 4)),
+            'insurances' => fake()->randomElements($insuranceProviders, fake()->numberBetween(1, 3)),
+            'therapy_modalities' => fake()->randomElements($therapyModalities, fake()->numberBetween(1, 4)),
+            'client_age_groups' => fake()->randomElements($ageGroups, fake()->numberBetween(1, 3)),
             'city' => $selectedCity['name'],
             'lat' => $selectedCity['lat'] + fake()->randomFloat(4, -0.05, 0.05),
             'lng' => $selectedCity['lng'] + fake()->randomFloat(4, -0.05, 0.05),

@@ -1,26 +1,34 @@
-interface FilterChipsProps {
-  filters: Record<string, string | number | undefined>
-  onRemove: (key: string) => void
-  labels?: Record<string, string>
+export interface FilterChipItem {
+  key: string
+  label: string
+  value: string | number
+  displayValue?: string
+  removeValue?: string | number
 }
 
-export const FilterChips = ({ filters, onRemove, labels }: FilterChipsProps) => {
-  const entries = Object.entries(filters).filter(([, value]) => value !== undefined && value !== '')
+interface FilterChipsProps {
+  items: FilterChipItem[]
+  onRemove: (key: string, value: string | number) => void
+}
 
-  if (entries.length === 0) {
+export const FilterChips = ({ items, onRemove }: FilterChipsProps) => {
+  if (items.length === 0) {
     return null
   }
 
   return (
     <div className="flex flex-wrap gap-2">
-      {entries.map(([key, value]) => (
+      {items.map((item) => (
         <button
-          key={key}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600"
-          onClick={() => onRemove(key)}
+          key={`${item.key}-${item.value}`}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 transition hover:border-primary-200 hover:text-primary-700"
+          onClick={() => onRemove(item.key, item.removeValue ?? item.value)}
+          type="button"
         >
-          {(labels?.[key] ?? key)}: {value}
-          <span className="text-slate-400">✕</span>
+          {item.label}: {item.displayValue ?? item.value}
+          <span className="text-slate-400" aria-hidden="true">
+            ✕
+          </span>
         </button>
       ))}
     </div>

@@ -13,6 +13,7 @@ import { Select } from '@/components/ui/Select'
 import { EmptyState } from '@/components/common/EmptyState'
 import type { AdminDoctorPayload } from '@/features/admin/types'
 import { Card } from '@/components/ui/Card'
+import { therapyModalityLabels } from '@/data/therapyModalities'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { LocationPicker } from '@/components/common/LocationPicker'
@@ -118,7 +119,7 @@ const languageChoices: LanguageChoice[] = ['ar', 'en']
 const participantOptions = ['individuals', 'couples', 'groups'] as const
 const ageGroupOptions = ['kids', 'teens', 'adults'] as const
 const alliedCommunityOptions = ['lgbtq', 'hard_of_hearing', 'racial_justice', 'veterans', 'disabilities', 'trauma_survivors'] as const
-const therapyModalityOptions = ['CBT', 'DBT', 'EMDR', 'ACT', 'IFS', 'Mindfulness', 'Intervention', 'Coaching'] as const
+const therapyModalityOptions = therapyModalityLabels
 const faithOrientationOptions = ['any', 'islamic', 'christian', 'jewish', 'spiritual'] as const
 
 const weekDays: DayKey[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']

@@ -21,6 +21,7 @@ import { FolderKanban, GraduationCap, HeartPulse, ShieldCheck, Star, UserRound, 
 import { queryClient } from '@/lib/queryClient'
 import { queryKeys } from '@/lib/queryKeys'
 import type { User } from '@/types/user'
+import { therapyModalityLabels } from '@/data/therapyModalities'
 
 const sectionOrder = ['about', 'finances', 'qualifications', 'specialties', 'clientFocus', 'treatment'] as const
 type SectionId = (typeof sectionOrder)[number]
@@ -223,10 +224,7 @@ export const DoctorProfileFormPage = () => {
     () => ['lgbtq', 'hard_of_hearing', 'racial_justice', 'veterans', 'disabilities', 'trauma_survivors'],
     [],
   )
-  const therapyModalityOptions = useMemo(
-    () => ['CBT', 'DBT', 'EMDR', 'ACT', 'IFS', 'Mindfulness', 'Intervention', 'Coaching'],
-    [],
-  )
+  const therapyModalityOptions = useMemo(() => therapyModalityLabels, [])
   const faithOrientationOptions = useMemo(
     () => ['any', 'islamic', 'christian', 'jewish', 'spiritual'],
     [],

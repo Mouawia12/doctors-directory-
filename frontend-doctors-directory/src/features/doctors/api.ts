@@ -8,6 +8,13 @@ export interface DoctorFilters {
   specialty?: string
   gender?: string
   languages?: string[]
+  issues?: number[]
+  therapy_modalities?: string[]
+  age_groups?: string[]
+  session_types?: Array<'in_person' | 'online' | 'hybrid'>
+  insurances?: string[]
+  price_min?: number
+  price_max?: number
   min_exp?: number
   has_media?: boolean
   page?: number

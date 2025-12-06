@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Doctor;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class DoctorSearchRequest extends FormRequest
 {
@@ -24,7 +25,19 @@ class DoctorSearchRequest extends FormRequest
             'gender' => ['nullable', 'in:male,female'],
             'languages' => ['nullable', 'array'],
             'languages.*' => ['string', 'max:5'],
+            'issues' => ['nullable', 'array'],
+            'issues.*' => ['integer', 'exists:categories,id'],
+            'therapy_modalities' => ['nullable', 'array'],
+            'therapy_modalities.*' => ['string', 'max:180'],
+            'age_groups' => ['nullable', 'array'],
+            'age_groups.*' => [Rule::in(['kids', 'teens', 'adults'])],
+            'session_types' => ['nullable', 'array'],
+            'session_types.*' => [Rule::in(['in_person', 'online', 'hybrid'])],
+            'insurances' => ['nullable', 'array'],
+            'insurances.*' => ['string', 'max:120'],
             'insurance' => ['nullable', 'string', 'max:120'],
+            'price_min' => ['nullable', 'integer', 'min:0', 'max:5000'],
+            'price_max' => ['nullable', 'integer', 'min:0', 'max:5000', 'gte:price_min'],
             'min_exp' => ['nullable', 'integer', 'min:0', 'max:60'],
             'has_media' => ['nullable', 'boolean'],
             'lat' => ['nullable', 'numeric'],
@@ -45,7 +58,14 @@ class DoctorSearchRequest extends FormRequest
             'sub_specialty',
             'gender',
             'languages',
+            'issues',
+            'therapy_modalities',
+            'age_groups',
+            'session_types',
+            'insurances',
             'insurance',
+            'price_min',
+            'price_max',
             'min_exp',
             'has_media',
             'lat',

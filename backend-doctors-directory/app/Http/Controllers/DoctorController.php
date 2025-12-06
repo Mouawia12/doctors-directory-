@@ -50,15 +50,60 @@ class DoctorController extends Controller
             ->when(Arr::get($filters, 'specialty'), fn ($q, $specialty) => $q->where('specialty', $specialty))
             ->when(Arr::get($filters, 'sub_specialty'), fn ($q, $value) => $q->where('sub_specialty', $value))
             ->when(Arr::get($filters, 'gender'), fn ($q, $gender) => $q->where('gender', $gender))
+            ->when(Arr::get($filters, 'issues'), function ($q, $issues) {
+                $q->whereHas('categories', fn ($categoryQuery) => $categoryQuery->whereIn('categories.id', $issues));
+            })
             ->when(Arr::get($filters, 'languages'), fn ($q, $languages) => $q->where(function ($inner) use ($languages) {
-                foreach ($languages as $language) {
-                    $inner->whereJsonContains('languages', $language);
+                foreach ($languages as $index => $language) {
+                    if ($index === 0) {
+                        $inner->whereJsonContains('languages', $language);
+                    } else {
+                        $inner->orWhereJsonContains('languages', $language);
+                    }
+                }
+            }))
+            ->when(Arr::get($filters, 'therapy_modalities'), fn ($q, $modalities) => $q->where(function ($inner) use ($modalities) {
+                foreach ($modalities as $index => $modality) {
+                    if ($index === 0) {
+                        $inner->whereJsonContains('therapy_modalities', $modality);
+                    } else {
+                        $inner->orWhereJsonContains('therapy_modalities', $modality);
+                    }
+                }
+            }))
+            ->when(Arr::get($filters, 'age_groups'), fn ($q, $groups) => $q->where(function ($inner) use ($groups) {
+                foreach ($groups as $index => $group) {
+                    if ($index === 0) {
+                        $inner->whereJsonContains('client_age_groups', $group);
+                    } else {
+                        $inner->orWhereJsonContains('client_age_groups', $group);
+                    }
+                }
+            }))
+            ->when(Arr::get($filters, 'session_types'), fn ($q, $sessionTypes) => $q->whereIn('service_delivery', $sessionTypes))
+            ->when(Arr::get($filters, 'insurances'), fn ($q, $insurances) => $q->where(function ($inner) use ($insurances) {
+                foreach ($insurances as $index => $insurance) {
+                    if ($index === 0) {
+                        $inner->whereJsonContains('insurances', $insurance);
+                    } else {
+                        $inner->orWhereJsonContains('insurances', $insurance);
+                    }
                 }
             }))
             ->when(Arr::get($filters, 'insurance'), fn ($q, $insurance) => $q->whereJsonContains('insurances', $insurance))
             ->when(Arr::get($filters, 'min_exp'), fn ($q, $exp) => $q->where('years_of_experience', '>=', $exp))
             ->when($request->boolean('has_media'), fn ($q) => $q->whereHas('media'))
             ->orderBy('is_verified', 'desc');
+
+        if (Arr::has($filters, 'price_min')) {
+            $query->whereNotNull('fee_individual')
+                ->where('fee_individual', '>=', (int) Arr::get($filters, 'price_min'));
+        }
+
+        if (Arr::has($filters, 'price_max')) {
+            $query->whereNotNull('fee_individual')
+                ->where('fee_individual', '<=', (int) Arr::get($filters, 'price_max'));
+        }
 
         $lat = Arr::get($filters, 'lat');
         $lng = Arr::get($filters, 'lng');
