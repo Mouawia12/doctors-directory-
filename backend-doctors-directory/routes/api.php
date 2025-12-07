@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\DoctorController as AdminDoctorController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\SiteSettingController as AdminSiteSettingController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\DoctorMediaController;
 use App\Http\Controllers\DoctorProfileController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SettingController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
@@ -30,6 +32,7 @@ Route::prefix('auth')->group(function (): void {
 
 Route::middleware(['auth:sanctum', 'throttle:6,1'])->post('email/verification-notification', [EmailVerificationNotificationController::class, 'store']);
 
+Route::get('settings', [SettingController::class, 'index']);
 Route::get('doctors', [DoctorController::class, 'index']);
 Route::get('doctors/{doctor}', [DoctorController::class, 'show']);
 Route::get('categories', [PublicCategoryController::class, 'index']);
@@ -60,4 +63,6 @@ Route::middleware(['auth:sanctum', 'verified', 'role:admin'])->prefix('admin')->
     Route::post('users/{user}/status', [AdminUserController::class, 'updateStatus']);
     Route::post('users/{user}/reset-password', [AdminUserController::class, 'resetPassword']);
     Route::delete('users/{user}', [AdminUserController::class, 'destroy']);
+    Route::get('settings', [AdminSiteSettingController::class, 'show']);
+    Route::post('settings', [AdminSiteSettingController::class, 'update']);
 });

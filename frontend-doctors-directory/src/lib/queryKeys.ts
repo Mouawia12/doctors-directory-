@@ -5,8 +5,10 @@ export const queryKeys = {
   favorites: ['favorites'] as const,
   doctorProfile: ['doctor-profile'] as const,
   categories: ['categories'] as const,
+  settings: ['site-settings'] as const,
   adminDoctors: (filters?: Record<string, unknown>) => ['admin-doctors', filters ?? {}] as const,
   adminDoctor: (id: number | string) => ['admin-doctor', id] as const,
   adminUsers: (filters?: Record<string, unknown>) => ['admin-users', filters ?? {}] as const,
+  adminSettings: ['admin-settings'] as const,
   notifications: ['notifications'] as const,
 }

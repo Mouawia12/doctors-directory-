@@ -11,6 +11,7 @@ import {
   UserRound,
   Home,
   Users,
+  SlidersHorizontal,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { Input } from '@/components/ui/Input'
@@ -18,6 +19,7 @@ import { useAuthQuery, useLogoutMutation } from '@/features/auth/hooks'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner'
+import { useSiteSettingsQuery } from '@/features/settings/hooks'
 
 type NavItem = {
   id: string
@@ -33,6 +35,7 @@ export const AdminLayout = () => {
   const navigate = useNavigate()
   const { i18n, t } = useTranslation()
   const { data: user } = useAuthQuery()
+  const { data: siteSettings } = useSiteSettingsQuery()
   const logoutMutation = useLogoutMutation()
   const navSections: NavItem[] = useMemo(
     () => [
@@ -48,6 +51,7 @@ export const AdminLayout = () => {
       },
       { id: 'users', label: t('adminLayout.nav.users'), icon: Users, to: '/admin/users' },
       { id: 'categories', label: t('adminLayout.nav.categories'), icon: Layers, to: '/admin/categories' },
+      { id: 'settings', label: t('adminLayout.nav.settings'), icon: SlidersHorizontal, to: '/admin/settings' },
       { id: 'security', label: t('adminLayout.nav.security'), icon: UserRound, to: '/admin/password' },
     ],
     [t, i18n.language],
@@ -75,6 +79,11 @@ export const AdminLayout = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const currentDir = i18n.dir()
   const isRTL = currentDir === 'rtl'
+  const brandName =
+    i18n.language === 'ar'
+      ? siteSettings?.site_name ?? t('brand')
+      : siteSettings?.site_name_en ?? siteSettings?.site_name ?? t('brand')
+  const brandInitial = brandName.slice(0, 1).toUpperCase()
 
   useEffect(() => {
     if (location.pathname.startsWith('/admin/doctors')) {
@@ -114,7 +123,23 @@ export const AdminLayout = () => {
   const sidebarContent = (closeSidebar?: () => void) => (
     <div className="flex h-full flex-col gap-6">
       <div className="rounded-3xl bg-gradient-to-br from-primary-700 to-indigo-700 p-4 text-white shadow-lg">
-        <h2 className="text-xl font-semibold">{t('adminLayout.dashboard')}</h2>
+        <div className="flex items-center gap-3">
+          {siteSettings?.site_logo_url ? (
+            <img
+              src={siteSettings.site_logo_url}
+              alt={brandName}
+              className="h-12 w-12 rounded-2xl border border-white/20 bg-white/10 p-1 object-contain"
+            />
+          ) : (
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-lg font-semibold text-white">
+              {brandInitial}
+            </span>
+          )}
+          <div>
+            <p className="text-xs uppercase tracking-wide text-primary-100/70">{t('adminLayout.dashboard')}</p>
+            <h2 className="text-lg font-semibold text-white">{brandName}</h2>
+          </div>
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto">
         <p className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-400">

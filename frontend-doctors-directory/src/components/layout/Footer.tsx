@@ -4,6 +4,7 @@ import { Facebook, Instagram, Linkedin, Mail, Phone } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { useSiteSettingsQuery } from '@/features/settings/hooks'
 
 const socialLinks = [
   { id: 'facebook', href: 'https://facebook.com', Icon: Facebook },
@@ -21,6 +22,7 @@ const quickLinkPaths = [
 
 export const Footer = () => {
   const { t, i18n } = useTranslation()
+  const { data: siteSettings } = useSiteSettingsQuery()
   const [email, setEmail] = useState('')
   const direction = i18n.dir()
   const year = new Date().getFullYear()
@@ -37,11 +39,18 @@ export const Footer = () => {
     setEmail('')
   }
 
+  const siteName =
+    i18n.language === 'ar'
+      ? siteSettings?.site_name ?? t('footer.title')
+      : siteSettings?.site_name_en ?? siteSettings?.site_name ?? t('footer.title')
+  const supportEmail = siteSettings?.support_email ?? t('footer.contactEmail')
+  const supportPhone = siteSettings?.support_phone ?? t('footer.contactPhone')
+
   return (
     <footer className="border-t border-slate-200 bg-slate-900 text-white" dir={direction}>
       <div className="container grid gap-8 py-12 md:grid-cols-[1.4fr,1fr,1fr,1.3fr]">
         <div className="space-y-3">
-          <p className="text-lg font-semibold text-white">{t('footer.title')}</p>
+          <p className="text-lg font-semibold text-white">{siteName}</p>
           <p className="text-sm text-white/80">{t('footer.description')}</p>
         </div>
 
@@ -64,12 +73,12 @@ export const Footer = () => {
           <p className="text-sm font-semibold uppercase tracking-widest text-white/70">{t('footer.contactTitle')}</p>
           <div className="flex items-center gap-2 text-sm text-white/80">
             <Phone className="h-4 w-4" aria-hidden="true" />
-            <span dir="ltr">{t('footer.contactPhone')}</span>
+            <span dir="ltr">{supportPhone}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-white/80">
             <Mail className="h-4 w-4" aria-hidden="true" />
-            <a href={`mailto:${t('footer.contactEmail')}`} className="hover:text-primary-200">
-              {t('footer.contactEmail')}
+            <a href={`mailto:${supportEmail}`} className="hover:text-primary-200">
+              {supportEmail}
             </a>
           </div>
           <div className="space-y-2">
@@ -115,7 +124,7 @@ export const Footer = () => {
       <div className="border-t border-white/10">
         <div className="container flex flex-col gap-4 py-6 text-xs text-white/70 md:flex-row md:items-center md:justify-between">
           <p>
-            © {year} {t('footer.title')}. {t('footer.rights')}
+            © {year} {siteName}. {t('footer.rights')}
           </p>
           <div className="flex gap-4">
             {quickLinkPaths.slice(0, 3).map((link) => (

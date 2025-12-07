@@ -1,6 +1,6 @@
 export const ar = {
   translation: {
-    brand: 'دليل المختصين',
+    brand: 'دليل المعالجين النفسيين والاسريين',
     language: {
       label: 'تغيير اللغة',
       arabic: 'العربية',
@@ -633,6 +633,7 @@ export const ar = {
         doctorsCreate: 'إضافة مختص',
         users: 'المستخدمون',
         categories: 'التصنيفات الطبية',
+        settings: 'إعدادات الموقع',
         security: 'الأمان وكلمة المرور',
         chat: 'الدردشة',
         mail: 'البريد',
@@ -642,6 +643,24 @@ export const ar = {
         ar: 'العربية',
         en: 'الإنجليزية',
       },
+    },
+    adminSettings: {
+      title: 'إعدادات الهوية والمنصة',
+      description: 'تحكّم في اسم المنصة، بيانات التواصل، والشعار الظاهر في جميع الصفحات.',
+      fields: {
+        siteName: 'اسم الموقع',
+        siteNameEn: 'اسم الموقع (بالإنجليزية)',
+        supportEmail: 'بريد الدعم',
+        supportPhone: 'هاتف الدعم',
+        logo: 'صورة الشعار',
+      },
+      logoHint: 'يفضّل رفع ملف PNG أو SVG مربع بحجم لا يتجاوز 2 ميجابايت.',
+      logoPreview: 'معاينة الشعار الحالي',
+      noLogo: 'لا يوجد شعار مرفوع حالياً',
+      save: 'حفظ التغييرات',
+      saving: 'جاري الحفظ...',
+      success: 'تم حفظ الإعدادات بنجاح',
+      error: 'تعذر حفظ الإعدادات، حاول مجدداً.',
     },
     adminDashboard: {
       pending: 'قيد المراجعة',

@@ -4,16 +4,18 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2, LogOut, Menu, X, UserRound } from 'lucide-react'
 import { useAuthQuery, useLogoutMutation } from '@/features/auth/hooks'
+import { useSiteSettingsQuery } from '@/features/settings/hooks'
 import { Button } from '@/components/ui/Button'
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 import clsx from 'clsx'
 import { getDoctorPortalPath } from '@/features/doctor/utils'
 
 export const Navbar = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
   const { data: user } = useAuthQuery()
+  const { data: siteSettings } = useSiteSettingsQuery()
   const logoutMutation = useLogoutMutation()
 
   const navLinks = useMemo(
@@ -30,14 +32,28 @@ export const Navbar = () => {
   const isPatient = user?.roles.includes('user') && !isDoctor
   const doctorPortalPath = getDoctorPortalPath()
 
+  const localizedSiteName =
+    i18n.language === 'ar'
+      ? siteSettings?.site_name ?? t('brand')
+      : siteSettings?.site_name_en ?? siteSettings?.site_name ?? t('brand')
+
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
       <div className="container flex items-center justify-between py-4">
-        <Link to="/" className="flex items-center gap-2 text-lg font-semibold text-primary-600">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-100 text-primary-600">
-            {t('nav.brandShort')}
-          </span>
-          {t('brand')}
+        <Link to="/" className="flex items-center gap-3 text-lg font-semibold text-primary-600">
+          {siteSettings?.site_logo_url ? (
+            <img
+              src={siteSettings.site_logo_url}
+              alt={localizedSiteName}
+              className="h-10 w-auto rounded-2xl border border-slate-200 bg-white p-1 object-contain"
+              loading="lazy"
+            />
+          ) : (
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-100 text-primary-600">
+              {t('nav.brandShort')}
+            </span>
+          )}
+          <span className="text-slate-900">{localizedSiteName}</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm md:flex">
           {navLinks.map((link) => (

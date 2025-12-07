@@ -1,6 +1,6 @@
 export const en = {
   translation: {
-    brand: 'Doctors Directory',
+    brand: 'Psychological & Family Therapists Directory',
     language: {
       label: 'Switch language',
       arabic: 'Arabic',
@@ -635,6 +635,7 @@ export const en = {
         doctorsCreate: 'Add doctor',
         users: 'Users',
         categories: 'Categories',
+        settings: 'Site settings',
         security: 'Security',
         chat: 'Chat',
         mail: 'Inbox',
@@ -644,6 +645,24 @@ export const en = {
         ar: 'Arabic',
         en: 'English',
       },
+    },
+    adminSettings: {
+      title: 'Branding & platform settings',
+      description: 'Update the public name, contact details, and logo shown across the directory.',
+      fields: {
+        siteName: 'Site name',
+        siteNameEn: 'Site name (English)',
+        supportEmail: 'Support email',
+        supportPhone: 'Support phone',
+        logo: 'Logo image',
+      },
+      logoHint: 'Upload a square PNG/SVG up to 2 MB for best clarity.',
+      logoPreview: 'Current logo preview',
+      noLogo: 'No logo uploaded yet',
+      save: 'Save changes',
+      saving: 'Saving...',
+      success: 'Settings saved successfully',
+      error: 'Unable to save settings. Try again.',
     },
     adminDashboard: {
       pending: 'Pending',

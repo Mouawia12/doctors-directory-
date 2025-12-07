@@ -25,6 +25,7 @@ import AdminDoctorFormPage from '@/pages/admin/AdminDoctorFormPage'
 import AdminCategoriesPage from '@/pages/admin/AdminCategoriesPage'
 import AdminUsersPage from '@/pages/admin/AdminUsersPage'
 import AdminPasswordPage from '@/pages/admin/AdminPasswordPage'
+import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
 export const router = createBrowserRouter([
@@ -124,6 +125,7 @@ export const router = createBrowserRouter([
       { path: 'categories', element: <AdminCategoriesPage /> },
       { path: 'users', element: <AdminUsersPage /> },
       { path: 'password', element: <AdminPasswordPage /> },
+      { path: 'settings', element: <AdminSettingsPage /> },
     ],
   },
   { path: '*', element: <NotFoundPage /> },
