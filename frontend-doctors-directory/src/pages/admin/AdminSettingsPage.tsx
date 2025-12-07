@@ -88,68 +88,70 @@ export const AdminSettingsPage = () => {
         <p className="text-sm text-slate-500">{t('adminSettings.description')}</p>
       </div>
 
-      <Card as="form" className="space-y-6 p-6" onSubmit={handleSubmit}>
-        {isLoading ? (
-          <p className="text-sm text-slate-500">{t('common.loading')}</p>
-        ) : (
-          <>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-xs text-slate-500">{t('adminSettings.fields.siteName')}</label>
-                <Input name="site_name" value={formState.site_name} onChange={handleChange} />
+      <form onSubmit={handleSubmit}>
+        <Card className="space-y-6">
+          {isLoading ? (
+            <p className="text-sm text-slate-500">{t('common.loading')}</p>
+          ) : (
+            <>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="text-xs text-slate-500">{t('adminSettings.fields.siteName')}</label>
+                  <Input name="site_name" value={formState.site_name} onChange={handleChange} />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500">{t('adminSettings.fields.siteNameEn')}</label>
+                  <Input name="site_name_en" value={formState.site_name_en} onChange={handleChange} />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500">{t('adminSettings.fields.supportEmail')}</label>
+                  <Input
+                    type="email"
+                    name="support_email"
+                    value={formState.support_email}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500">{t('adminSettings.fields.supportPhone')}</label>
+                  <Input
+                    name="support_phone"
+                    value={formState.support_phone}
+                    onChange={handleChange}
+                    placeholder="+966..."
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-xs text-slate-500">{t('adminSettings.fields.siteNameEn')}</label>
-                <Input name="site_name_en" value={formState.site_name_en} onChange={handleChange} />
+              <div className="grid gap-4 md:grid-cols-[1fr,0.6fr]">
+                <div>
+                  <label className="text-xs text-slate-500">{t('adminSettings.fields.logo')}</label>
+                  <Input type="file" accept="image/*" onChange={handleLogoChange} />
+                  <p className="mt-1 text-xs text-slate-400">{t('adminSettings.logoHint')}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">{t('adminSettings.logoPreview')}</p>
+                  {logoPreview ? (
+                    <div className="mt-2 rounded-2xl border border-dashed border-slate-300 p-4">
+                      <img
+                        src={logoPreview}
+                        alt={formState.site_name || formState.site_name_en || t('brand')}
+                        className="mx-auto h-16 w-auto object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-500">{t('adminSettings.noLogo')}</p>
+                  )}
+                </div>
               </div>
-              <div>
-                <label className="text-xs text-slate-500">{t('adminSettings.fields.supportEmail')}</label>
-                <Input
-                  type="email"
-                  name="support_email"
-                  value={formState.support_email}
-                  onChange={handleChange}
-                />
+              <div className="flex justify-end">
+                <Button type="submit" disabled={mutation.isPending}>
+                  {mutation.isPending ? t('adminSettings.saving') : t('adminSettings.save')}
+                </Button>
               </div>
-              <div>
-                <label className="text-xs text-slate-500">{t('adminSettings.fields.supportPhone')}</label>
-                <Input
-                  name="support_phone"
-                  value={formState.support_phone}
-                  onChange={handleChange}
-                  placeholder="+966..."
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-[1fr,0.6fr]">
-              <div>
-                <label className="text-xs text-slate-500">{t('adminSettings.fields.logo')}</label>
-                <Input type="file" accept="image/*" onChange={handleLogoChange} />
-                <p className="mt-1 text-xs text-slate-400">{t('adminSettings.logoHint')}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">{t('adminSettings.logoPreview')}</p>
-                {logoPreview ? (
-                  <div className="mt-2 rounded-2xl border border-dashed border-slate-300 p-4">
-                    <img
-                      src={logoPreview}
-                      alt={formState.site_name || formState.site_name_en || t('brand')}
-                      className="mx-auto h-16 w-auto object-contain"
-                    />
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm text-slate-500">{t('adminSettings.noLogo')}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? t('adminSettings.saving') : t('adminSettings.save')}
-              </Button>
-            </div>
-          </>
-        )}
-      </Card>
+            </>
+          )}
+        </Card>
+      </form>
     </div>
   )
 }
