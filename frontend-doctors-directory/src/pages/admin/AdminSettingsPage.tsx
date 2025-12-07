@@ -112,14 +112,15 @@ export const AdminSettingsPage = () => {
                     onChange={handleChange}
                   />
                 </div>
-                <div>
-                  <label className="text-xs text-slate-500">{t('adminSettings.fields.supportPhone')}</label>
-                  <Input
-                    name="support_phone"
-                    value={formState.support_phone}
-                    onChange={handleChange}
-                    placeholder="+966..."
-                  />
+              <div>
+                <label className="text-xs text-slate-500">{t('adminSettings.fields.supportPhone')}</label>
+                <Input
+                  dir="ltr"
+                  name="support_phone"
+                  value={formState.support_phone}
+                  onChange={handleChange}
+                  placeholder="+966..."
+                />
                 </div>
               </div>
               <div className="grid gap-4 md:grid-cols-[1fr,0.6fr]">
