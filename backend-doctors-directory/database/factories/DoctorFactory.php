@@ -138,7 +138,7 @@ class DoctorFactory extends Factory
             ],
             'license_number' => 'LIC-'.fake()->unique()->numerify('####-####'),
             'professional_role' => $professionalRole,
-            'languages' => fake()->randomElements(['ar', 'en', 'fr'], fake()->numberBetween(1, 3)),
+            'languages' => fake()->randomElements(['ar', 'en'], fake()->numberBetween(1, 2)),
             'gender' => fake()->randomElement(['male', 'female']),
             'years_of_experience' => fake()->numberBetween(3, 30),
             'service_delivery' => fake()->randomElement($sessionTypes),

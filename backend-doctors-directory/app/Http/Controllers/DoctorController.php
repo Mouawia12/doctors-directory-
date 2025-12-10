@@ -53,15 +53,19 @@ class DoctorController extends Controller
             ->when(Arr::get($filters, 'issues'), function ($q, $issues) {
                 $q->whereHas('categories', fn ($categoryQuery) => $categoryQuery->whereIn('categories.id', $issues));
             })
-            ->when(Arr::get($filters, 'languages'), fn ($q, $languages) => $q->where(function ($inner) use ($languages) {
-                foreach ($languages as $index => $language) {
-                    if ($index === 0) {
-                        $inner->whereJsonContains('languages', $language);
-                    } else {
-                        $inner->orWhereJsonContains('languages', $language);
-                    }
+            ->when(Arr::get($filters, 'languages'), function ($q, $languages) {
+                $languages = array_values(array_unique(array_filter($languages)));
+
+                if (empty($languages)) {
+                    return;
                 }
-            }))
+
+                $q->where(function ($inner) use ($languages) {
+                    foreach ($languages as $language) {
+                        $inner->whereJsonContains('languages', $language);
+                    }
+                })->whereJsonLength('languages', '=', count($languages));
+            })
             ->when(Arr::get($filters, 'therapy_modalities'), fn ($q, $modalities) => $q->where(function ($inner) use ($modalities) {
                 foreach ($modalities as $index => $modality) {
                     if ($index === 0) {

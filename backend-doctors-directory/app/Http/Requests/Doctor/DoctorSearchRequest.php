@@ -51,7 +51,7 @@ class DoctorSearchRequest extends FormRequest
 
     public function filters(): array
     {
-        return $this->safe()->only([
+        $filters = $this->safe()->only([
             'q',
             'city',
             'specialty',
@@ -73,5 +73,17 @@ class DoctorSearchRequest extends FormRequest
             'radius',
             'status',
         ]);
+
+        if (! empty($filters['languages']) && is_array($filters['languages'])) {
+            $filters['languages'] = collect($filters['languages'])
+                ->filter()
+                ->map(fn ($language) => strtolower(trim($language)))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+        }
+
+        return $filters;
     }
 }
