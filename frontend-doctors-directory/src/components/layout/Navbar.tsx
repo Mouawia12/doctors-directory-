@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Loader2, LogOut, Menu, X, UserRound } from 'lucide-react'
+import { Loader2, LogOut, Menu, X, UserRound, Phone, Mail } from 'lucide-react'
 import { useAuthQuery, useLogoutMutation } from '@/features/auth/hooks'
 import { useSiteSettingsQuery } from '@/features/settings/hooks'
 import { Button } from '@/components/ui/Button'
@@ -36,6 +36,21 @@ export const Navbar = () => {
     i18n.language === 'ar'
       ? siteSettings?.site_name ?? t('brand')
       : siteSettings?.site_name_en ?? siteSettings?.site_name ?? t('brand')
+  const isRtl = i18n.dir() === 'rtl'
+  const drawerPositionClass = isRtl ? 'left-0 rounded-e-[32px]' : 'right-0 rounded-s-[32px]'
+  const contactPhone = siteSettings?.support_phone ?? '+966 55 555 5555'
+  const contactEmail = siteSettings?.support_email ?? 'care@doctors.directory'
+
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
@@ -130,64 +145,141 @@ export const Navbar = () => {
         <button
           aria-label={t('nav.menu')}
           className="rounded-xl border border-slate-200 p-2 text-slate-600 md:hidden"
-          onClick={() => setMenuOpen((prev) => !prev)}
+          onClick={() => setMenuOpen(true)}
         >
-          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          <Menu className="h-5 w-5" />
         </button>
       </div>
       {menuOpen && (
-        <div className="border-t border-slate-200 bg-white shadow-lg md:hidden">
-          <div className="container flex flex-col gap-4 py-4 text-sm">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                onClick={() => setMenuOpen(false)}
-                className="text-slate-700"
-              >
-                {link.label}
-              </NavLink>
-            ))}
-            {isDoctor && (
-              <>
-                <NavLink to={doctorPortalPath} onClick={() => setMenuOpen(false)}>
-                  {t('nav.doctorPortal')}
-                </NavLink>
-                <NavLink to="/doctor" onClick={() => setMenuOpen(false)}>
-                  {t('nav.myProfile')}
-                </NavLink>
-              </>
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm md:hidden"
+          onClick={() => setMenuOpen(false)}
+        >
+          <div
+            className={clsx(
+              'fixed top-0 bottom-0 flex w-[85%] max-w-xs flex-col overflow-hidden bg-white shadow-2xl transition-transform duration-300',
+              drawerPositionClass,
+              isRtl ? 'translate-x-0' : 'translate-x-0',
             )}
-            {isPatient && (
-              <NavLink to="/account" onClick={() => setMenuOpen(false)}>
-                {t('nav.userDashboard')}
-              </NavLink>
-            )}
-            {isAdmin && (
-              <NavLink to="/admin" onClick={() => setMenuOpen(false)}>
-                {t('nav.admin')}
-              </NavLink>
-            )}
-            {!user ? (
-              <div className="flex flex-col gap-2">
-                <Button asChild>
-                  <Link to="/auth/login">{t('nav.login')}</Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link to="/auth/register">{t('nav.join')}</Link>
-                </Button>
-                <LanguageSwitcher fullWidth variant="outline" size="sm" />
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-500">{t('nav.menu')}</p>
+                <p className="text-sm font-semibold text-slate-900">{localizedSiteName}</p>
               </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <span className="text-slate-600">
-                  {t('nav.hello')} {user.name}
-                </span>
+              <button
+                type="button"
+                aria-label={t('common.actions.close')}
+                className="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50"
+                onClick={() => setMenuOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {user && (
+              <div className="mx-6 mt-4 rounded-3xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <p className="text-xs text-slate-500">{t('nav.hello')}</p>
+                <p className="text-sm font-semibold text-slate-900">{user.name}</p>
+              </div>
+            )}
+            <nav className="mt-4 flex-1 overflow-y-auto px-6 pb-4">
+              <div className="rounded-[28px] border border-slate-100 bg-slate-50 px-4 py-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  {t('nav.quickLinks')}
+                </p>
+                <ul className="space-y-2">
+                  {navLinks.map((link) => (
+                    <li key={link.to}>
+                      <NavLink
+                        to={link.to}
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition hover:bg-primary-50 hover:text-primary-700"
+                      >
+                        <span>{link.label}</span>
+                        <span aria-hidden="true">›</span>
+                      </NavLink>
+                    </li>
+                  ))}
+                  {isDoctor && (
+                    <>
+                      <li>
+                        <NavLink
+                          to={doctorPortalPath}
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition hover:bg-primary-50 hover:text-primary-700"
+                        >
+                          <span>{t('nav.doctorPortal')}</span>
+                          <span aria-hidden="true">›</span>
+                        </NavLink>
+                      </li>
+                      <li>
+                        <NavLink
+                          to="/doctor"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition hover:bg-primary-50 hover:text-primary-700"
+                        >
+                          <span>{t('nav.myProfile')}</span>
+                          <span aria-hidden="true">›</span>
+                        </NavLink>
+                      </li>
+                    </>
+                  )}
+                  {isPatient && (
+                    <li>
+                      <NavLink
+                        to="/account"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition hover:bg-primary-50 hover:text-primary-700"
+                      >
+                        <span>{t('nav.userDashboard')}</span>
+                        <span aria-hidden="true">›</span>
+                      </NavLink>
+                    </li>
+                  )}
+                  {isAdmin && (
+                    <li>
+                      <NavLink
+                        to="/admin"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition hover:bg-primary-50 hover:text-primary-700"
+                      >
+                        <span>{t('nav.admin')}</span>
+                        <span aria-hidden="true">›</span>
+                      </NavLink>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </nav>
+            <div className="space-y-4 border-t border-slate-100 p-6">
+              <div className="rounded-2xl border border-slate-100 px-4 py-3 text-sm text-slate-600">
+                <p className="text-xs uppercase tracking-wide text-slate-400">{t('nav.contact', { defaultValue: 'تواصل معنا' })}</p>
+                <a href={`tel:${contactPhone}`} className="mt-2 flex items-center gap-2 text-slate-700">
+                  <Phone className="h-4 w-4 text-primary-500" />
+                  {contactPhone}
+                </a>
+                <a href={`mailto:${contactEmail}`} className="mt-1 flex items-center gap-2 text-slate-700">
+                  <Mail className="h-4 w-4 text-primary-500" />
+                  {contactEmail}
+                </a>
+              </div>
+              {!user ? (
+                <>
+                  <Button asChild>
+                    <Link to="/auth/login">{t('nav.login')}</Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/auth/register">{t('nav.join')}</Link>
+                  </Button>
+                  <LanguageSwitcher fullWidth variant="outline" size="sm" />
+                </>
+              ) : (
                 <div className="flex items-center gap-2">
                   <LanguageSwitcher variant="outline" size="sm" className="flex-1" fullWidth />
                   <Button
                     variant="ghost"
-                    className="h-10 w-10 rounded-2xl p-0"
+                    className="h-11 w-11 rounded-2xl p-0"
                     onClick={() => {
                       setMenuOpen(false)
                       logoutMutation.mutate()
@@ -203,8 +295,8 @@ export const Navbar = () => {
                     )}
                   </Button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}

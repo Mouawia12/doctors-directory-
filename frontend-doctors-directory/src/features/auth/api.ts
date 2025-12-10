@@ -44,6 +44,9 @@ export interface ResetPasswordPayload {
 }
 
 export const fetchCurrentUser = async (): Promise<User | null> => {
+  if (!api.defaults.headers.common.Authorization) {
+    return null
+  }
   try {
     const { data } = await api.get<ApiResponse<User>>('/api/auth/me')
     return data.data
