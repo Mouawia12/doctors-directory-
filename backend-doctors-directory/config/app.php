@@ -123,6 +123,13 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'frontend_url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost')),
+
+    'frontend_urls' => array_values(array_filter(array_map(
+        static fn ($url) => rtrim(trim($url), '/'),
+        explode(',', (string) env('FRONTEND_URLS', env('FRONTEND_URL', '')))
+    ))),
+
     'doctor_seed_count' => (int) env('DOCTOR_SEED_COUNT', 150),
 
 ];

@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Support\FrontendUrlResolver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,7 +32,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $resetLinkBuilder = static function (object $notifiable, string $token): string {
-            $frontendUrl = rtrim((string) config('app.frontend_url', config('app.url')), '/');
+            $frontendUrl = rtrim(FrontendUrlResolver::resolve(), '/');
+
             $query = http_build_query([
                 'token' => $token,
                 'email' => $notifiable->getEmailForPasswordReset(),
@@ -54,6 +57,21 @@ class AppServiceProvider extends ServiceProvider
                     'appName' => config('app.name'),
                     'expiresInMinutes' => $expiresInMinutes,
                 ]);
+        });
+
+        VerifyEmail::createUrlUsing(function (object $notifiable) {
+            $expires = (int) config('auth.verification.expire', 60);
+
+            $verificationUrl = URL::temporarySignedRoute(
+                'verification.verify',
+                now()->addMinutes($expires),
+                [
+                    'id' => $notifiable->getKey(),
+                    'hash' => sha1($notifiable->getEmailForVerification()),
+                ]
+            );
+
+            return FrontendUrlResolver::appendFrontendQuery($verificationUrl);
         });
 
         VerifyEmail::toMailUsing(function (object $notifiable, string $url) {

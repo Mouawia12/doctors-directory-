@@ -33,6 +33,7 @@ return [
     'allowed_origins_patterns' => [
         '#^https?://([a-z0-9-]+\.)?souftech\.com$#i',
         '#^https?://([a-z0-9-]+\.)?souftec\.com$#i',
+        '#^https?://([a-z0-9-]+\.)?whoismypsychologist\.com$#i',
     ],
 
     'allowed_headers' => ['*'],

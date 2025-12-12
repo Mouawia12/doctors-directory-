@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\FrontendUrlResolver;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -40,7 +41,7 @@ class VerifyEmailController extends Controller
             return $this->respond(['verified' => $status === 'verified']);
         }
 
-        return redirect()->away($this->frontendRedirectUrl($status));
+        return redirect()->away($this->frontendRedirectUrl($request, $status));
     }
 
     protected function verificationFailedResponse(Request $request, string $status): JsonResponse|RedirectResponse
@@ -51,12 +52,12 @@ class VerifyEmailController extends Controller
             return $this->respondWithError(['verification' => [$message]], $message, 422);
         }
 
-        return redirect()->away($this->frontendRedirectUrl($status));
+        return redirect()->away($this->frontendRedirectUrl($request, $status));
     }
 
-    protected function frontendRedirectUrl(string $status): string
+    protected function frontendRedirectUrl(Request $request, string $status): string
     {
-        $baseUrl = rtrim((string) config('app.frontend_url', config('app.url')), '/').'/verify-email/success';
+        $baseUrl = rtrim(FrontendUrlResolver::resolve($request), '/').'/verify-email/success';
         $query = http_build_query(['status' => $status]);
 
         return "{$baseUrl}?{$query}";
