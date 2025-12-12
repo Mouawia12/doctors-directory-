@@ -4,8 +4,8 @@ namespace Database\Factories;
 
 use App\Enums\DoctorStatus;
 use App\Models\Doctor;
+use Faker\Factory as FakerFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use function fake;
 
 /**
  * @extends Factory<Doctor>
@@ -19,6 +19,8 @@ class DoctorFactory extends Factory
      */
     public function definition(): array
     {
+        $arabicFaker = FakerFactory::create('ar_SA');
+
         $cities = [
             ['name' => 'الرياض', 'lat' => 24.7136, 'lng' => 46.6753],
             ['name' => 'جدة', 'lat' => 21.4858, 'lng' => 39.1925],
@@ -103,9 +105,9 @@ class DoctorFactory extends Factory
             'مستشار صحة نفسية',
         ];
 
-        $selectedCity = fake()->randomElement($cities);
-        $specialty = fake()->randomElement($specialties);
-        $professionalRole = fake()->randomElement($professionalRoles);
+        $selectedCity = $this->faker->randomElement($cities);
+        $specialty = $this->faker->randomElement($specialties);
+        $professionalRole = $this->faker->randomElement($professionalRoles);
         $sessionTypes = ['in_person', 'online', 'hybrid'];
         $therapyModalities = [
             'العلاج المعرفي السلوكي / Cognitive Behavioral Therapy (CBT)',
@@ -129,38 +131,38 @@ class DoctorFactory extends Factory
         $paymentMethods = ['Visa', 'Mastercard', 'مدى', 'تحويل بنكي', 'نقد', 'Apple Pay'];
 
         return [
-            'full_name' => fake('ar_SA')->name(),
-            'bio' => fake('ar_SA')->sentence().' متخصص في خطط علاجية مخصصة للصحة النفسية.',
+            'full_name' => $arabicFaker->name(),
+            'bio' => $arabicFaker->sentence().' متخصص في خطط علاجية مخصصة للصحة النفسية.',
             'specialty' => $specialty,
-            'sub_specialty' => fake()->optional()->randomElement($subSpecialties),
+            'sub_specialty' => $this->faker->optional()->randomElement($subSpecialties),
             'qualifications' => [
-                fake()->randomElement(['ماجستير إرشاد نفسي', 'دبلوم علاج معرفي سلوكي', 'شهادة EMDR']),
-                fake()->randomElement(['دبلوم العلاج الأسري', 'شهادة علاج الإدمان', 'اعتماد جلسات أونلاين']),
+                $this->faker->randomElement(['ماجستير إرشاد نفسي', 'دبلوم علاج معرفي سلوكي', 'شهادة EMDR']),
+                $this->faker->randomElement(['دبلوم العلاج الأسري', 'شهادة علاج الإدمان', 'اعتماد جلسات أونلاين']),
             ],
-            'license_number' => 'LIC-'.fake()->unique()->numerify('####-####'),
+            'license_number' => 'LIC-'.$this->faker->unique()->numerify('####-####'),
             'professional_role' => $professionalRole,
-            'languages' => fake()->randomElements(['ar', 'en'], fake()->numberBetween(1, 2)),
-            'gender' => fake()->randomElement(['male', 'female']),
-            'years_of_experience' => fake()->numberBetween(3, 30),
-            'service_delivery' => fake()->randomElement($sessionTypes),
-            'new_clients_status' => fake()->randomElement(['accepting', 'not_accepting', 'waitlist']),
-            'offers_intro_call' => fake()->boolean(60),
-            'fee_individual' => fake()->numberBetween(200, 650),
-            'fee_couples' => fake()->numberBetween(300, 800),
-            'offers_sliding_scale' => fake()->boolean(30),
-            'payment_methods' => fake()->randomElements($paymentMethods, fake()->numberBetween(2, 4)),
-            'insurances' => fake()->randomElements($insuranceProviders, fake()->numberBetween(1, 3)),
-            'therapy_modalities' => fake()->randomElements($therapyModalities, fake()->numberBetween(1, 4)),
-            'client_age_groups' => fake()->randomElements($ageGroups, fake()->numberBetween(1, 3)),
+            'languages' => $this->faker->randomElements(['ar', 'en'], $this->faker->numberBetween(1, 2)),
+            'gender' => $this->faker->randomElement(['male', 'female']),
+            'years_of_experience' => $this->faker->numberBetween(3, 30),
+            'service_delivery' => $this->faker->randomElement($sessionTypes),
+            'new_clients_status' => $this->faker->randomElement(['accepting', 'not_accepting', 'waitlist']),
+            'offers_intro_call' => $this->faker->boolean(60),
+            'fee_individual' => $this->faker->numberBetween(200, 650),
+            'fee_couples' => $this->faker->numberBetween(300, 800),
+            'offers_sliding_scale' => $this->faker->boolean(30),
+            'payment_methods' => $this->faker->randomElements($paymentMethods, $this->faker->numberBetween(2, 4)),
+            'insurances' => $this->faker->randomElements($insuranceProviders, $this->faker->numberBetween(1, 3)),
+            'therapy_modalities' => $this->faker->randomElements($therapyModalities, $this->faker->numberBetween(1, 4)),
+            'client_age_groups' => $this->faker->randomElements($ageGroups, $this->faker->numberBetween(1, 3)),
             'city' => $selectedCity['name'],
-            'lat' => $selectedCity['lat'] + fake()->randomFloat(4, -0.05, 0.05),
-            'lng' => $selectedCity['lng'] + fake()->randomFloat(4, -0.05, 0.05),
-            'website' => fake()->optional()->url(),
-            'phone' => fake()->phoneNumber(),
-            'whatsapp' => fake()->phoneNumber(),
-            'email' => fake()->unique()->safeEmail(),
-            'is_verified' => fake()->boolean(70),
-            'status' => fake()->randomElement(DoctorStatus::values()),
+            'lat' => $selectedCity['lat'] + $this->faker->randomFloat(4, -0.05, 0.05),
+            'lng' => $selectedCity['lng'] + $this->faker->randomFloat(4, -0.05, 0.05),
+            'website' => $this->faker->optional()->url(),
+            'phone' => $this->faker->phoneNumber(),
+            'whatsapp' => $this->faker->phoneNumber(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'is_verified' => $this->faker->boolean(70),
+            'status' => $this->faker->randomElement(DoctorStatus::values()),
             'status_note' => null,
         ];
     }
