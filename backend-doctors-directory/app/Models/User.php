@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
+use Illuminate\Auth\Notifications\VerifyEmail as VerifyEmailNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -66,5 +68,25 @@ class User extends Authenticatable implements MustVerifyEmail
     public function favorites(): HasMany
     {
         return $this->hasMany(Favorite::class);
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        try {
+            Log::info('Dispatching email verification notification', [
+                'user_id' => $this->getAuthIdentifier(),
+                'email' => $this->email,
+            ]);
+
+            $this->notify(new VerifyEmailNotification());
+        } catch (\Throwable $exception) {
+            Log::error('Email verification notification failed to send', [
+                'user_id' => $this->getAuthIdentifier(),
+                'email' => $this->email,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            throw $exception;
+        }
     }
 }

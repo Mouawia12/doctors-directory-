@@ -47,6 +47,70 @@ class EmailVerificationTest extends TestCase
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
 
+    public function test_email_verification_redirects_to_remembered_frontend(): void
+    {
+        config([
+            'app.frontend_url' => 'https://default.test',
+            'app.frontend_urls' => ['https://default.test', 'https://frontend.example'],
+        ]);
+
+        $user = User::factory()->unverified()->create();
+
+        $this->actingAs($user)
+            ->withHeader('Origin', 'https://frontend.example')
+            ->postJson('/api/email/verification-notification')
+            ->assertOk();
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $user->id, 'hash' => sha1($user->email)]
+        ).'&frontend_url=https://malicious.example';
+
+        $this->get($verificationUrl)->assertRedirect('https://frontend.example/verify-email/success?status=verified');
+    }
+
+    public function test_email_verification_redirects_to_default_when_frontend_missing(): void
+    {
+        config([
+            'app.frontend_url' => 'https://default.test',
+            'app.frontend_urls' => ['https://default.test'],
+        ]);
+
+        $user = User::factory()->unverified()->create();
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $user->id, 'hash' => sha1($user->email)]
+        );
+
+        $this->get($verificationUrl)->assertRedirect('https://default.test/verify-email/success?status=verified');
+    }
+
+    public function test_unapproved_frontend_is_rejected(): void
+    {
+        config([
+            'app.frontend_url' => 'https://default.test',
+            'app.frontend_urls' => ['https://default.test'],
+        ]);
+
+        $user = User::factory()->unverified()->create();
+
+        $this->actingAs($user)
+            ->withHeader('Origin', 'https://malicious.example')
+            ->postJson('/api/email/verification-notification')
+            ->assertOk();
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $user->id, 'hash' => sha1($user->email)]
+        );
+
+        $this->get($verificationUrl)->assertRedirect('https://default.test/verify-email/success?status=verified');
+    }
+
     protected function verificationRedirectUrl(string $status): string
     {
         $base = rtrim((string) config('app.frontend_url', config('app.url')), '/').'/verify-email/success';

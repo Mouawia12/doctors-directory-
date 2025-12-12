@@ -130,6 +130,8 @@ return [
         explode(',', (string) env('FRONTEND_URLS', env('FRONTEND_URL', '')))
     ))),
 
+    'frontend_url_ttl' => (int) env('FRONTEND_URL_TTL', 3600),
+
     'doctor_seed_count' => (int) env('DOCTOR_SEED_COUNT', 150),
 
 ];

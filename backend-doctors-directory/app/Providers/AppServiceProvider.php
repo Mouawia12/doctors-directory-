@@ -6,7 +6,9 @@ use App\Support\FrontendUrlResolver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Support\Facades\URL;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -32,7 +34,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $resetLinkBuilder = static function (object $notifiable, string $token): string {
-            $frontendUrl = rtrim(FrontendUrlResolver::resolve(), '/');
+            $frontendUrl = rtrim(FrontendUrlResolver::resolveForEmail($notifiable->getEmailForPasswordReset()), '/');
 
             $query = http_build_query([
                 'token' => $token,
@@ -59,21 +61,6 @@ class AppServiceProvider extends ServiceProvider
                 ]);
         });
 
-        VerifyEmail::createUrlUsing(function (object $notifiable) {
-            $expires = (int) config('auth.verification.expire', 60);
-
-            $verificationUrl = URL::temporarySignedRoute(
-                'verification.verify',
-                now()->addMinutes($expires),
-                [
-                    'id' => $notifiable->getKey(),
-                    'hash' => sha1($notifiable->getEmailForVerification()),
-                ]
-            );
-
-            return FrontendUrlResolver::appendFrontendQuery($verificationUrl);
-        });
-
         VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
             $expires = (int) config('auth.verification.expire', 60);
 
@@ -85,6 +72,15 @@ class AppServiceProvider extends ServiceProvider
                     'appName' => config('app.name'),
                     'expiresInMinutes' => $expires,
                 ]);
+        });
+
+        Queue::failing(function (JobFailed $event) {
+            Log::error('Queue job failed', [
+                'connection' => $event->connectionName,
+                'job' => $event->job?->resolveName(),
+                'queue' => $event->job?->getQueue(),
+                'exception' => $event->exception->getMessage(),
+            ]);
         });
     }
 }
