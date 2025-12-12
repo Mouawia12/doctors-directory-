@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Enums\DoctorStatus;
 use App\Models\Doctor;
-use Faker\Factory as FakerFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,7 +18,27 @@ class DoctorFactory extends Factory
      */
     public function definition(): array
     {
-        $arabicFaker = FakerFactory::create('ar_SA');
+        $arabicNames = [
+            'د. سارة الحمادي',
+            'د. فهد السبيعي',
+            'د. نورة العتيبي',
+            'د. ليان المطيري',
+            'د. محمد الخطاف',
+            'د. ريم القحطاني',
+            'د. خالد الشهري',
+            'د. غادة العنزي',
+            'د. عبدالله الحربي',
+            'د. شهد الأنصاري',
+        ];
+
+        $arabicBios = [
+            'متخصص في بناء خطط علاجية شمولية تعزز التوازن النفسي.',
+            'يدعم العملاء عبر جلسات تعزز الوعي الذاتي وتنظم الانفعالات.',
+            'يركز على الممارسات العلاجية المستندة إلى الأدلة لمعالجة القلق.',
+            'يساعد الأفراد على تطوير مهارات تواصل صحية وحدود واضحة.',
+            'يعمل على تصميم تدخلات تناسب بيئات العمل المرهقة.',
+            'يستخدم أساليب علاج سردي لمساعدة العملاء على إعادة صياغة التجارب المؤلمة.',
+        ];
 
         $cities = [
             ['name' => 'الرياض', 'lat' => 24.7136, 'lng' => 46.6753],
@@ -131,8 +150,8 @@ class DoctorFactory extends Factory
         $paymentMethods = ['Visa', 'Mastercard', 'مدى', 'تحويل بنكي', 'نقد', 'Apple Pay'];
 
         return [
-            'full_name' => $arabicFaker->name(),
-            'bio' => $arabicFaker->sentence().' متخصص في خطط علاجية مخصصة للصحة النفسية.',
+            'full_name' => $this->faker->randomElement($arabicNames),
+            'bio' => $this->faker->randomElement($arabicBios),
             'specialty' => $specialty,
             'sub_specialty' => $this->faker->optional()->randomElement($subSpecialties),
             'qualifications' => [
