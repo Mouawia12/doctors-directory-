@@ -6,6 +6,8 @@ $allowedOrigins = array_values(array_unique(array_filter(array_merge(
     [
         'http://localhost:5173',
         'http://localhost:5174',
+        'https://whoismypsychologist.com',
+        'https://www.whoismypsychologist.com',
     ]
 ))));
 
