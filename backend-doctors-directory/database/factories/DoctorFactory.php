@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\DoctorStatus;
 use App\Models\Doctor;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use function fake;
 
 /**
  * @extends Factory<Doctor>
