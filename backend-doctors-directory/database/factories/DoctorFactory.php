@@ -5,6 +5,8 @@ namespace Database\Factories;
 use App\Enums\DoctorStatus;
 use App\Models\Doctor;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Doctor>
@@ -18,6 +20,21 @@ class DoctorFactory extends Factory
      */
     public function definition(): array
     {
+        $randomBool = function (int $probability = 50): bool {
+            return random_int(1, 100) <= $probability;
+        };
+        $pickMany = function (array $items, int $min, int $max): array {
+            $count = random_int($min, $max);
+            $selection = Arr::random($items, $count);
+
+            return is_array($selection) ? array_values($selection) : [$selection];
+        };
+        $optional = function (callable $callback, int $probability = 50) use ($randomBool) {
+            return $randomBool($probability) ? $callback() : null;
+        };
+        $randomPhone = static fn (): string => '05'.str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+        $randomUrl = static fn (): string => sprintf('https://clinic%s.example.com', random_int(100, 999));
+
         $arabicNames = [
             'د. سارة الحمادي',
             'د. فهد السبيعي',
@@ -124,9 +141,9 @@ class DoctorFactory extends Factory
             'مستشار صحة نفسية',
         ];
 
-        $selectedCity = $this->faker->randomElement($cities);
-        $specialty = $this->faker->randomElement($specialties);
-        $professionalRole = $this->faker->randomElement($professionalRoles);
+        $selectedCity = Arr::random($cities);
+        $specialty = Arr::random($specialties);
+        $professionalRole = Arr::random($professionalRoles);
         $sessionTypes = ['in_person', 'online', 'hybrid'];
         $therapyModalities = [
             'العلاج المعرفي السلوكي / Cognitive Behavioral Therapy (CBT)',
@@ -150,38 +167,42 @@ class DoctorFactory extends Factory
         $paymentMethods = ['Visa', 'Mastercard', 'مدى', 'تحويل بنكي', 'نقد', 'Apple Pay'];
 
         return [
-            'full_name' => $this->faker->randomElement($arabicNames),
-            'bio' => $this->faker->randomElement($arabicBios),
+            'full_name' => Arr::random($arabicNames),
+            'bio' => Arr::random($arabicBios),
             'specialty' => $specialty,
-            'sub_specialty' => $this->faker->optional()->randomElement($subSpecialties),
+            'sub_specialty' => $optional(fn () => Arr::random($subSpecialties)),
             'qualifications' => [
-                $this->faker->randomElement(['ماجستير إرشاد نفسي', 'دبلوم علاج معرفي سلوكي', 'شهادة EMDR']),
-                $this->faker->randomElement(['دبلوم العلاج الأسري', 'شهادة علاج الإدمان', 'اعتماد جلسات أونلاين']),
+                Arr::random(['ماجستير إرشاد نفسي', 'دبلوم علاج معرفي سلوكي', 'شهادة EMDR']),
+                Arr::random(['دبلوم العلاج الأسري', 'شهادة علاج الإدمان', 'اعتماد جلسات أونلاين']),
             ],
-            'license_number' => 'LIC-'.$this->faker->unique()->numerify('####-####'),
+            'license_number' => sprintf(
+                'LIC-%s-%s',
+                str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT),
+                str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT),
+            ),
             'professional_role' => $professionalRole,
-            'languages' => $this->faker->randomElements(['ar', 'en'], $this->faker->numberBetween(1, 2)),
-            'gender' => $this->faker->randomElement(['male', 'female']),
-            'years_of_experience' => $this->faker->numberBetween(3, 30),
-            'service_delivery' => $this->faker->randomElement($sessionTypes),
-            'new_clients_status' => $this->faker->randomElement(['accepting', 'not_accepting', 'waitlist']),
-            'offers_intro_call' => $this->faker->boolean(60),
-            'fee_individual' => $this->faker->numberBetween(200, 650),
-            'fee_couples' => $this->faker->numberBetween(300, 800),
-            'offers_sliding_scale' => $this->faker->boolean(30),
-            'payment_methods' => $this->faker->randomElements($paymentMethods, $this->faker->numberBetween(2, 4)),
-            'insurances' => $this->faker->randomElements($insuranceProviders, $this->faker->numberBetween(1, 3)),
-            'therapy_modalities' => $this->faker->randomElements($therapyModalities, $this->faker->numberBetween(1, 4)),
-            'client_age_groups' => $this->faker->randomElements($ageGroups, $this->faker->numberBetween(1, 3)),
+            'languages' => $pickMany(['ar', 'en'], 1, 2),
+            'gender' => Arr::random(['male', 'female']),
+            'years_of_experience' => random_int(3, 30),
+            'service_delivery' => Arr::random($sessionTypes),
+            'new_clients_status' => Arr::random(['accepting', 'not_accepting', 'waitlist']),
+            'offers_intro_call' => $randomBool(60),
+            'fee_individual' => random_int(200, 650),
+            'fee_couples' => random_int(300, 800),
+            'offers_sliding_scale' => $randomBool(30),
+            'payment_methods' => $pickMany($paymentMethods, 2, 4),
+            'insurances' => $pickMany($insuranceProviders, 1, 3),
+            'therapy_modalities' => $pickMany($therapyModalities, 1, 4),
+            'client_age_groups' => $pickMany($ageGroups, 1, 3),
             'city' => $selectedCity['name'],
-            'lat' => $selectedCity['lat'] + $this->faker->randomFloat(4, -0.05, 0.05),
-            'lng' => $selectedCity['lng'] + $this->faker->randomFloat(4, -0.05, 0.05),
-            'website' => $this->faker->optional()->url(),
-            'phone' => $this->faker->phoneNumber(),
-            'whatsapp' => $this->faker->phoneNumber(),
-            'email' => $this->faker->unique()->safeEmail(),
-            'is_verified' => $this->faker->boolean(70),
-            'status' => $this->faker->randomElement(DoctorStatus::values()),
+            'lat' => round($selectedCity['lat'] + random_int(-50, 50) / 1000, 4),
+            'lng' => round($selectedCity['lng'] + random_int(-50, 50) / 1000, 4),
+            'website' => $optional($randomUrl, 40),
+            'phone' => $randomPhone(),
+            'whatsapp' => $randomPhone(),
+            'email' => sprintf('%s@whoismypsychologist.com', Str::slug('doctor '.uniqid())),
+            'is_verified' => $randomBool(70),
+            'status' => Arr::random(DoctorStatus::values()),
             'status_note' => null,
         ];
     }
