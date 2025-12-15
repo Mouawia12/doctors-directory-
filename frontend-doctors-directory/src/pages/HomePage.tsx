@@ -8,13 +8,21 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { useAuthQuery } from '@/features/auth/hooks'
 import { useJoinDoctorMutation } from '@/features/doctor/hooks'
+import { useDoctorsQuery } from '@/features/doctors/hooks'
 
 type Slide = { title: string; description: string }
 type StatHighlight = { value: string; label: string }
 type HighlightIcon = keyof typeof iconLookup
 type ServiceHighlight = { title: string; description: string; icon: HighlightIcon }
 type TherapyMethod = { title: string; subtitle: string; description: string; icon: HighlightIcon }
-type ExpertCard = { name: string; specialty: string; focus: string; experience: string; languages: string }
+type ExpertCard = {
+  name: string
+  specialty: string
+  focus: string
+  experience: string
+  languages: string
+  profileId?: string
+}
 type PlatformFeature = { title: string; description: string }
 
 const iconLookup = {
@@ -65,6 +73,8 @@ export const HomePage = () => {
     () => (t('home.platform.features', { returnObjects: true }) as PlatformFeature[]) ?? [],
     [t],
   )
+  const featuredDoctorsQuery = useDoctorsQuery({ per_page: 6, page: 1 })
+  const handlePlatformFeatureClick = () => navigate('/stats')
 
   const [activeSlide, setActiveSlide] = useState(0)
 
@@ -125,6 +135,52 @@ export const HomePage = () => {
   const renderIcon = (icon: HighlightIcon, className?: string) => {
     const Icon = iconLookup[icon] ?? Sparkles
     return <Icon className={cn('h-6 w-6 text-primary-600', className)} aria-hidden="true" />
+  }
+
+  const featuredDoctorCards = useMemo(() => {
+    const apiDoctors = featuredDoctorsQuery.data?.items ?? []
+
+    if (apiDoctors.length > 0) {
+      const sorted = [...apiDoctors].sort((a, b) => {
+        const favoritesDiff = (b.favorites_count ?? 0) - (a.favorites_count ?? 0)
+        if (favoritesDiff !== 0) return favoritesDiff
+        const verifiedDiff = Number(b.is_verified) - Number(a.is_verified)
+        if (verifiedDiff !== 0) return verifiedDiff
+        return (b.years_of_experience ?? 0) - (a.years_of_experience ?? 0)
+      })
+
+      return sorted.slice(0, 3).map((doctor) => ({
+        name: doctor.full_name,
+        specialty: doctor.specialty || t('doctorProfile.specialty', { defaultValue: 'Specialty' }),
+        focus:
+          doctor.sub_specialty ||
+          doctor.tagline ||
+          doctor.specialties_note ||
+          t('doctorProfile.focusEmpty', { defaultValue: '' }),
+        experience: doctor.years_of_experience
+          ? `${doctor.years_of_experience} ${t('doctorProfile.years')}`
+          : undefined,
+        languages: doctor.languages?.length ? doctor.languages.join(' · ') : undefined,
+        profileId: String(doctor.id),
+      }))
+    }
+
+    return featuredExperts
+  }, [featuredDoctorsQuery.data, featuredExperts, t])
+
+  const handleExpertClick = (expert: ExpertCard) => {
+    if (expert.profileId) {
+      navigate(`/doctors/${expert.profileId}`)
+      return
+    }
+    const params = new URLSearchParams({ q: expert.name })
+    navigate(`/search?${params.toString()}`)
+  }
+
+  const navigateToIssue = (issue: string) => {
+    const params = new URLSearchParams()
+    params.set('q', issue)
+    navigate(`/search?${params.toString()}`)
   }
 
   return (
@@ -237,12 +293,14 @@ export const HomePage = () => {
         </div>
         <div className="flex flex-wrap gap-3">
           {issues.map((issue) => (
-            <span
+            <button
+              type="button"
               key={issue}
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600"
+              onClick={() => navigateToIssue(issue)}
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 text-center transition hover:-translate-y-0.5 hover:border-primary-200 hover:bg-primary-50/70"
             >
               {issue}
-            </span>
+            </button>
           ))}
         </div>
       </section>
@@ -280,12 +338,15 @@ export const HomePage = () => {
             {t('home.featuredExperts.title')}
           </p>
           <h2 className="section-title">{t('home.featuredExperts.description')}</h2>
+          <p className="text-sm text-slate-600">{t('home.featuredExperts.updateHint')}</p>
         </div>
         <div className="grid gap-4 lg:grid-cols-3">
-          {featuredExperts.map((expert, index) => (
-            <div
+          {featuredDoctorCards.map((expert, index) => (
+            <button
+              type="button"
               key={expert.name}
-              className="rounded-3xl border border-slate-100 bg-gradient-to-br from-white to-slate-50/60 p-6 shadow-card animate-fade-up"
+              onClick={() => handleExpertClick(expert)}
+              className="rounded-3xl border border-slate-100 bg-gradient-to-br from-white to-slate-50/60 p-6 text-left shadow-card transition animate-fade-up hover:-translate-y-0.5 hover:border-primary-200 hover:bg-primary-50/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <p className="text-xl font-semibold text-slate-900">{expert.name}</p>
@@ -295,16 +356,20 @@ export const HomePage = () => {
                   <span className="font-semibold text-slate-800">{t('doctorProfile.specialty', { defaultValue: 'Focus' })}:</span>{' '}
                   {expert.focus}
                 </p>
-                <p>
-                  <span className="font-semibold text-slate-800">{t('doctorProfile.experience', { defaultValue: 'Experience' })}:</span>{' '}
-                  {expert.experience}
-                </p>
-                <p>
-                  <span className="font-semibold text-slate-800">{t('doctorProfile.languages', { defaultValue: 'Languages' })}:</span>{' '}
-                  {expert.languages}
-                </p>
+                {expert.experience && (
+                  <p>
+                    <span className="font-semibold text-slate-800">{t('doctorProfile.experience', { defaultValue: 'Experience' })}:</span>{' '}
+                    {expert.experience}
+                  </p>
+                )}
+                {expert.languages && (
+                  <p>
+                    <span className="font-semibold text-slate-800">{t('doctorProfile.languages', { defaultValue: 'Languages' })}:</span>{' '}
+                    {expert.languages}
+                  </p>
+                )}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -318,14 +383,16 @@ export const HomePage = () => {
         </div>
         <div className="grid gap-4">
           {platformFeatures.map((feature, index) => (
-            <div
+            <button
+              type="button"
+              onClick={handlePlatformFeatureClick}
               key={feature.title}
-              className="rounded-3xl border border-slate-100 bg-slate-50/80 p-4 animate-fade-up"
+              className="rounded-3xl border border-slate-100 bg-slate-50/80 p-4 text-left transition animate-fade-up hover:-translate-y-0.5 hover:border-primary-200 hover:bg-primary-50/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <p className="text-base font-semibold text-slate-900">{feature.title}</p>
               <p className="text-sm text-slate-600">{feature.description}</p>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -340,7 +407,12 @@ export const HomePage = () => {
               <Button className="bg-white text-primary-700 hover:bg-white/90" onClick={() => navigate('/search')}>
                 {t('home.cta.primary')}
               </Button>
-              <Button variant="outline" onClick={heroSecondaryCta.onClick} disabled={heroSecondaryCta.disabled}>
+              <Button
+                variant="outline"
+                className="border-white text-white hover:bg-white/20 hover:text-white disabled:border-white/60 disabled:text-white/70"
+                onClick={heroSecondaryCta.onClick}
+                disabled={heroSecondaryCta.disabled}
+              >
                 {heroSecondaryCta.label}
               </Button>
             </div>

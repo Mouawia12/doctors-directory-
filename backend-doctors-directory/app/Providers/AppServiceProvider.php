@@ -63,15 +63,26 @@ class AppServiceProvider extends ServiceProvider
 
         VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
             $expires = (int) config('auth.verification.expire', 60);
+            $locale = app()->getLocale();
+            $isEnglish = str_starts_with((string) $locale, 'en');
+            $subject = $isEnglish ? 'Verify your email' : 'تأكيد البريد الإلكتروني';
+            $currentLocale = app()->getLocale();
+            app()->setLocale($locale);
 
-            return (new MailMessage())
-                ->subject(__('تأكيد البريد الإلكتروني'))
+            $message = (new MailMessage())
+                ->subject($subject)
                 ->view('emails.verify-email', [
                     'verificationUrl' => $url,
                     'user' => $notifiable,
                     'appName' => config('app.name'),
                     'expiresInMinutes' => $expires,
+                    'locale' => $locale,
+                    'isEnglish' => $isEnglish,
                 ]);
+
+            app()->setLocale($currentLocale);
+
+            return $message;
         });
 
         Queue::failing(function (JobFailed $event) {

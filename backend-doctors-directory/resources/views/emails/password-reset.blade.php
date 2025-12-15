@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $appName ?? config('app.name') }} - إعادة تعيين كلمة المرور</title>
 </head>
-<body style="background-color:#f4f6fb;padding:32px 16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#0f172a;">
-    <div style="max-width:560px;margin:0 auto;background-color:#ffffff;border-radius:24px;padding:32px;box-shadow:0 10px 40px rgba(15,23,42,0.08);">
+<body style="background-color:#f4f6fb;padding:32px 16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#0f172a;direction:rtl;text-align:center;">
+    <div style="max-width:560px;margin:0 auto;background-color:#ffffff;border-radius:24px;padding:32px;box-shadow:0 10px 40px rgba(15,23,42,0.08);text-align:center;">
         <div style="margin-bottom:24px;">
             <p style="margin:0;color:#64748b;font-size:13px;">{{ $appName ?? config('app.name') }}</p>
             <h1 style="margin:8px 0 0;font-size:22px;color:#0f172a;">إعادة تعيين كلمة المرور</h1>

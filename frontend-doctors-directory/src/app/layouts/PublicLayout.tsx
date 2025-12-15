@@ -7,7 +7,7 @@ export const PublicLayout = () => (
   <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-50 to-white">
     <EmailVerificationBanner />
     <Navbar />
-    <main className="flex-1 pb-16 pt-10">
+    <main className="flex-1 pb-16 pt-6 md:pt-10">
       <Outlet />
     </main>
     <Footer />

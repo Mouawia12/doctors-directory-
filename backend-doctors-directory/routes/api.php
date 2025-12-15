@@ -14,6 +14,7 @@ use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\DoctorMediaController;
 use App\Http\Controllers\DoctorProfileController;
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\NewsletterSubscriptionController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SettingController;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,7 @@ Route::get('settings', [SettingController::class, 'index']);
 Route::get('doctors', [DoctorController::class, 'index']);
 Route::get('doctors/{doctor}', [DoctorController::class, 'show']);
 Route::get('categories', [PublicCategoryController::class, 'index']);
+Route::post('newsletter', [NewsletterSubscriptionController::class, 'store']);
 
 Route::middleware(['auth:sanctum', 'verified'])->group(function (): void {
     Route::get('favorites', [FavoriteController::class, 'index']);
@@ -65,4 +67,5 @@ Route::middleware(['auth:sanctum', 'verified', 'role:admin'])->prefix('admin')->
     Route::delete('users/{user}', [AdminUserController::class, 'destroy']);
     Route::get('settings', [AdminSiteSettingController::class, 'show']);
     Route::post('settings', [AdminSiteSettingController::class, 'update']);
+    Route::get('newsletter-subscriptions', [\App\Http\Controllers\Admin\NewsletterSubscriptionController::class, 'index']);
 });

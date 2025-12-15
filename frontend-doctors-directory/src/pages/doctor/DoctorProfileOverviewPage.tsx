@@ -23,7 +23,9 @@ const InfoCard = ({ label, value }: { label: string; value: React.ReactNode }) =
   </div>
 )
 
-const ContactRow = ({ icon: Icon, label, value, href }: { icon: typeof Mail; label: string; value?: ReactNode; href?: string }) => {
+type ContactRowProps = { icon: typeof Mail; label: string; value?: ReactNode; href?: string; isRTL?: boolean }
+
+const ContactRow = ({ icon: Icon, label, value, href, isRTL }: ContactRowProps) => {
   if (!value) return null
   const content = href ? (
     <a href={href} className="font-medium text-primary-700 hover:underline">{value}</a>
@@ -32,7 +34,12 @@ const ContactRow = ({ icon: Icon, label, value, href }: { icon: typeof Mail; lab
   )
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white/80 p-3 text-sm text-slate-600">
+    <div
+      className={cn(
+        'flex items-center gap-3 rounded-2xl border border-slate-100 bg-white/80 p-3 text-sm text-slate-600',
+        isRTL && 'flex-row-reverse',
+      )}
+    >
       <Icon className="h-4 w-4 text-primary-500" />
       <div>
         <p className="text-xs uppercase text-slate-400">{label}</p>
@@ -49,6 +56,8 @@ const DoctorProfileOverviewPage = () => {
   const { t, i18n } = useTranslation()
   const [showPassword, setShowPassword] = useState(false)
   const dir = i18n.dir()
+  const isRTL = dir === 'rtl'
+  const isEnglish = i18n.language.startsWith('en')
 
   if (isLoading) {
     return (
@@ -100,7 +109,7 @@ const DoctorProfileOverviewPage = () => {
       value: doctor.website,
       href: doctor.website ?? undefined,
     },
-  ]
+  ] satisfies ContactRowProps[]
 
   return (
     <div className="container space-y-8 py-8" dir={dir}>
@@ -179,7 +188,7 @@ const DoctorProfileOverviewPage = () => {
             <p className="text-sm text-slate-500">{t('doctorProfile.contactCopy')}</p>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               {contactRows.map((row) => (
-                <ContactRow key={row.label} {...row} />
+                <ContactRow key={row.label} {...row} isRTL={isRTL} />
               ))}
             </div>
           </section>
@@ -197,7 +206,11 @@ const DoctorProfileOverviewPage = () => {
               <p className="mt-4 text-sm text-slate-500">{t('doctorProfile.notificationsEmpty')}</p>
             ) : (
               <div className="mt-4 space-y-3">
-                {notifications.map((notification) => (
+                {notifications.map((notification) => {
+                  const data = notification.data as { title?: string; message?: string; title_en?: string; title_ar?: string; message_en?: string; message_ar?: string; note?: string }
+                  const localizedTitle = isEnglish ? data.title_en ?? data.title : data.title_ar ?? data.title
+                  const localizedMessage = isEnglish ? data.message_en ?? data.message : data.message_ar ?? data.message
+                  return (
                   <div
                     key={notification.id}
                     className={cn(
@@ -206,11 +219,11 @@ const DoctorProfileOverviewPage = () => {
                     )}
                   >
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{notification.data.title}</p>
-                      <p className="text-sm text-slate-600">{notification.data.message}</p>
-                      {notification.data.note && (
+                      <p className="text-sm font-semibold text-slate-900">{localizedTitle}</p>
+                      <p className="text-sm text-slate-600">{localizedMessage}</p>
+                      {data.note && (
                         <p className="text-xs text-slate-500">
-                          {t('doctorForm.rejectedBanner.notePrefix')} {notification.data.note}
+                          {t('doctorForm.rejectedBanner.notePrefix')} {data.note}
                         </p>
                       )}
                       <p className="text-xs text-slate-400">
@@ -229,7 +242,7 @@ const DoctorProfileOverviewPage = () => {
                       </Button>
                     )}
                   </div>
-                ))}
+                )})}
               </div>
             )}
           </section>

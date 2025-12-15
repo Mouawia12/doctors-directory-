@@ -5,6 +5,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useSiteSettingsQuery } from '@/features/settings/hooks'
+import { useNewsletterSubscribe } from '@/features/newsletter/hooks'
+import { cn } from '@/lib/utils'
 
 const socialLinks = [
   { id: 'facebook', href: 'https://facebook.com', Icon: Facebook },
@@ -23,6 +25,7 @@ const quickLinkPaths = [
 export const Footer = () => {
   const { t, i18n } = useTranslation()
   const { data: siteSettings } = useSiteSettingsQuery()
+  const subscribeMutation = useNewsletterSubscribe()
   const [email, setEmail] = useState('')
   const direction = i18n.dir()
   const year = new Date().getFullYear()
@@ -35,8 +38,16 @@ export const Footer = () => {
       return
     }
 
-    toast.success(t('footer.newsletterSuccess'))
-    setEmail('')
+    subscribeMutation.mutate(
+      { email: trimmed, source: 'footer' },
+      {
+        onSuccess: () => {
+          toast.success(t('footer.newsletterSuccess'))
+          setEmail('')
+        },
+        onError: () => toast.error(t('footer.newsletterError')),
+      },
+    )
   }
 
   const siteName =
@@ -45,13 +56,37 @@ export const Footer = () => {
       : siteSettings?.site_name_en ?? siteSettings?.site_name ?? t('footer.title')
   const supportEmail = siteSettings?.support_email ?? t('footer.contactEmail')
   const supportPhone = siteSettings?.support_phone ?? t('footer.contactPhone')
+  const footerDescription =
+    i18n.language === 'ar'
+      ? siteSettings?.footer_description ?? t('footer.description')
+      : siteSettings?.footer_description_en ?? siteSettings?.footer_description ?? t('footer.description')
+  const newsletterTitle =
+    i18n.language === 'ar'
+      ? siteSettings?.newsletter_title ?? t('footer.newsletterTitle')
+      : siteSettings?.newsletter_title_en ?? siteSettings?.newsletter_title ?? t('footer.newsletterTitle')
+  const newsletterDescription =
+    i18n.language === 'ar'
+      ? siteSettings?.newsletter_description ?? t('footer.newsletterDescription')
+      : siteSettings?.newsletter_description_en ??
+        siteSettings?.newsletter_description ??
+        t('footer.newsletterDescription')
+  const newsletterPlaceholder =
+    i18n.language === 'ar'
+      ? siteSettings?.newsletter_placeholder ?? t('footer.newsletterPlaceholder')
+      : siteSettings?.newsletter_placeholder_en ??
+        siteSettings?.newsletter_placeholder ??
+        t('footer.newsletterPlaceholder')
+
+  const siteQuickLinks = siteSettings?.footer_links?.filter((link) => link.href) ?? []
+  const quickLinks = siteQuickLinks.length > 0 ? siteQuickLinks : quickLinkPaths
+  const social = siteSettings?.social_links ?? {}
 
   return (
     <footer className="border-t border-slate-200 bg-slate-900 text-white" dir={direction}>
       <div className="container grid gap-8 py-12 md:grid-cols-[1.4fr,1fr,1fr,1.3fr]">
         <div className="space-y-3">
           <p className="text-lg font-semibold text-white">{siteName}</p>
-          <p className="text-sm text-white/80">{t('footer.description')}</p>
+          <p className="text-sm text-white/80">{footerDescription}</p>
         </div>
 
         <div>
@@ -59,13 +94,26 @@ export const Footer = () => {
             {t('footer.quickLinksTitle')}
           </p>
           <ul className="mt-4 space-y-2 text-sm text-white/80">
-            {quickLinkPaths.map((link) => (
-              <li key={link.id}>
-                <a href={link.href} className="transition hover:text-primary-200">
-                  {t(`footer.quickLinks.${link.id}`)}
-                </a>
-              </li>
-            ))}
+            {quickLinks.map((link) => {
+              const isIdLink = 'id' in link && link.id
+              const customLabel =
+                i18n.language === 'ar'
+                  ? (link as any).label ?? (link as any).label_en
+                  : (link as any).label_en ?? (link as any).label
+              const label = isIdLink
+                ? t(`footer.quickLinks.${link.id as string}`, {
+                    defaultValue: customLabel ?? undefined,
+                  })
+                : customLabel ?? link.href
+
+              return (
+                <li key={link.id ?? link.href}>
+                  <a href={link.href} className="transition hover:text-primary-200">
+                    {label}
+                  </a>
+                </li>
+              )
+            })}
           </ul>
         </div>
 
@@ -87,10 +135,13 @@ export const Footer = () => {
               {socialLinks.map(({ id, href, Icon }) => (
                 <a
                   key={id}
-                  href={href}
+                  href={social[id] || href}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white transition hover:border-primary-200 hover:text-primary-200"
+                  className={cn(
+                    'inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white transition hover:border-primary-200 hover:text-primary-200',
+                    social[id] ? '' : 'pointer-events-none opacity-40',
+                  )}
                   aria-label={id}
                 >
                   <Icon className="h-4 w-4" aria-hidden="true" />
@@ -102,15 +153,15 @@ export const Footer = () => {
 
         <div className="space-y-3">
           <p className="text-sm font-semibold uppercase tracking-widest text-white/70">
-            {t('footer.newsletterTitle')}
+            {newsletterTitle}
           </p>
-          <p className="text-sm text-white/80">{t('footer.newsletterDescription')}</p>
+          <p className="text-sm text-white/80">{newsletterDescription}</p>
           <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
             <Input
               type="email"
               dir="ltr"
               value={email}
-              placeholder={t('footer.newsletterPlaceholder')}
+              placeholder={newsletterPlaceholder}
               onChange={(event) => setEmail(event.target.value)}
               className="border-white/30 bg-white/10 text-white placeholder:text-white/60"
             />
@@ -127,9 +178,18 @@ export const Footer = () => {
             © {year} {siteName}. {t('footer.rights')}
           </p>
           <div className="flex gap-4">
-            {quickLinkPaths.slice(0, 3).map((link) => (
-              <a key={link.id} href={link.href} className="hover:text-primary-200">
-                {t(`footer.quickLinks.${link.id}`)}
+            {(quickLinks.length ? quickLinks : quickLinkPaths).slice(0, 3).map((link) => (
+              <a key={link.id ?? link.href} href={link.href} className="hover:text-primary-200">
+                {'id' in link && link.id
+                  ? t(`footer.quickLinks.${link.id as string}`, {
+                      defaultValue:
+                        i18n.language === 'ar'
+                          ? (link as any).label ?? (link as any).label_en
+                          : (link as any).label_en ?? (link as any).label,
+                    })
+                  : i18n.language === 'ar'
+                    ? (link as any).label ?? (link as any).label_en ?? link.href
+                    : (link as any).label_en ?? (link as any).label ?? link.href}
               </a>
             ))}
           </div>

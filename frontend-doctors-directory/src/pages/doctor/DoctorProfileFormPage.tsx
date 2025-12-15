@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react'
+import { createPortal } from 'react-dom'
 import { useForm, useWatch } from 'react-hook-form'
 import type { FieldErrors } from 'react-hook-form'
 import { z } from 'zod'
@@ -495,11 +496,6 @@ export const DoctorProfileFormPage = () => {
       }))
       .filter((clinic) => clinic.address !== '' && clinic.city !== '')
 
-    if (cleanedClinics.length === 0) {
-      toast.error(t('doctorForm.validation.clinicRequired'))
-      return
-    }
-
     const identityPayload = {
       birth_year: identity_birth_year ? Number(identity_birth_year) : undefined,
       gender_identity: genderIdentities,
@@ -828,9 +824,6 @@ export const DoctorProfileFormPage = () => {
         watchedValues.about_paragraph_two?.trim() ||
         watchedValues.about_paragraph_three?.trim(),
     )
-  const hasClinics = clinics.some(
-    (clinic) => clinic.address.trim().length > 0 && clinic.city.trim().length > 0,
-  )
   const aboutScore = calculateScore([
     Boolean(watchedValues.full_name?.trim()),
     Boolean(watchedValues.specialty?.trim()),
@@ -838,7 +831,6 @@ export const DoctorProfileFormPage = () => {
     Boolean(watchedValues.city?.trim()),
     languagesCount > 0,
     hasParagraph,
-    hasClinics,
   ])
   const financesScore = calculateScore([
     paymentMethods.length > 0,
@@ -1439,7 +1431,9 @@ export const DoctorProfileFormPage = () => {
               </div>
               <div>
                 <label className="text-xs text-slate-500">{t('doctorForm.contact.quickIntro')}</label>
-                <Input
+                <Textarea
+                  rows={2}
+                  maxLength={160}
                   {...register('new_clients_intro')}
                   placeholder={t('doctorForm.contact.quickIntro')}
                   aria-invalid={!!errors.new_clients_intro}
@@ -1535,16 +1529,14 @@ export const DoctorProfileFormPage = () => {
                     <p className="text-sm font-semibold text-slate-900">
                       {t('doctorForm.clinics.city')} {index + 1}
                     </p>
-                    {clinics.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="text-xs text-rose-600 hover:bg-rose-50"
-                        onClick={() => removeClinic(index)}
-                      >
-                        {t('doctorForm.clinics.remove')}
-                      </Button>
-                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="text-xs text-rose-600 hover:bg-rose-50"
+                      onClick={() => removeClinic(index)}
+                    >
+                      {t('doctorForm.clinics.remove')}
+                    </Button>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
@@ -2175,42 +2167,45 @@ export const DoctorProfileFormPage = () => {
           </Button>
         </div>
       </form>
-      {activeSection && (
-        <div className="fixed inset-0 z-40 flex">
-          <div className="flex-1 bg-slate-900/40" onClick={handleCloseDrawer} />
-          <div className="ml-auto flex h-full w-full max-w-3xl flex-col bg-white shadow-2xl">
-            <div className="flex items-start justify-between border-b border-slate-100 p-6">
-              <div className="flex items-center gap-3">
-                {ActiveSectionIcon && (
-                  <div className="rounded-2xl bg-primary-50 p-3 text-primary-600">
-                    <ActiveSectionIcon className="h-5 w-5" />
+      {activeSection &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex">
+            <div className="flex-1 bg-slate-900/50 backdrop-blur-sm" onClick={handleCloseDrawer} />
+            <div className="ml-auto flex h-full w-full max-w-3xl flex-col bg-white shadow-2xl">
+              <div className="flex items-start justify-between border-b border-slate-100 p-6">
+                <div className="flex items-center gap-3">
+                  {ActiveSectionIcon && (
+                    <div className="rounded-2xl bg-primary-50 p-3 text-primary-600">
+                      <ActiveSectionIcon className="h-5 w-5" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-lg font-semibold text-slate-900">{t(`doctorForm.tabs.${activeSection}`)}</p>
+                    <p className="text-sm text-slate-500">{t(`doctorForm.tabs.${activeSection}Desc`)}</p>
                   </div>
-                )}
-                <div>
-                  <p className="text-lg font-semibold text-slate-900">{t(`doctorForm.tabs.${activeSection}`)}</p>
-                  <p className="text-sm text-slate-500">{t(`doctorForm.tabs.${activeSection}Desc`)}</p>
                 </div>
+                <button
+                  type="button"
+                  className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
+                  onClick={handleCloseDrawer}
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                type="button"
-                className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
-                onClick={handleCloseDrawer}
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">{renderSectionContent(activeSection)}</div>
+              <div className="flex items-center justify-between border-t border-slate-100 p-4">
+                <Button type="button" variant="ghost" onClick={handleCloseDrawer}>
+                  {t('common.actions.close')}
+                </Button>
+                <Button type="button" onClick={handleDrawerSave} disabled={isSaving}>
+                  {isSaving ? t('doctorForm.buttons.saving') : t('doctorForm.buttons.sectionSave')}
+                </Button>
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">{renderSectionContent(activeSection)}</div>
-            <div className="flex items-center justify-between border-t border-slate-100 p-4">
-              <Button type="button" variant="ghost" onClick={handleCloseDrawer}>
-                {t('common.actions.close')}
-              </Button>
-              <Button type="button" onClick={handleDrawerSave} disabled={isSaving}>
-                {isSaving ? t('doctorForm.buttons.saving') : t('doctorForm.buttons.sectionSave')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }

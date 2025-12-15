@@ -26,6 +26,9 @@ import AdminCategoriesPage from '@/pages/admin/AdminCategoriesPage'
 import AdminUsersPage from '@/pages/admin/AdminUsersPage'
 import AdminPasswordPage from '@/pages/admin/AdminPasswordPage'
 import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
+import AdminNewsletterPage from '@/pages/admin/AdminNewsletterPage'
+import StatisticsPage from '@/pages/StatisticsPage'
+import { makeStaticPage } from '@/pages/StaticPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
 export const router = createBrowserRouter([
@@ -35,6 +38,12 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'search', element: <SearchPage /> },
+      { path: 'stats', element: <StatisticsPage /> },
+      { path: 'about', element: makeStaticPage('about')() },
+      { path: 'privacy', element: makeStaticPage('privacy')() },
+      { path: 'terms', element: makeStaticPage('terms')() },
+      { path: 'faq', element: makeStaticPage('faq')() },
+      { path: 'contact', element: makeStaticPage('contact')() },
       { path: 'doctors/:id', element: <DoctorProfilePage /> },
       {
         path: 'favorites',
@@ -123,6 +132,7 @@ export const router = createBrowserRouter([
       { path: 'doctors/:doctorId', element: <AdminDoctorDetailsPage /> },
       { path: 'doctors/:doctorId/edit', element: <AdminDoctorFormPage /> },
       { path: 'categories', element: <AdminCategoriesPage /> },
+      { path: 'newsletter', element: <AdminNewsletterPage /> },
       { path: 'users', element: <AdminUsersPage /> },
       { path: 'password', element: <AdminPasswordPage /> },
       { path: 'settings', element: <AdminSettingsPage /> },

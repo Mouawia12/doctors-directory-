@@ -5,33 +5,47 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { therapySpecialties } from '@/data/therapySpecialties'
+import { cn } from '@/lib/utils'
 
 interface SearchBarProps {
   onSearch: (filters: { q?: string; city?: string; specialty?: string }) => void
 }
 
 export const SearchBar = ({ onSearch }: SearchBarProps) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const direction = i18n.dir()
+  const isRTL = direction === 'rtl'
   const [q, setQ] = useState('')
   const [city, setCity] = useState('')
   const [specialty, setSpecialty] = useState('')
 
   const cities = [
-    { value: '', label: t('searchBar.cities.all') },
-    { value: t('searchBar.cities.riyadh'), label: t('searchBar.cities.riyadh') },
-    { value: t('searchBar.cities.jeddah'), label: t('searchBar.cities.jeddah') },
-    { value: t('searchBar.cities.dubai'), label: t('searchBar.cities.dubai') },
-    { value: t('searchBar.cities.doha'), label: t('searchBar.cities.doha') },
-    { value: t('searchBar.cities.cairo'), label: t('searchBar.cities.cairo') },
+    { value: '', label: t('searchPage.options.allCities') },
+    { value: t('searchPage.options.riyadh'), label: t('searchPage.options.riyadh') },
+    { value: t('searchPage.options.jeddah'), label: t('searchPage.options.jeddah') },
+    { value: t('searchPage.options.mecca'), label: t('searchPage.options.mecca') },
+    { value: t('searchPage.options.medina'), label: t('searchPage.options.medina') },
+    { value: t('searchPage.options.dammam'), label: t('searchPage.options.dammam') },
+    { value: t('searchPage.options.khobar'), label: t('searchPage.options.khobar') },
+    { value: t('searchPage.options.dhahran'), label: t('searchPage.options.dhahran') },
+    { value: t('searchPage.options.abha'), label: t('searchPage.options.abha') },
+    { value: t('searchPage.options.taif'), label: t('searchPage.options.taif') },
+    { value: t('searchPage.options.tabuk'), label: t('searchPage.options.tabuk') },
+    { value: t('searchPage.options.qassim'), label: t('searchPage.options.qassim') },
+    { value: t('searchPage.options.hail'), label: t('searchPage.options.hail') },
+    { value: t('searchPage.options.najran'), label: t('searchPage.options.najran') },
+    { value: t('searchPage.options.jizan'), label: t('searchPage.options.jizan') },
+    { value: t('searchPage.options.baha'), label: t('searchPage.options.baha') },
+    { value: t('searchPage.options.ulla'), label: t('searchPage.options.ulla') },
   ]
 
   const specialties = [
     { value: '', label: t('searchBar.specialties.all') },
-    { value: t('searchBar.specialties.family'), label: t('searchBar.specialties.family') },
-    { value: t('searchBar.specialties.cardio'), label: t('searchBar.specialties.cardio') },
-    { value: t('searchBar.specialties.derm'), label: t('searchBar.specialties.derm') },
-    { value: t('searchBar.specialties.pediatrics'), label: t('searchBar.specialties.pediatrics') },
-    { value: t('searchBar.specialties.ophthalmology'), label: t('searchBar.specialties.ophthalmology') },
+    ...therapySpecialties.map((item) => ({
+      value: item.ar,
+      label: i18n.language.startsWith('ar') ? item.ar : item.en,
+    })),
   ]
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -50,11 +64,18 @@ export const SearchBar = ({ onSearch }: SearchBarProps) => {
         </label>
         <div className="relative">
           <Input
+            className={cn('h-11', isRTL ? 'pr-10' : 'pl-10')}
             placeholder={t('searchBar.placeholder')}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search
+            className={cn(
+              'absolute top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400',
+              isRTL ? 'right-3' : 'left-3',
+            )}
+            aria-hidden="true"
+          />
         </div>
       </div>
       <div>

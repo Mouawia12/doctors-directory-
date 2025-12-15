@@ -12,6 +12,7 @@ import {
   Home,
   Users,
   SlidersHorizontal,
+  Mail,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { Input } from '@/components/ui/Input'
@@ -51,6 +52,7 @@ export const AdminLayout = () => {
       },
       { id: 'users', label: t('adminLayout.nav.users'), icon: Users, to: '/admin/users' },
       { id: 'categories', label: t('adminLayout.nav.categories'), icon: Layers, to: '/admin/categories' },
+      { id: 'newsletter', label: t('adminLayout.nav.newsletter'), icon: Mail, to: '/admin/newsletter' },
       { id: 'settings', label: t('adminLayout.nav.settings'), icon: SlidersHorizontal, to: '/admin/settings' },
       { id: 'security', label: t('adminLayout.nav.security'), icon: UserRound, to: '/admin/password' },
     ],

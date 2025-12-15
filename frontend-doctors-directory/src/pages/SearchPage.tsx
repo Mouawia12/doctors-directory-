@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, SlidersHorizontal, X } from 'lucide-react'
@@ -851,47 +852,50 @@ export const SearchPage = () => {
         </section>
       </div>
 
-      {isMobileFiltersOpen && (
-        <div
-          className="fixed inset-0 z-50 flex flex-col bg-slate-900/40 backdrop-blur-sm lg:hidden"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="mt-auto flex max-h-[90vh] w-full flex-col rounded-t-[32px] bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div>
-                <p className="text-base font-semibold text-slate-900">{t('searchPage.filters.mobile.title')}</p>
-                <p className="text-xs text-slate-500">{mobileFilterHelperText}</p>
+      {isMobileFiltersOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex flex-col bg-slate-900/50 backdrop-blur-sm lg:hidden"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="mt-auto flex max-h-[90vh] w-full flex-col rounded-t-[32px] bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <div>
+                  <p className="text-base font-semibold text-slate-900">{t('searchPage.filters.mobile.title')}</p>
+                  <p className="text-xs text-slate-500">{mobileFilterHelperText}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileFiltersOpen(false)}
+                  className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                  aria-label={t('common.actions.close')}
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsMobileFiltersOpen(false)}
-                className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-                aria-label={t('common.actions.close')}
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex-1 overflow-y-auto px-5 py-6">{filterPanelContent}</div>
+              <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    clearAllFilters()
+                    setIsMobileFiltersOpen(false)
+                  }}
+                >
+                  {t('searchPage.filters.mobile.reset')}
+                </Button>
+                <Button type="button" className="flex-1" onClick={() => setIsMobileFiltersOpen(false)}>
+                  {t('searchPage.filters.mobile.apply')}
+                </Button>
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto px-5 py-6">{filterPanelContent}</div>
-            <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  clearAllFilters()
-                  setIsMobileFiltersOpen(false)
-                }}
-              >
-                {t('searchPage.filters.mobile.reset')}
-              </Button>
-              <Button type="button" className="flex-1" onClick={() => setIsMobileFiltersOpen(false)}>
-                {t('searchPage.filters.mobile.apply')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }

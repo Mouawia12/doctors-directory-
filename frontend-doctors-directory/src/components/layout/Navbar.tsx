@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -14,6 +14,7 @@ export const Navbar = () => {
   const { t, i18n } = useTranslation()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const toggleButtonRef = useRef<HTMLButtonElement | null>(null)
   const { data: user } = useAuthQuery()
   const { data: siteSettings } = useSiteSettingsQuery()
   const logoutMutation = useLogoutMutation()
@@ -31,6 +32,27 @@ export const Navbar = () => {
   const isAdmin = user?.roles.includes('admin')
   const isPatient = user?.roles.includes('user') && !isDoctor
   const doctorPortalPath = getDoctorPortalPath()
+  const drawerRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (menuOpen) {
+      const previousOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') setMenuOpen(false)
+      }
+
+      document.addEventListener('keydown', handleKeyDown)
+      const focusTarget = drawerRef.current?.querySelector<HTMLElement>('[data-focus-start]')
+      focusTarget?.focus()
+
+      return () => {
+        document.body.style.overflow = previousOverflow
+        document.removeEventListener('keydown', handleKeyDown)
+      }
+    }
+  }, [menuOpen])
 
   const localizedSiteName =
     i18n.language === 'ar'
@@ -131,50 +153,165 @@ export const Navbar = () => {
           aria-label={t('nav.menu')}
           className="rounded-xl border border-slate-200 p-2 text-slate-600 md:hidden"
           onClick={() => setMenuOpen((prev) => !prev)}
+          ref={toggleButtonRef}
         >
           {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
-      {menuOpen && (
-        <div className="border-t border-slate-200 bg-white shadow-lg md:hidden">
-          <div className="container flex flex-col gap-4 py-4 text-sm">
+      <MobileNavDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onAfterClose={() => toggleButtonRef.current?.focus()}
+        drawerRef={drawerRef}
+        navLinks={navLinks}
+        isDoctor={isDoctor}
+        isAdmin={isAdmin}
+        isPatient={isPatient}
+        user={user}
+        t={t}
+        doctorPortalPath={doctorPortalPath}
+        logoutMutation={logoutMutation}
+      />
+    </header>
+  )
+}
+
+type NavLinkItem = { to: string; label: string }
+
+type MobileNavDrawerProps = {
+  open: boolean
+  onClose: () => void
+  onAfterClose?: () => void
+  drawerRef: React.RefObject<HTMLDivElement>
+  navLinks: NavLinkItem[]
+  isDoctor: boolean
+  isAdmin: boolean
+  isPatient: boolean
+  user: ReturnType<typeof useAuthQuery>['data']
+  t: ReturnType<typeof useTranslation>['t']
+  doctorPortalPath: string
+  logoutMutation: ReturnType<typeof useLogoutMutation>
+}
+
+const MobileNavDrawer = ({
+  open,
+  onClose,
+  onAfterClose,
+  drawerRef,
+  navLinks,
+  isDoctor,
+  isAdmin,
+  isPatient,
+  user,
+  t,
+  doctorPortalPath,
+  logoutMutation,
+}: MobileNavDrawerProps) => {
+  const [visible, setVisible] = useState(open)
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current)
+        closeTimerRef.current = null
+      }
+      setVisible(true)
+    } else {
+      closeTimerRef.current = setTimeout(() => {
+        setVisible(false)
+        onAfterClose?.()
+      }, 300)
+    }
+
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current)
+      }
+    }
+  }, [open, onAfterClose])
+
+  if (!visible) return null
+
+  const stopPropagation = (event: React.MouseEvent) => event.stopPropagation()
+
+  return (
+    <div
+      className={clsx(
+        'md:hidden fixed inset-0 z-50 transition duration-300',
+        open ? 'pointer-events-auto' : 'pointer-events-none',
+      )}
+    >
+      <div
+        className={clsx(
+          'absolute inset-0 bg-white transition-opacity duration-300',
+          open ? 'opacity-100' : 'opacity-0',
+        )}
+        onClick={onClose}
+      />
+      <div
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        className={clsx(
+          'absolute inset-y-0 right-0 h-screen w-full max-w-full transform bg-white shadow-2xl transition-transform duration-300 ease-out overflow-y-auto overscroll-contain',
+          open ? 'translate-x-0' : 'translate-x-full',
+        )}
+        onClick={stopPropagation}
+      >
+        <div className="flex min-h-full flex-col bg-white">
+          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+            <span className="text-sm font-semibold text-slate-900">{t('nav.menu')}</span>
+            <button
+              type="button"
+              className="rounded-xl border border-slate-200 p-2 text-slate-600"
+              onClick={onClose}
+            aria-label={t('common.close')}
+            data-focus-start
+          >
+            <X className="h-5 w-5" />
+          </button>
+          </div>
+
+          <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4 text-sm">
             {navLinks.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                onClick={() => setMenuOpen(false)}
-                className="text-slate-700"
-              >
+              <NavLink key={link.to} to={link.to} onClick={onClose} className="text-slate-700">
                 {link.label}
               </NavLink>
             ))}
+
             {isDoctor && (
               <>
-                <NavLink to={doctorPortalPath} onClick={() => setMenuOpen(false)} className="text-slate-700">
+                <NavLink to={doctorPortalPath} onClick={onClose} className="text-slate-700">
                   {t('nav.doctorPortal')}
                 </NavLink>
-                <NavLink to="/doctor" onClick={() => setMenuOpen(false)} className="text-slate-700">
+                <NavLink to="/doctor" onClick={onClose} className="text-slate-700">
                   {t('nav.myProfile')}
                 </NavLink>
               </>
             )}
             {isPatient && (
-              <NavLink to="/account" onClick={() => setMenuOpen(false)} className="text-slate-700">
+              <NavLink to="/account" onClick={onClose} className="text-slate-700">
                 {t('nav.userDashboard')}
               </NavLink>
             )}
             {isAdmin && (
-              <NavLink to="/admin" onClick={() => setMenuOpen(false)} className="text-slate-700">
+              <NavLink to="/admin" onClick={onClose} className="text-slate-700">
                 {t('nav.admin')}
               </NavLink>
             )}
+
             {!user ? (
               <div className="flex flex-col gap-2">
                 <Button asChild>
-                  <Link to="/auth/login">{t('nav.login')}</Link>
+                  <Link to="/auth/login" onClick={onClose}>
+                    {t('nav.login')}
+                  </Link>
                 </Button>
                 <Button variant="outline" asChild>
-                  <Link to="/auth/register">{t('nav.join')}</Link>
+                  <Link to="/auth/register" onClick={onClose}>
+                    {t('nav.join')}
+                  </Link>
                 </Button>
                 <LanguageSwitcher fullWidth variant="outline" size="sm" />
               </div>
@@ -189,7 +326,7 @@ export const Navbar = () => {
                     variant="ghost"
                     className="h-10 w-10 rounded-2xl p-0"
                     onClick={() => {
-                      setMenuOpen(false)
+                      onClose()
                       logoutMutation.mutate()
                     }}
                     disabled={logoutMutation.isPending}
@@ -207,7 +344,7 @@ export const Navbar = () => {
             )}
           </div>
         </div>
-      )}
-    </header>
+      </div>
+    </div>
   )
 }

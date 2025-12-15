@@ -62,10 +62,8 @@ class DoctorStatusUpdated extends Notification
             'doctor_id' => $this->doctor->id,
             'status' => $this->doctor->status,
             'title' => $parts['subject'],
-            'title_en' => $parts['subject_en'],
             'title_ar' => $parts['subject_ar'],
             'message' => $parts['message'],
-            'message_en' => $parts['message_en'],
             'message_ar' => $parts['message_ar'],
             'note' => $this->doctor->status_note,
         ];
@@ -75,10 +73,8 @@ class DoctorStatusUpdated extends Notification
      * @return array{
      *     subject: string,
      *     subject_ar: string,
-     *     subject_en: string,
      *     message: string,
-     *     message_ar: string,
-     *     message_en: string
+     *     message_ar: string
      * }
      */
     protected function messageParts(): array
@@ -86,26 +82,20 @@ class DoctorStatusUpdated extends Notification
         $parts = match ($this->doctor->status) {
             DoctorStatus::Approved->value => [
                 'subject_ar' => 'تمت الموافقة على حسابك كمعالج',
-                'subject_en' => 'Your doctor profile was approved',
                 'message_ar' => 'تمت مراجعة ملفك الطبي وتمت الموافقة عليه. حسابك أصبح مرئياً للمرضى ويمكنك استقبال الحجوزات.',
-                'message_en' => 'Your profile has been reviewed and approved. Your listing is now visible to patients so you can start receiving bookings.',
             ],
             DoctorStatus::Rejected->value => [
                 'subject_ar' => 'نعتذر، نحتاج إلى بعض التعديلات',
-                'subject_en' => 'Your doctor profile needs updates',
                 'message_ar' => 'بعد مراجعة ملفك، نحتاج إلى بعض التعديلات قبل النشر. راجع الملاحظات وأعد الإرسال متى كنت جاهزاً.',
-                'message_en' => 'We need a few updates before your profile can go live. Please review the notes from the team and resubmit when ready.',
             ],
             default => [
                 'subject_ar' => 'تحديث على حالة حسابك',
-                'subject_en' => 'Your doctor profile was updated',
                 'message_ar' => 'تم تحديث حالة ملفك. يرجى مراجعة التفاصيل في لوحة التحكم.',
-                'message_en' => 'Your profile status has been updated. Please review the details in your portal.',
             ],
         };
 
-        $parts['subject'] = "{$parts['subject_ar']} | {$parts['subject_en']}";
-        $parts['message'] = "{$parts['message_ar']} | {$parts['message_en']}";
+        $parts['subject'] = $parts['subject_ar'];
+        $parts['message'] = $parts['message_ar'];
 
         return $parts;
     }

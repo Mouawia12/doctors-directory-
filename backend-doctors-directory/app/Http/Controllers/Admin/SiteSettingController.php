@@ -20,10 +20,18 @@ class SiteSettingController extends Controller
     {
         $data = $request->validated();
 
-        foreach (['site_name', 'site_name_en', 'support_email', 'support_phone'] as $key) {
+        foreach (['site_name', 'site_name_en', 'support_email', 'support_phone', 'footer_description', 'footer_description_en', 'newsletter_title', 'newsletter_title_en', 'newsletter_description', 'newsletter_description_en', 'newsletter_placeholder', 'newsletter_placeholder_en'] as $key) {
             if (array_key_exists($key, $data)) {
                 SiteSetting::updateOrCreate(['key' => $key], [
                     'value' => $data[$key],
+                ]);
+            }
+        }
+
+        foreach (['social_links', 'footer_links', 'static_pages'] as $jsonKey) {
+            if (array_key_exists($jsonKey, $data)) {
+                SiteSetting::updateOrCreate(['key' => $jsonKey], [
+                    'value' => json_encode($data[$jsonKey]),
                 ]);
             }
         }
