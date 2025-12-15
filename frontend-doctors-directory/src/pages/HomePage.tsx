@@ -19,8 +19,8 @@ type ExpertCard = {
   name: string
   specialty: string
   focus: string
-  experience: string
-  languages: string
+  experience?: string
+  languages?: string
   profileId?: string
 }
 type PlatformFeature = { title: string; description: string }

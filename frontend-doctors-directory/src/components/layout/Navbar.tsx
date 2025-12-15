@@ -28,9 +28,9 @@ export const Navbar = () => {
     [t],
   )
 
-  const isDoctor = user?.roles.includes('doctor')
-  const isAdmin = user?.roles.includes('admin')
-  const isPatient = user?.roles.includes('user') && !isDoctor
+  const isDoctor = Boolean(user?.roles.includes('doctor'))
+  const isAdmin = Boolean(user?.roles.includes('admin'))
+  const isPatient = Boolean(user?.roles.includes('user') && !isDoctor)
   const doctorPortalPath = getDoctorPortalPath()
   const drawerRef = useRef<HTMLDivElement | null>(null)
 
@@ -182,7 +182,7 @@ type MobileNavDrawerProps = {
   open: boolean
   onClose: () => void
   onAfterClose?: () => void
-  drawerRef: React.RefObject<HTMLDivElement>
+  drawerRef: React.RefObject<HTMLDivElement | null>
   navLinks: NavLinkItem[]
   isDoctor: boolean
   isAdmin: boolean
@@ -208,7 +208,7 @@ const MobileNavDrawer = ({
   logoutMutation,
 }: MobileNavDrawerProps) => {
   const [visible, setVisible] = useState(open)
-  const closeTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (open) {

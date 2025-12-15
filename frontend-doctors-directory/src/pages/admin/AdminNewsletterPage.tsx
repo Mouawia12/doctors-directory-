@@ -58,7 +58,7 @@ export const AdminNewsletterPage = () => {
             page={pagination.page}
             total={pagination.total}
             perPage={pagination.per_page}
-            onPageChange={setPage}
+            onChange={setPage}
           />
         </div>
       )}
