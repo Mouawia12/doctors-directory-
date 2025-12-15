@@ -1,4 +1,5 @@
 import axios from 'axios'
+import i18n from '@/app/i18n'
 import { env } from '@/lib/env'
 
 const AUTH_TOKEN_KEY = 'dd_auth_token'
@@ -9,6 +10,14 @@ export const api = axios.create({
     Accept: 'application/json',
   },
 })
+
+const setLocaleHeader = (lng: string) => {
+  api.defaults.headers.common['X-Locale'] = lng
+  api.defaults.headers.common['Accept-Language'] = lng
+}
+
+setLocaleHeader(i18n.language)
+i18n.on('languageChanged', setLocaleHeader)
 
 const setAuthHeader = (token: string | null) => {
   if (token) {

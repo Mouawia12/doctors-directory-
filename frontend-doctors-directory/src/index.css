@@ -68,6 +68,26 @@
       font-size: 1.875rem;
     }
   }
+
+  /* Ensure toasts stay centered on mobile for both LTR/RTL */
+  [data-sonner-toaster][data-x-position='center'] {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  @media (max-width: 640px) {
+    [data-sonner-toaster][data-x-position='center'] {
+      left: 50% !important;
+      right: auto;
+      width: min(460px, calc(100vw - 32px));
+      transform: translateX(-50%);
+    }
+
+    [data-sonner-toaster][data-x-position='center'] [data-sonner-toast] {
+      width: 100%;
+      margin-inline: auto;
+    }
+  }
 }
 
 @layer utilities {
