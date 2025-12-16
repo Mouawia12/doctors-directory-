@@ -92,20 +92,44 @@ export const SearchPage = () => {
   const [insuranceInput, setInsuranceInput] = useState('')
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false)
   const [openFilters, setOpenFilters] = useState(() => ({
+    specialties: params.getAll('issues').length > 0,
     issues: params.getAll('issues').length > 0,
     therapy: params.getAll('therapy_modalities').length > 0,
   }))
 
   const categoriesQuery = useCategoriesQuery()
-  const flattenedCategories = useMemo(
-    () => flattenCategories(categoriesQuery.data ?? []),
+  const { specialtyCategories, issueCategories, categoryLabelMap, specialtyCategoryIds, issueCategoryIds } = useMemo(
+    () => {
+      const roots = categoriesQuery.data ?? []
+      const rootCategories = roots.filter((category) => category.parent_id === null)
+      const findRoot = (matcher: (value: string) => boolean) =>
+        rootCategories.find((category) => matcher(category.name))
+
+      const specialtyRoot =
+        findRoot((name) => /تخصص/.test(name)) ?? rootCategories[0] ?? null
+      const issueRoot =
+        findRoot((name) => /قضا|مشكل/.test(name)) ??
+        rootCategories.find((category) => category.id !== specialtyRoot?.id) ??
+        null
+
+      const specialtyList = flattenCategories(specialtyRoot?.children ?? [])
+      const issuesList = flattenCategories(issueRoot?.children ?? [])
+
+      const map = new Map<number, string>()
+      roots.forEach((category) => map.set(category.id, category.name))
+      specialtyList.forEach((category) => map.set(category.id, category.name))
+      issuesList.forEach((category) => map.set(category.id, category.name))
+
+      return {
+        specialtyCategories: specialtyList,
+        issueCategories: issuesList,
+        categoryLabelMap: map,
+        specialtyCategoryIds: new Set(specialtyList.map((category) => category.id)),
+        issueCategoryIds: new Set(issuesList.map((category) => category.id)),
+      }
+    },
     [categoriesQuery.data],
   )
-  const categoryLabelMap = useMemo(() => {
-    const map = new Map<number, string>()
-    flattenedCategories.forEach((category) => map.set(category.id, category.name))
-    return map
-  }, [flattenedCategories])
 
   const therapyApproachOptions = useMemo(
     () =>
@@ -320,7 +344,7 @@ export const SearchPage = () => {
     }
     handleFilterChange('price_max', String(maxPrice))
   }
-  const toggleCollapsible = (section: 'issues' | 'therapy') => {
+  const toggleCollapsible = (section: 'issues' | 'therapy' | 'specialties') => {
     setOpenFilters((prev) => ({ ...prev, [section]: !prev[section] }))
   }
   const clearAllFilters = () => {
@@ -379,14 +403,17 @@ export const SearchPage = () => {
         displayValue: languageLabel(code, t),
       }),
     )
-    ;(filters.issues ?? []).forEach((issueId) =>
+    ;(filters.issues ?? []).forEach((issueId) => {
+      const label = specialtyCategoryIds.has(issueId)
+        ? t('searchPage.filters.specialtyCategories')
+        : t('searchPage.filters.issues')
       chips.push({
         key: 'issues',
-        label: t('searchPage.filters.issues'),
+        label,
         value: issueId,
         displayValue: categoryLabelMap.get(issueId) ?? String(issueId),
-      }),
-    )
+      })
+    })
     ;(filters.therapy_modalities ?? []).forEach((modality) =>
       chips.push({
         key: 'therapy_modalities',
@@ -457,7 +484,9 @@ export const SearchPage = () => {
     filters.session_types,
     filters.specialty,
     filters.therapy_modalities,
+    issueCategoryIds,
     sessionTypeLabelMap,
+    specialtyCategoryIds,
     t,
   ])
   const activeFilterCount = filterChips.length
@@ -600,51 +629,79 @@ export const SearchPage = () => {
 
   const renderAdvancedFilters = () => (
     <div className="space-y-6">
-        <CollapsibleFilter
-          title={t('searchPage.filters.issues')}
-          isOpen={openFilters.issues}
-          onToggle={() => toggleCollapsible('issues')}
-        >
-          {categoriesQuery.isLoading ? (
-            <p className="text-xs text-slate-500">{t('common.loadingShort')}</p>
-          ) : flattenedCategories.length === 0 ? (
-            <p className="text-xs text-slate-500">{t('searchPage.filters.noCategories')}</p>
-          ) : (
-            <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
-              {flattenedCategories.map((category) => (
-                <label
-                  key={category.id}
-                  className="flex items-center gap-2 text-sm text-slate-700"
-                  style={{ marginInlineStart: `${category.depth * 12}px` }}
-                >
-                  <Checkbox
-                    checked={selectedIssues.includes(category.id)}
-                    onChange={() => toggleArrayParam('issues', String(category.id))}
-                  />
-                  {category.name}
-                </label>
-              ))}
-            </div>
-          )}
-        </CollapsibleFilter>
-
-        <CollapsibleFilter
-          title={t('searchPage.filters.therapyApproaches')}
-          isOpen={openFilters.therapy}
-          onToggle={() => toggleCollapsible('therapy')}
-        >
-          <div className="max-h-48 space-y-2 overflow-y-auto pr-1 text-sm text-slate-700">
-            {therapyApproachOptions.map((option) => (
-              <label key={option.value} className="flex items-center gap-2">
+      <CollapsibleFilter
+        title={t('searchPage.filters.specialtyCategories')}
+        isOpen={openFilters.specialties}
+        onToggle={() => toggleCollapsible('specialties')}
+      >
+        {categoriesQuery.isLoading ? (
+          <p className="text-xs text-slate-500">{t('common.loadingShort')}</p>
+        ) : specialtyCategories.length === 0 ? (
+          <p className="text-xs text-slate-500">{t('searchPage.filters.noCategories')}</p>
+        ) : (
+          <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+            {specialtyCategories.map((category) => (
+              <label
+                key={category.id}
+                className="flex items-center gap-2 text-sm text-slate-700"
+                style={{ marginInlineStart: `${category.depth * 12}px` }}
+              >
                 <Checkbox
-                  checked={selectedTherapyApproaches.includes(option.value)}
-                  onChange={() => toggleArrayParam('therapy_modalities', option.value)}
+                  checked={selectedIssues.includes(category.id)}
+                  onChange={() => toggleArrayParam('issues', String(category.id))}
                 />
-                <span className="leading-snug">{option.label}</span>
+                {category.name}
               </label>
             ))}
           </div>
-        </CollapsibleFilter>
+        )}
+      </CollapsibleFilter>
+
+      <CollapsibleFilter
+        title={t('searchPage.filters.issues')}
+        isOpen={openFilters.issues}
+        onToggle={() => toggleCollapsible('issues')}
+      >
+        {categoriesQuery.isLoading ? (
+          <p className="text-xs text-slate-500">{t('common.loadingShort')}</p>
+        ) : issueCategories.length === 0 ? (
+          <p className="text-xs text-slate-500">{t('searchPage.filters.noCategories')}</p>
+        ) : (
+          <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+            {issueCategories.map((category) => (
+              <label
+                key={category.id}
+                className="flex items-center gap-2 text-sm text-slate-700"
+                style={{ marginInlineStart: `${category.depth * 12}px` }}
+              >
+                <Checkbox
+                  checked={selectedIssues.includes(category.id)}
+                  onChange={() => toggleArrayParam('issues', String(category.id))}
+                />
+                {category.name}
+              </label>
+            ))}
+          </div>
+        )}
+      </CollapsibleFilter>
+
+      <CollapsibleFilter
+        title={t('searchPage.filters.therapyApproaches')}
+        isOpen={openFilters.therapy}
+        onToggle={() => toggleCollapsible('therapy')}
+      >
+        <div className="max-h-48 space-y-2 overflow-y-auto pr-1 text-sm text-slate-700">
+          {therapyApproachOptions.map((option) => (
+            <label key={option.value} className="flex items-center gap-2">
+              <Checkbox
+                checked={selectedTherapyApproaches.includes(option.value)}
+                onChange={() => toggleArrayParam('therapy_modalities', option.value)}
+              />
+              <span className="leading-snug">{option.label}</span>
+            </label>
+          ))}
+        </div>
+      </CollapsibleFilter>
 
         <FilterSection title={t('searchPage.filters.ageGroups')}>
           <div className="flex flex-wrap gap-4 text-sm text-slate-700">
