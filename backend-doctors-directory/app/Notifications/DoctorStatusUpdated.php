@@ -73,8 +73,10 @@ class DoctorStatusUpdated extends Notification
      * @return array{
      *     subject: string,
      *     subject_ar: string,
+     *     subject_en: string,
      *     message: string,
-     *     message_ar: string
+     *     message_ar: string,
+     *     message_en: string,
      * }
      */
     protected function messageParts(): array
@@ -83,14 +85,20 @@ class DoctorStatusUpdated extends Notification
             DoctorStatus::Approved->value => [
                 'subject_ar' => 'تمت الموافقة على حسابك كمعالج',
                 'message_ar' => 'تمت مراجعة ملفك الطبي وتمت الموافقة عليه. حسابك أصبح مرئياً للمرضى ويمكنك استقبال الحجوزات.',
+                'subject_en' => 'Your therapist account is approved',
+                'message_en' => 'We reviewed your profile and approved it. Your account is now visible to patients and you can receive appointments.',
             ],
             DoctorStatus::Rejected->value => [
                 'subject_ar' => 'نعتذر، نحتاج إلى بعض التعديلات',
                 'message_ar' => 'بعد مراجعة ملفك، نحتاج إلى بعض التعديلات قبل النشر. راجع الملاحظات وأعد الإرسال متى كنت جاهزاً.',
+                'subject_en' => 'We need a few updates before publishing',
+                'message_en' => 'After reviewing your profile, we need a few changes before publishing. Please check the notes and resubmit when ready.',
             ],
             default => [
                 'subject_ar' => 'تحديث على حالة حسابك',
                 'message_ar' => 'تم تحديث حالة ملفك. يرجى مراجعة التفاصيل في لوحة التحكم.',
+                'subject_en' => 'Update on your account status',
+                'message_en' => 'Your profile status has been updated. Please review the details in your dashboard.',
             ],
         };
 
