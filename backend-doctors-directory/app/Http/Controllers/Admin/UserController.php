@@ -7,6 +7,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 
 class UserController extends Controller
@@ -72,6 +73,27 @@ class UserController extends Controller
         $user->load(['doctorProfile', 'favorites.doctor'])->loadCount('favorites');
 
         return $this->respond(new UserResource($user), __('تم تحديث حالة المستخدم'));
+    }
+
+    public function storeAdmin(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        $user->assignRole('admin');
+        $user->forceFill(['email_verified_at' => now()])->save();
+        $user->load('roles');
+
+        return $this->respond(new UserResource($user), __('تم إنشاء حساب مشرف جديد'));
     }
 
     public function resetPassword(User $user): JsonResponse

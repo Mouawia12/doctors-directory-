@@ -62,6 +62,7 @@ Route::middleware(['auth:sanctum', 'verified', 'role:admin'])->prefix('admin')->
     Route::post('doctors/{doctor}/reject', [AdminDoctorController::class, 'reject']);
     Route::apiResource('categories', AdminCategoryController::class)->except(['show', 'create', 'edit']);
     Route::get('users', [AdminUserController::class, 'index']);
+    Route::post('users/admins', [AdminUserController::class, 'storeAdmin']);
     Route::post('users/{user}/status', [AdminUserController::class, 'updateStatus']);
     Route::post('users/{user}/reset-password', [AdminUserController::class, 'resetPassword']);
     Route::delete('users/{user}', [AdminUserController::class, 'destroy']);

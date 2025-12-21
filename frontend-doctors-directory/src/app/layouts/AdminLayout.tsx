@@ -13,6 +13,7 @@ import {
   Users,
   SlidersHorizontal,
   Mail,
+  ShieldCheck,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { Input } from '@/components/ui/Input'
@@ -50,6 +51,7 @@ export const AdminLayout = () => {
           { id: 'doctors-create', label: t('adminLayout.nav.doctorsCreate'), to: '/admin/doctors/new' },
         ],
       },
+      { id: 'admins', label: t('adminLayout.nav.admins'), icon: ShieldCheck, to: '/admin/admins' },
       { id: 'users', label: t('adminLayout.nav.users'), icon: Users, to: '/admin/users' },
       { id: 'categories', label: t('adminLayout.nav.categories'), icon: Layers, to: '/admin/categories' },
       { id: 'newsletter', label: t('adminLayout.nav.newsletter'), icon: Mail, to: '/admin/newsletter' },

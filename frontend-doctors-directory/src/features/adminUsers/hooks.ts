@@ -1,11 +1,12 @@
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import {
+  createAdminUser,
   deleteAdminUser,
   fetchAdminUsers,
   resetAdminUserPassword,
   updateAdminUserStatus,
 } from '@/features/adminUsers/api'
-import type { AdminUserFilters } from '@/features/adminUsers/types'
+import type { AdminUserFilters, CreateAdminPayload } from '@/features/adminUsers/types'
 import { queryClient } from '@/lib/queryClient'
 import { queryKeys } from '@/lib/queryKeys'
 import type { User } from '@/types/user'
@@ -42,6 +43,14 @@ export const useAdminUserResetPasswordMutation = () =>
 export const useAdminUserDeleteMutation = () =>
   useMutation({
     mutationFn: (userId: number) => deleteAdminUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'], exact: false })
+    },
+  })
+
+export const useCreateAdminUserMutation = () =>
+  useMutation({
+    mutationFn: (payload: CreateAdminPayload) => createAdminUser(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'], exact: false })
     },

@@ -24,6 +24,7 @@ import AdminDoctorDetailsPage from '@/pages/admin/AdminDoctorDetailsPage'
 import AdminDoctorFormPage from '@/pages/admin/AdminDoctorFormPage'
 import AdminCategoriesPage from '@/pages/admin/AdminCategoriesPage'
 import AdminUsersPage from '@/pages/admin/AdminUsersPage'
+import AdminAdminsPage from '@/pages/admin/AdminAdminsPage'
 import AdminPasswordPage from '@/pages/admin/AdminPasswordPage'
 import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
 import AdminNewsletterPage from '@/pages/admin/AdminNewsletterPage'
@@ -133,6 +134,7 @@ export const router = createBrowserRouter([
       { path: 'doctors/:doctorId/edit', element: <AdminDoctorFormPage /> },
       { path: 'categories', element: <AdminCategoriesPage /> },
       { path: 'newsletter', element: <AdminNewsletterPage /> },
+      { path: 'admins', element: <AdminAdminsPage /> },
       { path: 'users', element: <AdminUsersPage /> },
       { path: 'password', element: <AdminPasswordPage /> },
       { path: 'settings', element: <AdminSettingsPage /> },

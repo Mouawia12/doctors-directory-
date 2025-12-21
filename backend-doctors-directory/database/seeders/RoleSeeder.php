@@ -20,8 +20,10 @@ class RoleSeeder extends Seeder
             'user',
         ])->map(fn (string $role) => Role::firstOrCreate(['name' => $role]));
 
+        $adminEmail = env('SEED_ADMIN_EMAIL', 'counselor984@gmail.com');
+
         $admin = User::firstOrCreate(
-            ['email' => 'ymouawia10@yahoo.com'],
+            ['email' => $adminEmail],
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('password'),

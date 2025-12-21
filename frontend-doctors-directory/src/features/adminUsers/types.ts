@@ -16,3 +16,9 @@ export type AdminUserListResponse = {
     total: number
   }
 }
+
+export type CreateAdminPayload = {
+  name: string
+  email: string
+  password: string
+}

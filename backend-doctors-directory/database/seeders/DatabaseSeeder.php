@@ -17,11 +17,16 @@ class DatabaseSeeder extends Seeder
     {
         Artisan::call('migrate:fresh');
 
+        $shouldSeedDemoDoctors = (bool) env('SEED_DEMO_DOCTORS', !app()->environment('production'));
+
         $this->call([
             RoleSeeder::class,
             CategorySeeder::class,
             SiteSettingSeeder::class,
-            DoctorSeeder::class,
         ]);
+
+        if ($shouldSeedDemoDoctors) {
+            $this->call([DoctorSeeder::class]);
+        }
     }
 }
