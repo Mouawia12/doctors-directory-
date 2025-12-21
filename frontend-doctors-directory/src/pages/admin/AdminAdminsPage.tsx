@@ -1,4 +1,5 @@
-import { FormEvent, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
 import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
