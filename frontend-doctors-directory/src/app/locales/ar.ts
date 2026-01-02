@@ -577,6 +577,8 @@ export const ar = {
       focusCopy: 'الأساليب والمدارس العلاجية المعتمدة لدى المعالج.',
       focusChip: 'دعم الصحة النفسية المتكامل',
       focusEmpty: 'لم تتم إضافة تخصصات إضافية.',
+      personalStatementTitle: 'البيان الشخصي',
+      personalStatementCopy: 'ثلاث فقرات يكتبها المختص لتعريف العملاء.',
       financesTitle: 'الشؤون المالية',
       financesCopy: 'الأتعاب، التأمينات، طرق الدفع كما تظهر في Psychology Today.',
       individualSession: 'جلسة فردية',
@@ -980,7 +982,7 @@ export const ar = {
         fullName: 'الاسم الكامل',
         displayName: 'الاسم الظاهر',
         businessName: 'اسم النشاط/العيادة',
-        honorific: 'اللقب',
+        honorific: 'اللقب المهني',
         firstName: 'الاسم الأول',
         middleName: 'الاسم الأوسط',
         lastName: 'اسم العائلة',
@@ -1170,7 +1172,7 @@ export const ar = {
         description: 'املأ الاسم، التعريف، وبيانات التواصل.',
         labels: {
           fullPublicName: 'الاسم الكامل الظاهر',
-          honorific: 'اللقب المهني (Dr., Mr., Ms.)',
+          honorific: 'اللقب المهني',
           firstName: 'الاسم الأول',
           middleName: 'الاسم الأوسط',
           lastName: 'اسم العائلة',
@@ -1194,6 +1196,16 @@ export const ar = {
           paragraph2: 'الفقرة الثانية (360 حرفاً)',
           paragraph3: 'الفقرة الثالثة (بدون حد صارم)',
         },
+        paragraphHints: {
+          paragraph1: 'عرّف بنفسك وخبرتك ولماذا اخترت هذا المجال.',
+          paragraph2: 'وضح الفئات أو المشكلات التي تركز عليها وكيف تساعدهم.',
+          paragraph3: 'صف أسلوب الجلسة وما يمكن للعميل توقعه.',
+        },
+        honorificOptions: {
+          dr: 'د.',
+          mr: 'الأستاذ',
+          ms: 'الأستاذة',
+        },
         displayNameOptions: {
           personal: 'الاسم الشخصي',
           business: 'اسم الشركة',
@@ -1205,6 +1217,7 @@ export const ar = {
         },
         placeholders: {
           fullPublicName: 'مثال: د. سارة أحمد',
+          honorific: 'اختر اللقب المهني',
           firstName: 'الاسم الأول',
           middleName: 'اختياري',
           lastName: 'اسم العائلة',
@@ -1215,7 +1228,10 @@ export const ar = {
           secondarySpecialty: 'مثال: اضطرابات القلق',
           licenseState: 'مثال: دبي - هيئة الصحة',
           professionalRole: 'معالج نفسي، مستشار...',
-          bio: 'اكتب ملخصاً عاماً يشجع على التواصل',
+          bio: 'اهلاً... كيف ستساعد؟ اكتب نصاً قصيراً بصيغة إنسانية هادئة يوضح حضورك مع المراجع دون وعود كبيرة.',
+          paragraph1: 'تخيّل مراجعك المثالي: متى يأتي؟ ما المشكلة الظاهرة والعميقة؟ صفه بلغة واقعية دون مبالغة.',
+          paragraph2: 'كيف يمكنك مساعدته فعلياً؟ ما القضايا التي تجيدها؟ وكيف تعمل داخل الجلسة دون ادعاءات؟',
+          paragraph3: 'رسالة تطمئن المتردد: التواصل لا يلزمه بشيء. اختم بدعوة مفتوحة وغير ملحّة.',
         },
       },
       media: {

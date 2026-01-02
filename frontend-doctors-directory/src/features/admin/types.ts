@@ -32,8 +32,8 @@ export interface AdminDoctorPayload {
   about_paragraph_one?: string | null
   about_paragraph_two?: string | null
   about_paragraph_three?: string | null
-  specialty: string
-  sub_specialty?: string | null
+  specialty: string[]
+  sub_specialty?: string[] | null
   qualifications?: string[]
   additional_credentials?: string[]
   license_number?: string | null

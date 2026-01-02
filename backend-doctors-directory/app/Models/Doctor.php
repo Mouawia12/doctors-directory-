@@ -91,6 +91,8 @@ class Doctor extends Model implements HasMedia
     protected function casts(): array
     {
         return [
+            'specialty' => 'array',
+            'sub_specialty' => 'array',
             'qualifications' => 'array',
             'additional_credentials' => 'array',
             'languages' => 'array',

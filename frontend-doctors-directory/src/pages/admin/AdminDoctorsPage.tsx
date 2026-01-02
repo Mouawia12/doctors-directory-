@@ -17,6 +17,7 @@ import { Card } from '@/components/ui/Card'
 import type { DoctorStatus, Doctor } from '@/types/doctor'
 import { useTranslation } from 'react-i18next'
 import { PhoneNumber } from '@/components/common/PhoneNumber'
+import { formatSpecialtyList } from '@/lib/doctor'
 
 const formatDate = (value?: string) =>
   value ? dayjs(value).format('DD MMM YYYY') : '—'
@@ -203,7 +204,9 @@ export const AdminDoctorsPage = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-slate-500">{doctor.specialty}</p>
+                  <p className="text-sm text-slate-500">
+                    {formatSpecialtyList(doctor.specialty, t('common.comma')) || '—'}
+                  </p>
                   <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
                     <span>
                       {t('adminDoctors.lastUpdated')}: {formatDate(doctor.updated_at)}

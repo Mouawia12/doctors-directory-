@@ -123,7 +123,7 @@ class SocialAuthController extends Controller
                 Doctor::create([
                     'user_id' => $user->id,
                     'full_name' => $name,
-                    'specialty' => 'غير محدد',
+                    'specialty' => [],
                     'status' => DoctorStatus::Draft->value,
                     'languages' => ['ar'],
                     'email' => $user->email,

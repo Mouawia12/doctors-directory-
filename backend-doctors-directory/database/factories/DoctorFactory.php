@@ -169,8 +169,8 @@ class DoctorFactory extends Factory
         return [
             'full_name' => Arr::random($arabicNames),
             'bio' => Arr::random($arabicBios),
-            'specialty' => $specialty,
-            'sub_specialty' => $optional(fn () => Arr::random($subSpecialties)),
+            'specialty' => [$specialty],
+            'sub_specialty' => $optional(fn () => [Arr::random($subSpecialties)]),
             'qualifications' => [
                 Arr::random(['ماجستير إرشاد نفسي', 'دبلوم علاج معرفي سلوكي', 'شهادة EMDR']),
                 Arr::random(['دبلوم العلاج الأسري', 'شهادة علاج الإدمان', 'اعتماد جلسات أونلاين']),

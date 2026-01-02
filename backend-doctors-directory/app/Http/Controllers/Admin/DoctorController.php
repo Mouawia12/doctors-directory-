@@ -35,7 +35,7 @@ class DoctorController extends Controller
             $query->where(function ($inner) use ($value): void {
                 $inner
                     ->where('full_name', 'like', "%{$value}%")
-                    ->orWhere('specialty', 'like', "%{$value}%")
+                    ->orWhereJsonContains('specialty', $value)
                     ->orWhere('phone', 'like', "%{$value}%");
             });
         }

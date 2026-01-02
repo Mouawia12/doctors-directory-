@@ -5,12 +5,12 @@ use App\Models\Doctor;
 it('filters doctors by city and specialty', function (): void {
     $match = Doctor::factory()->approved()->create([
         'city' => 'الرياض',
-        'specialty' => 'طب الأسرة',
+        'specialty' => ['طب الأسرة'],
     ]);
 
     Doctor::factory()->approved()->create([
         'city' => 'جدة',
-        'specialty' => 'جلدية',
+        'specialty' => ['جلدية'],
     ]);
 
     $query = http_build_query([

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react'
 import { createPortal } from 'react-dom'
-import { useForm, useWatch } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import type { FieldErrors } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -88,8 +88,8 @@ const buildSchema = (t: TFunction) =>
     about_paragraph_one: z.string().max(640, t('doctorForm.validation.required')).optional(),
     about_paragraph_two: z.string().max(360, t('doctorForm.validation.required')).optional(),
     about_paragraph_three: z.string().optional(),
-    specialty: z.string().min(3, t('doctorForm.validation.specialtyRequired')),
-    sub_specialty: z.string().optional(),
+    specialty: z.array(z.string().min(1)).min(1, t('doctorForm.validation.specialtyRequired')).max(3),
+    sub_specialty: z.array(z.string().min(1)).max(7).optional(),
     license_number: z.string().min(2, t('doctorForm.validation.licenseRequired')),
     license_state: z.string().optional(),
     license_expiration: z.string().optional(),
@@ -247,6 +247,14 @@ export const DoctorProfileFormPage = () => {
       })),
     [i18n.language],
   )
+  const honorificPrefixOptions = useMemo(
+    () => [
+      { value: 'dr', label: t('doctorForm.about.honorificOptions.dr') },
+      { value: 'mr', label: t('doctorForm.about.honorificOptions.mr') },
+      { value: 'ms', label: t('doctorForm.about.honorificOptions.ms') },
+    ],
+    [t],
+  )
   const faithOrientationOptions = useMemo(
     () => ['any', 'islamic', 'christian', 'jewish', 'spiritual'],
     [],
@@ -323,6 +331,8 @@ export const DoctorProfileFormPage = () => {
       years_of_experience: '',
       qualifications_text: '',
       insurances_text: '',
+      specialty: [],
+      sub_specialty: [],
     },
   })
 
@@ -358,8 +368,8 @@ export const DoctorProfileFormPage = () => {
       about_paragraph_one: doctor.about_paragraph_one ?? '',
       about_paragraph_two: doctor.about_paragraph_two ?? '',
       about_paragraph_three: doctor.about_paragraph_three ?? '',
-      specialty: doctor.specialty ?? '',
-      sub_specialty: doctor.sub_specialty ?? '',
+      specialty: normalizeArray(doctor.specialty),
+      sub_specialty: normalizeArray(doctor.sub_specialty),
       license_number: doctor.license_number ?? '',
       license_state: doctor.license_state ?? '',
       license_expiration: doctor.license_expiration ?? '',
@@ -466,6 +476,12 @@ export const DoctorProfileFormPage = () => {
       ?.split('\n')
       .map((item) => item.trim())
       .filter((item) => item.length > 0)
+  }
+
+  const normalizeArray = (value?: string[] | string | null) => {
+    const placeholder = 'غير محدد'
+    if (Array.isArray(value)) return value.filter((item) => item && item !== placeholder)
+    return value && value !== placeholder ? [value] : []
   }
 
   const onSubmit = async (values: FormValues) => {
@@ -826,7 +842,7 @@ export const DoctorProfileFormPage = () => {
     )
   const aboutScore = calculateScore([
     Boolean(watchedValues.full_name?.trim()),
-    Boolean(watchedValues.specialty?.trim()),
+    Array.isArray(watchedValues.specialty) && watchedValues.specialty.length > 0,
     Boolean(watchedValues.phone?.trim()),
     Boolean(watchedValues.city?.trim()),
     languagesCount > 0,
@@ -938,7 +954,18 @@ export const DoctorProfileFormPage = () => {
               </div>
               <div>
                 <label className="text-xs text-slate-500">{t('doctorForm.about.labels.honorific')}</label>
-                <Input {...register('honorific_prefix')} placeholder="Dr." aria-invalid={!!errors.honorific_prefix} />
+                <select
+                  {...register('honorific_prefix')}
+                  className={selectClasses(!!errors.honorific_prefix)}
+                  aria-invalid={!!errors.honorific_prefix}
+                >
+                  <option value="">{t('doctorForm.about.placeholders.honorific')}</option>
+                  {honorificPrefixOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="text-xs text-slate-500">{t('doctorForm.about.labels.firstName')}</label>
@@ -1016,26 +1043,80 @@ export const DoctorProfileFormPage = () => {
                 <label className="text-xs text-slate-500">
                   {t('doctorForm.about.labels.primarySpecialty')} <RequiredAsterisk />
                 </label>
-                <Select
-                  {...register('specialty', { required: t('doctorForm.validation.specialtyRequired') })}
-                  aria-invalid={!!errors.specialty}
-                >
-                  <option value="">{t('doctorForm.about.placeholders.primarySpecialty')}</option>
-                  {therapySpecialtyOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
+                <Controller
+                  name="specialty"
+                  control={control}
+                  rules={{
+                    validate: (value) => (value?.length ? true : t('doctorForm.validation.specialtyRequired')),
+                  }}
+                  render={({ field }) => {
+                    const selected = Array.isArray(field.value) ? field.value : []
+                    const toggle = (value: string) => {
+                      if (selected.includes(value)) {
+                        field.onChange(selected.filter((item) => item !== value))
+                        return
+                      }
+                      if (selected.length >= 3) {
+                        toast.error(t('doctorForm.validation.selectionLimit', { count: 3 }))
+                        return
+                      }
+                      field.onChange([...selected, value])
+                    }
+                    return (
+                      <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                          {therapySpecialtyOptions.map((option) => {
+                            const active = selected.includes(option.value)
+                            return (
+                              <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
+                                <Checkbox checked={active} onChange={() => toggle(option.value)} />
+                                {option.label}
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  }}
+                />
                 {errors.specialty && <p className="text-xs text-rose-500">{errors.specialty.message}</p>}
               </div>
               <div>
                 <label className="text-xs text-slate-500">{t('doctorForm.about.labels.secondarySpecialty')}</label>
-                <Input
-                  {...register('sub_specialty')}
-                  placeholder={t('doctorForm.about.placeholders.secondarySpecialty')}
-                  aria-invalid={!!errors.sub_specialty}
+                <Controller
+                  name="sub_specialty"
+                  control={control}
+                  render={({ field }) => {
+                    const selected = Array.isArray(field.value) ? field.value : []
+                    const toggle = (value: string) => {
+                      if (selected.includes(value)) {
+                        field.onChange(selected.filter((item) => item !== value))
+                        return
+                      }
+                      if (selected.length >= 7) {
+                        toast.error(t('doctorForm.validation.selectionLimit', { count: 7 }))
+                        return
+                      }
+                      field.onChange([...selected, value])
+                    }
+                    return (
+                      <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                          {therapySpecialtyOptions.map((option) => {
+                            const active = selected.includes(option.value)
+                            return (
+                              <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
+                                <Checkbox checked={active} onChange={() => toggle(option.value)} />
+                                {option.label}
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  }}
                 />
+                {errors.sub_specialty && <p className="text-xs text-rose-500">{errors.sub_specialty.message}</p>}
               </div>
               <div>
                 <label className="text-xs text-slate-500">
@@ -1094,15 +1175,30 @@ export const DoctorProfileFormPage = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-xs text-slate-500">{t('doctorForm.about.labels.paragraph1')}</label>
-                <Textarea rows={3} {...register('about_paragraph_one')} aria-invalid={!!errors.about_paragraph_one} />
+                <Textarea
+                  rows={3}
+                  {...register('about_paragraph_one')}
+                  placeholder={t('doctorForm.about.placeholders.paragraph1')}
+                  aria-invalid={!!errors.about_paragraph_one}
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-xs text-slate-500">{t('doctorForm.about.labels.paragraph2')}</label>
-                <Textarea rows={3} {...register('about_paragraph_two')} aria-invalid={!!errors.about_paragraph_two} />
+                <Textarea
+                  rows={3}
+                  {...register('about_paragraph_two')}
+                  placeholder={t('doctorForm.about.placeholders.paragraph2')}
+                  aria-invalid={!!errors.about_paragraph_two}
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-xs text-slate-500">{t('doctorForm.about.labels.paragraph3')}</label>
-                <Textarea rows={3} {...register('about_paragraph_three')} aria-invalid={!!errors.about_paragraph_three} />
+                <Textarea
+                  rows={3}
+                  {...register('about_paragraph_three')}
+                  placeholder={t('doctorForm.about.placeholders.paragraph3')}
+                  aria-invalid={!!errors.about_paragraph_three}
+                />
               </div>
             </div>
 

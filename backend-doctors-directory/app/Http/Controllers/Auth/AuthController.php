@@ -35,7 +35,7 @@ class AuthController extends Controller
                 Doctor::create([
                     'user_id' => $user->id,
                     'full_name' => $user->name,
-                    'specialty' => 'غير محدد',
+                    'specialty' => [],
                     'status' => DoctorStatus::Draft->value,
                     'languages' => ['ar'],
                 ]);

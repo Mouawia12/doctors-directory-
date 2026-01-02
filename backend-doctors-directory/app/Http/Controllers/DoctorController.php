@@ -47,8 +47,8 @@ class DoctorController extends Controller
                 });
             })
             ->when(Arr::get($filters, 'city'), fn ($q, $city) => $q->where('city', $city))
-            ->when(Arr::get($filters, 'specialty'), fn ($q, $specialty) => $q->where('specialty', $specialty))
-            ->when(Arr::get($filters, 'sub_specialty'), fn ($q, $value) => $q->where('sub_specialty', $value))
+            ->when(Arr::get($filters, 'specialty'), fn ($q, $specialty) => $q->whereJsonContains('specialty', $specialty))
+            ->when(Arr::get($filters, 'sub_specialty'), fn ($q, $value) => $q->whereJsonContains('sub_specialty', $value))
             ->when(Arr::get($filters, 'gender'), fn ($q, $gender) => $q->where('gender', $gender))
             ->when(Arr::get($filters, 'issues'), function ($q, $issues) {
                 $q->whereHas('categories', fn ($categoryQuery) => $categoryQuery->whereIn('categories.id', $issues));

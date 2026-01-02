@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { SearchBar } from '@/components/common/SearchBar'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import { formatSpecialtyList } from '@/lib/doctor'
 import { useAuthQuery } from '@/features/auth/hooks'
 import { useJoinDoctorMutation } from '@/features/doctor/hooks'
 import { useDoctorsQuery } from '@/features/doctors/hooks'
@@ -151,9 +152,11 @@ export const HomePage = () => {
 
       return sorted.slice(0, 3).map((doctor) => ({
         name: doctor.full_name,
-        specialty: doctor.specialty || t('doctorProfile.specialty', { defaultValue: 'Specialty' }),
+        specialty:
+          formatSpecialtyList(doctor.specialty, t('common.comma')) ||
+          t('doctorProfile.specialty', { defaultValue: 'Specialty' }),
         focus:
-          doctor.sub_specialty ||
+          formatSpecialtyList(doctor.sub_specialty, t('common.comma')) ||
           doctor.tagline ||
           doctor.specialties_note ||
           t('doctorProfile.focusEmpty', { defaultValue: '' }),
@@ -188,7 +191,12 @@ export const HomePage = () => {
       <section className="container relative overflow-hidden rounded-[40px] bg-gradient-to-br from-primary-50 via-white to-slate-50 px-6 py-12 md:px-14">
         <div className="grid gap-10 md:grid-cols-[1.1fr,0.9fr]">
           <div className={cn('space-y-6', isRTL ? 'text-right' : 'text-left')}>
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary-100/80 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-primary-700">
+            <span
+              className={cn(
+                'inline-flex items-center gap-2 rounded-full bg-primary-100/80 px-4 py-1 text-xs font-semibold text-primary-700',
+                isRTL ? 'tracking-normal' : 'uppercase tracking-widest',
+              )}
+            >
               {t('home.heroBadge')}
             </span>
             <h1 className="text-4xl font-semibold leading-tight text-slate-900 md:text-5xl">{t('home.heroTitle')}</h1>

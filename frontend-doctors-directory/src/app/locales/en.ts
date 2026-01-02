@@ -579,6 +579,8 @@ export const en = {
       focusCopy: 'Modalities and therapy schools practiced.',
       focusChip: 'Holistic mental health care',
       focusEmpty: 'No additional specialties yet.',
+      personalStatementTitle: 'Personal statement',
+      personalStatementCopy: 'Three short paragraphs written by the therapist.',
       financesTitle: 'Finances',
       financesCopy: 'Fees, insurance, and payments.',
       individualSession: 'Individual session',
@@ -982,7 +984,7 @@ export const en = {
         fullName: 'Full name',
         displayName: 'Display name',
         businessName: 'Business name',
-        honorific: 'Honorific',
+        honorific: 'Professional title',
         firstName: 'First name',
         middleName: 'Middle name',
         lastName: 'Last name',
@@ -1172,7 +1174,7 @@ export const en = {
         description: 'Fill name, intro, and contact details just like Psychology Today.',
         labels: {
           fullPublicName: 'Full public name',
-          honorific: 'Honorific (Dr., Mr., Ms.)',
+          honorific: 'Honorific',
           firstName: 'First name',
           middleName: 'Middle name',
           lastName: 'Last name',
@@ -1196,6 +1198,16 @@ export const en = {
           paragraph2: 'Paragraph two (360 chars)',
           paragraph3: 'Paragraph three (no strict limit)',
         },
+        paragraphHints: {
+          paragraph1: 'Briefly introduce who you are and your experience.',
+          paragraph2: 'Describe the clients or issues you focus on most.',
+          paragraph3: 'Explain your therapy style and what clients can expect.',
+        },
+        honorificOptions: {
+          dr: 'Dr.',
+          mr: 'Mr.',
+          ms: 'Ms.',
+        },
         displayNameOptions: {
           personal: 'Personal name',
           business: 'Business name',
@@ -1207,6 +1219,7 @@ export const en = {
         },
         placeholders: {
           fullPublicName: 'e.g., Dr. Sarah Ahmed',
+          honorific: 'Select a professional title',
           firstName: 'First name',
           middleName: 'Optional',
           lastName: 'Last name',
@@ -1218,6 +1231,9 @@ export const en = {
           licenseState: 'e.g., Dubai - DHA',
           professionalRole: 'Therapist, counselor...',
           bio: 'Write a concise bio to encourage contact',
+          paragraph1: 'Introduce yourself and highlight your experience.',
+          paragraph2: 'Describe who you help most and the issues you focus on.',
+          paragraph3: 'Explain your therapy approach and what clients can expect.',
         },
       },
       media: {

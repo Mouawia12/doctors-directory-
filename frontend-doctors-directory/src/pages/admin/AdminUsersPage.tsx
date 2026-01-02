@@ -14,6 +14,7 @@ import type { User } from '@/types/user'
 import { useTranslation } from 'react-i18next'
 import { Filter, RefreshCcw, Search, Shield, Trash2, UserMinus, UserPlus, Users } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
+import { formatSpecialtyList } from '@/lib/doctor'
 
 const formatDate = (value?: string | null) => (value ? dayjs(value).format('DD MMM YYYY HH:mm') : '—')
 
@@ -293,7 +294,8 @@ export const AdminUsersPage = () => {
                   </div>
                   <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
                     <span>
-                      {t('adminUsers.doctorProfile.specialty')}: {user.doctor_profile.specialty}
+                      {t('adminUsers.doctorProfile.specialty')}:{' '}
+                      {formatSpecialtyList(user.doctor_profile.specialty, t('common.comma')) || '—'}
                     </span>
                     <a
                       href={`/admin/doctors/${user.doctor_profile.id}`}

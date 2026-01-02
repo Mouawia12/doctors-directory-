@@ -7,6 +7,7 @@ import { useToggleFavorite } from '@/features/favorites/hooks'
 import { useAuthQuery } from '@/features/auth/hooks'
 import { cn } from '@/lib/utils'
 import { languageLabel } from '@/lib/language'
+import { formatSpecialtyList } from '@/lib/doctor'
 import { useTranslation } from 'react-i18next'
 
 interface DoctorCardProps {
@@ -22,6 +23,7 @@ export const DoctorCard = ({ doctor, compact = false, profilePath }: DoctorCardP
 
   const galleryCover = doctor.media?.avatar?.url ?? doctor.media?.gallery?.[0]?.url
   const targetProfile = profilePath ?? `/doctors/${doctor.id}`
+  const specialtyLabel = formatSpecialtyList(doctor.specialty, t('common.comma')) || '—'
 
   return (
     <div className="flex flex-col gap-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-card md:flex-row">
@@ -40,10 +42,19 @@ export const DoctorCard = ({ doctor, compact = false, profilePath }: DoctorCardP
       <div className="flex flex-1 flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <Link to={targetProfile} className="text-lg font-semibold text-slate-900">
-              {doctor.full_name}
-            </Link>
-            <p className="text-sm text-slate-500">{doctor.specialty}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link to={targetProfile} className="text-lg font-semibold text-slate-900">
+                {doctor.full_name}
+              </Link>
+              {doctor.honorific_prefix && (
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                  {t(`doctorForm.about.honorificOptions.${doctor.honorific_prefix}`, {
+                    defaultValue: doctor.honorific_prefix,
+                  })}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-slate-500">{specialtyLabel}</p>
           </div>
           {user && (
             <button

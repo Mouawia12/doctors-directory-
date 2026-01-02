@@ -49,8 +49,8 @@ export interface Doctor {
   about_paragraph_one?: string
   about_paragraph_two?: string
   about_paragraph_three?: string
-  specialty: string
-  sub_specialty?: string
+  specialty: string[]
+  sub_specialty?: string[]
   qualifications?: string[]
   additional_credentials?: string[]
   license_number?: string

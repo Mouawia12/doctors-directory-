@@ -32,7 +32,7 @@ class DoctorProfileController extends Controller
             $doctor = Doctor::create([
                 'user_id' => $user->id,
                 'full_name' => $user->name,
-                'specialty' => 'غير محدد',
+                'specialty' => [],
                 'status' => DoctorStatus::Draft->value,
                 'languages' => ['ar'],
             ]);

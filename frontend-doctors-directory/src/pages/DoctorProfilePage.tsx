@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { PhoneNumber } from '@/components/common/PhoneNumber'
 import { buildTelLink, buildWhatsAppLink } from '@/lib/phone'
 import { languageLabel } from '@/lib/language'
+import { formatSpecialtyList } from '@/lib/doctor'
 import type { MediaItem } from '@/types/doctor'
 
 export const DoctorProfilePage = () => {
@@ -57,6 +58,11 @@ export const DoctorProfilePage = () => {
       })
     : t('doctorProfile.newClients.default')
   const paymentMethods = doctor.payment_methods ?? []
+  const aboutParagraphs = [
+    doctor.about_paragraph_one,
+    doctor.about_paragraph_two,
+    doctor.about_paragraph_three,
+  ].filter((paragraph): paragraph is string => Boolean(paragraph && paragraph.trim().length > 0))
   const therapyModalities = doctor.therapy_modalities ?? []
   const insurances = doctor.insurances ?? []
   const telHref = buildTelLink(doctor.phone)
@@ -72,7 +78,7 @@ export const DoctorProfilePage = () => {
     '@type': doctor.clinics && doctor.clinics.length > 0 ? 'MedicalClinic' : 'Physician',
     name: doctor.full_name,
     description: doctor.bio,
-    medicalSpecialty: doctor.specialty,
+    medicalSpecialty: formatSpecialtyList(doctor.specialty, t('common.comma')),
     address: doctor.clinics?.[0]
       ? {
           '@type': 'PostalAddress',
@@ -101,12 +107,30 @@ export const DoctorProfilePage = () => {
           <div className="space-y-5">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl font-semibold text-slate-900">{doctor.full_name}</h1>
+              {doctor.honorific_prefix && (
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                  {t(`doctorForm.about.honorificOptions.${doctor.honorific_prefix}`, {
+                    defaultValue: doctor.honorific_prefix,
+                  })}
+                </span>
+              )}
               <StatusBadge status={doctor.status} />
             </div>
             {doctor.tagline && <p className="text-lg font-medium text-primary-700">{doctor.tagline}</p>}
             <p className="text-base text-slate-600">
               {doctor.bio || t('doctorProfile.bioFallback')}
             </p>
+            {aboutParagraphs.length > 0 && (
+              <div className="rounded-2xl border border-slate-100 bg-white p-4">
+                <p className="text-sm font-semibold text-slate-900">{t('doctorProfile.personalStatementTitle')}</p>
+                <p className="text-xs text-slate-500">{t('doctorProfile.personalStatementCopy')}</p>
+                <div className="mt-3 space-y-3 text-sm text-slate-700">
+                  {aboutParagraphs.map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="grid gap-4 rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-600 md:grid-cols-3">
               <div>
                 <p className="text-xs uppercase text-slate-400">{t('doctorProfile.experience')}</p>

@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Card } from '@/components/ui/Card'
 import { useTranslation } from 'react-i18next'
 import { PhoneNumber } from '@/components/common/PhoneNumber'
+import { formatSpecialtyList } from '@/lib/doctor'
 
 const formatDate = (value?: string) => (value ? dayjs(value).format('DD MMM YYYY') : '—')
 const normalizeIdentityList = (value?: string[]) => (Array.isArray(value) && value.length > 0 ? value : [])
@@ -131,7 +132,9 @@ export const AdminDoctorDetailsPage = () => {
               <StatusBadge status={doctor.status} />
               {doctor.is_verified && <Badge variant="success">{t('doctorProfile.verified')}</Badge>}
             </div>
-            <p className="text-sm text-slate-500">{doctor.specialty}</p>
+            <p className="text-sm text-slate-500">
+              {formatSpecialtyList(doctor.specialty, t('common.comma')) || '—'}
+            </p>
             <div className="flex flex-wrap gap-4 text-xs text-slate-500">
               <span>
                 {t('adminDoctorDetails.meta.license')}: {doctor.license_number || '—'}
@@ -302,7 +305,9 @@ export const AdminDoctorDetailsPage = () => {
           </div>
           <div>
             <p className="text-xs text-slate-500">{t('adminDoctorDetails.subSpecialty')}</p>
-            <p className="text-sm text-slate-700">{doctor.sub_specialty || '—'}</p>
+            <p className="text-sm text-slate-700">
+              {formatSpecialtyList(doctor.sub_specialty, t('common.comma')) || '—'}
+            </p>
           </div>
           <div>
             <p className="text-xs text-slate-500">{t('adminDoctorDetails.tagline')}</p>
