@@ -1792,7 +1792,7 @@ export const DoctorProfileFormPage = () => {
       case 'specialties':
         return (
           <>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4">
               <div>
                 <label className="text-xs text-slate-500">
                   {t('doctorForm.about.labels.primarySpecialty')} <RequiredAsterisk />
@@ -1817,18 +1817,23 @@ export const DoctorProfileFormPage = () => {
                       field.onChange([...selected, value])
                     }
                     return (
-                      <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
-                        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                          {therapySpecialtyOptions.map((option) => {
-                            const active = selected.includes(option.value)
-                            return (
-                              <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
-                                <Checkbox checked={active} onChange={() => toggle(option.value)} />
-                                {option.label}
-                              </label>
-                            )
-                          })}
-                        </div>
+                      <div className="mt-2 max-h-[320px] space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                        {therapySpecialtyOptions.map((option) => {
+                          const active = selected.includes(option.value)
+                          return (
+                            <label key={option.id} className="flex items-center gap-3 text-sm text-slate-700">
+                              <Checkbox checked={active} onChange={() => toggle(option.value)} />
+                              <span
+                                className={cn(
+                                  'flex flex-1 items-center justify-between gap-2 rounded-2xl px-3 py-1',
+                                  active ? 'bg-primary-50 text-primary-700' : 'bg-slate-50 text-slate-700',
+                                )}
+                              >
+                                <span>{option.label}</span>
+                              </span>
+                            </label>
+                          )
+                        })}
                       </div>
                     )
                   }}
@@ -1854,70 +1859,28 @@ export const DoctorProfileFormPage = () => {
                       field.onChange([...selected, value])
                     }
                     return (
-                      <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
-                        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                          {therapySpecialtyOptions.map((option) => {
-                            const active = selected.includes(option.value)
-                            return (
-                              <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
-                                <Checkbox checked={active} onChange={() => toggle(option.value)} />
-                                {option.label}
-                              </label>
-                            )
-                          })}
-                        </div>
+                      <div className="mt-2 max-h-[320px] space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                        {therapySpecialtyOptions.map((option) => {
+                          const active = selected.includes(option.value)
+                          return (
+                            <label key={option.id} className="flex items-center gap-3 text-sm text-slate-700">
+                              <Checkbox checked={active} onChange={() => toggle(option.value)} />
+                              <span
+                                className={cn(
+                                  'flex flex-1 items-center justify-between gap-2 rounded-2xl px-3 py-1',
+                                  active ? 'bg-primary-50 text-primary-700' : 'bg-slate-50 text-slate-700',
+                                )}
+                              >
+                                <span>{option.label}</span>
+                              </span>
+                            </label>
+                          )
+                        })}
                       </div>
                     )
                   }}
                 />
                 {errors.sub_specialty && <p className="text-xs text-rose-500">{errors.sub_specialty.message}</p>}
-              </div>
-            </div>
-            <div className="space-y-3 rounded-2xl border border-slate-100 p-4">
-              <div>
-                <h4 className="font-semibold text-slate-900">{t('doctorForm.specialties.categoriesTitle')}</h4>
-                <p className="text-xs text-slate-500">{t('doctorForm.specialties.categoriesHint')}</p>
-              </div>
-              {categoriesQuery.isLoading ? (
-                <p className="text-sm text-slate-500">{t('doctorForm.specialties.loading')}</p>
-              ) : flattenedCategories.length > 0 ? (
-                <div className="max-h-[320px] space-y-2 overflow-y-auto pr-2">
-                  {flattenedCategories.map((category) => (
-                    <label key={category.id} className="flex items-center gap-3 text-sm text-slate-700">
-                      <Checkbox
-                        checked={selectedCategories.includes(category.id)}
-                        onChange={() => handleCategoryToggle(category.id)}
-                      />
-                      <span
-                        className="flex flex-1 items-center justify-between gap-2 rounded-2xl bg-slate-50 px-3 py-1"
-                        style={{ marginInlineStart: `${category.depth * 12}px` }}
-                      >
-                        <span>{category.name}</span>
-                        <span
-                          className={cn(
-                            'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase',
-                            category.depth === 0 ? 'bg-primary-100 text-primary-600' : 'bg-slate-200 text-slate-600',
-                          )}
-                        >
-                          {category.depth === 0
-                            ? t('doctorForm.specialties.rootBadge')
-                            : t('doctorForm.specialties.childBadge')}
-                        </span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-500">{t('doctorForm.specialties.empty')}</p>
-              )}
-              <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.specialties.noteLabel')}</label>
-                <Textarea
-                  rows={3}
-                  {...register('specialties_note')}
-                  placeholder={t('doctorForm.specialties.notePlaceholder')}
-                  aria-invalid={!!errors.specialties_note}
-                />
               </div>
             </div>
           </>

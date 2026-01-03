@@ -1361,7 +1361,6 @@ export const en = {
         title: 'Specialties',
         description: 'Choose the main issues to highlight and add a short note.',
         categoriesTitle: 'Therapy categories',
-        categoriesHint: 'Pick the specialties you want to highlight.',
         loading: 'Loading categories...',
         empty: 'No categories available currently.',
         noteLabel: 'Specialties note (400 chars)',
