@@ -346,10 +346,6 @@ export const AdminDoctorDetailsPage = () => {
             </p>
           </div>
           <div>
-            <p className="text-xs text-slate-500">{t('adminDoctorDetails.licenseState')}</p>
-            <p className="text-sm text-slate-700">{doctor.license_state || '—'}</p>
-          </div>
-          <div>
             <p className="text-xs text-slate-500">{t('adminDoctorDetails.licenseExpiration')}</p>
             <p className="text-sm text-slate-700">{doctor.license_expiration ? formatDate(doctor.license_expiration) : '—'}</p>
           </div>

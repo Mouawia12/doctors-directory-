@@ -91,7 +91,6 @@ const buildSchema = (t: TFunction) =>
     specialty: z.array(z.string().min(1)).min(1, t('doctorForm.validation.specialtyRequired')).max(3),
     sub_specialty: z.array(z.string().min(1)).max(7).optional(),
     license_number: z.string().min(2, t('doctorForm.validation.licenseRequired')),
-    license_state: z.string().optional(),
     license_expiration: z.string().optional(),
     qualifications_text: z.string().optional(),
     languages: z.string().min(2, t('doctorForm.validation.languageRequired')),
@@ -371,7 +370,6 @@ export const DoctorProfileFormPage = () => {
       specialty: normalizeArray(doctor.specialty),
       sub_specialty: normalizeArray(doctor.sub_specialty),
       license_number: doctor.license_number ?? '',
-      license_state: doctor.license_state ?? '',
       license_expiration: doctor.license_expiration ?? '',
       qualifications_text: doctor.qualifications?.join('\n') ?? '',
       languages: doctor.languages?.join(', ') ?? '',
@@ -1038,125 +1036,6 @@ export const DoctorProfileFormPage = () => {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-xs text-slate-500">
-                  {t('doctorForm.about.labels.primarySpecialty')} <RequiredAsterisk />
-                </label>
-                <Controller
-                  name="specialty"
-                  control={control}
-                  rules={{
-                    validate: (value) => (value?.length ? true : t('doctorForm.validation.specialtyRequired')),
-                  }}
-                  render={({ field }) => {
-                    const selected = Array.isArray(field.value) ? field.value : []
-                    const toggle = (value: string) => {
-                      if (selected.includes(value)) {
-                        field.onChange(selected.filter((item) => item !== value))
-                        return
-                      }
-                      if (selected.length >= 3) {
-                        toast.error(t('doctorForm.validation.selectionLimit', { count: 3 }))
-                        return
-                      }
-                      field.onChange([...selected, value])
-                    }
-                    return (
-                      <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
-                        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                          {therapySpecialtyOptions.map((option) => {
-                            const active = selected.includes(option.value)
-                            return (
-                              <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
-                                <Checkbox checked={active} onChange={() => toggle(option.value)} />
-                                {option.label}
-                              </label>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  }}
-                />
-                {errors.specialty && <p className="text-xs text-rose-500">{errors.specialty.message}</p>}
-              </div>
-              <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.secondarySpecialty')}</label>
-                <Controller
-                  name="sub_specialty"
-                  control={control}
-                  render={({ field }) => {
-                    const selected = Array.isArray(field.value) ? field.value : []
-                    const toggle = (value: string) => {
-                      if (selected.includes(value)) {
-                        field.onChange(selected.filter((item) => item !== value))
-                        return
-                      }
-                      if (selected.length >= 7) {
-                        toast.error(t('doctorForm.validation.selectionLimit', { count: 7 }))
-                        return
-                      }
-                      field.onChange([...selected, value])
-                    }
-                    return (
-                      <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
-                        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                          {therapySpecialtyOptions.map((option) => {
-                            const active = selected.includes(option.value)
-                            return (
-                              <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
-                                <Checkbox checked={active} onChange={() => toggle(option.value)} />
-                                {option.label}
-                              </label>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  }}
-                />
-                {errors.sub_specialty && <p className="text-xs text-rose-500">{errors.sub_specialty.message}</p>}
-              </div>
-              <div>
-                <label className="text-xs text-slate-500">
-                  {t('doctorForm.about.labels.licenseNumber')} <RequiredAsterisk />
-                </label>
-                <Input {...register('license_number')} aria-invalid={!!errors.license_number} aria-required="true" />
-              </div>
-              <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseState')}</label>
-                <Input
-                  {...register('license_state')}
-                  placeholder={t('doctorForm.about.placeholders.licenseState')}
-                  aria-invalid={!!errors.license_state}
-                />
-              </div>
-              <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseExpiration')}</label>
-                <Input type="date" {...register('license_expiration')} aria-invalid={!!errors.license_expiration} />
-              </div>
-              <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.professionalRole')}</label>
-                <Select {...register('professional_role')} aria-invalid={!!errors.professional_role}>
-                  <option value="">{t('doctorForm.about.placeholders.professionalRole')}</option>
-                  {professionalRoleOptions.map((option) => (
-                    <option key={option.id} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licensureStatus')}</label>
-                <select {...register('licensure_status')} className={selectClasses(!!errors.licensure_status)}>
-                  <option value="">{t('doctorForm.about.labels.licensureStatus')}</option>
-                  <option value="licensed">{t('doctorForm.about.licensureOptions.licensed')}</option>
-                  <option value="supervised">{t('doctorForm.about.licensureOptions.supervised')}</option>
-                  <option value="unlicensed">{t('doctorForm.about.licensureOptions.unlicensed')}</option>
-                </select>
-              </div>
-            </div>
 
             <div>
               <label className="text-xs text-slate-500">{t('doctorForm.about.labels.bio')}</label>
@@ -1307,95 +1186,6 @@ export const DoctorProfileFormPage = () => {
                 </div>
               </div>
             </div>
-
-            <div className="flex items-center justify-between rounded-2xl border border-slate-100 p-4">
-              <div>
-                <p className="font-semibold text-slate-900">{t('doctorForm.media.documentsTitle')}</p>
-                <p className="text-xs text-slate-500">{t('doctorForm.media.documentsHint')}</p>
-              </div>
-              <Input
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={handleDocumentSelection}
-                disabled={isMediaUploading}
-              />
-            </div>
-            {documentsMedia.length > 0 && (
-              <div className="rounded-2xl border border-slate-100 p-4 text-xs text-slate-600">
-                <p className="font-semibold text-slate-700">{t('doctorForm.media.uploadedMediaTitle')}</p>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {documentsMedia.map((document) => (
-                    <div
-                      key={document.id}
-                      className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2"
-                    >
-                      <a
-                        href={document.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="truncate text-primary-700 underline"
-                      >
-                        {document.name}
-                      </a>
-                      <button
-                        type="button"
-                        className="text-rose-600 hover:underline"
-                        onClick={() => handleMediaDelete(document.id)}
-                      >
-                        {t('doctorForm.media.delete')}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-              {pendingDocumentFiles.length > 0 && (
-                <div className="rounded-2xl border border-slate-100 p-4 text-xs text-slate-600">
-                  <p className="font-semibold text-slate-700">{t('doctorForm.media.documentsPendingTitle')}</p>
-                  <p className="text-[11px] text-slate-500">
-                    {t('doctorForm.media.documentsPendingHint', { count: pendingDocumentFiles.length })}
-                  </p>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    {pendingDocumentFiles.map((item, index) => {
-                      const fileExt = item.file.name.split('.').pop()?.toUpperCase()
-                      const isImage = item.file.type.startsWith('image/')
-                      return (
-                        <div
-                          key={`${item.file.name}-${index}`}
-                          className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2"
-                        >
-                          <div className="flex items-center gap-3">
-                            {isImage && item.preview ? (
-                              <img src={item.preview} alt={item.file.name} className="h-10 w-10 rounded-xl object-cover" />
-                            ) : (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 text-[11px] font-semibold text-slate-600">
-                              {fileExt ?? 'FILE'}
-                            </div>
-                          )}
-                          <span className="truncate text-slate-700">{item.file.name}</span>
-                        </div>
-                          <button
-                            type="button"
-                            className="text-rose-600 hover:underline"
-                            onClick={() => removePendingDocumentFile(index)}
-                          >
-                            {t('doctorForm.media.galleryPendingRemove')}
-                          </button>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <p className="mt-2 text-[11px] text-slate-500">{t('doctorForm.media.pendingUploadNote')}</p>
-                  {isMediaUploading && pendingDocumentFiles.length > 0 && (
-                    <p className="mt-2 text-xs text-primary-600">{t('doctorForm.media.mediaUploading')}</p>
-                  )}
-                </div>
-            )}
-            {mediaErrors.documents && (
-              <p className="text-xs text-rose-600">
-                {t('doctorForm.media.uploadErrorLabel')}: {mediaErrors.documents}
-              </p>
-            )}
 
             <div className="rounded-2xl border border-slate-100 p-4">
               <div className="flex items-center justify-between gap-4">
@@ -1801,6 +1591,128 @@ export const DoctorProfileFormPage = () => {
                 aria-invalid={!!errors.qualifications_text}
               />
             </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-xs text-slate-500">
+                  {t('doctorForm.about.labels.licenseNumber')} <RequiredAsterisk />
+                </label>
+                <Input {...register('license_number')} aria-invalid={!!errors.license_number} aria-required="true" />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseExpiration')}</label>
+                <Input type="date" {...register('license_expiration')} aria-invalid={!!errors.license_expiration} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.professionalRole')}</label>
+                <Select {...register('professional_role')} aria-invalid={!!errors.professional_role}>
+                  <option value="">{t('doctorForm.about.placeholders.professionalRole')}</option>
+                  {professionalRoleOptions.map((option) => (
+                    <option key={option.id} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.licensureStatus')}</label>
+                <select {...register('licensure_status')} className={selectClasses(!!errors.licensure_status)}>
+                  <option value="">{t('doctorForm.about.labels.licensureStatus')}</option>
+                  <option value="licensed">{t('doctorForm.about.licensureOptions.licensed')}</option>
+                  <option value="supervised">{t('doctorForm.about.licensureOptions.supervised')}</option>
+                  <option value="unlicensed">{t('doctorForm.about.licensureOptions.unlicensed')}</option>
+                </select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between rounded-2xl border border-slate-100 p-4">
+                <div>
+                  <p className="font-semibold text-slate-900">{t('doctorForm.media.documentsTitle')}</p>
+                  <p className="text-xs text-slate-500">{t('doctorForm.media.documentsHint')}</p>
+                </div>
+                <Input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={handleDocumentSelection}
+                  disabled={isMediaUploading}
+                />
+              </div>
+              {documentsMedia.length > 0 && (
+                <div className="rounded-2xl border border-slate-100 p-4 text-xs text-slate-600">
+                  <p className="font-semibold text-slate-700">{t('doctorForm.media.uploadedMediaTitle')}</p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {documentsMedia.map((document) => (
+                      <div
+                        key={document.id}
+                        className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2"
+                      >
+                        <a
+                          href={document.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="truncate text-primary-700 underline"
+                        >
+                          {document.name}
+                        </a>
+                        <button
+                          type="button"
+                          className="text-rose-600 hover:underline"
+                          onClick={() => handleMediaDelete(document.id)}
+                        >
+                          {t('doctorForm.media.delete')}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {pendingDocumentFiles.length > 0 && (
+                <div className="rounded-2xl border border-slate-100 p-4 text-xs text-slate-600">
+                  <p className="font-semibold text-slate-700">{t('doctorForm.media.documentsPendingTitle')}</p>
+                  <p className="text-[11px] text-slate-500">
+                    {t('doctorForm.media.documentsPendingHint', { count: pendingDocumentFiles.length })}
+                  </p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {pendingDocumentFiles.map((item, index) => {
+                      const fileExt = item.file.name.split('.').pop()?.toUpperCase()
+                      const isImage = item.file.type.startsWith('image/')
+                      return (
+                        <div
+                          key={`${item.file.name}-${index}`}
+                          className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2"
+                        >
+                          <div className="flex items-center gap-3">
+                            {isImage && item.preview ? (
+                              <img src={item.preview} alt={item.file.name} className="h-10 w-10 rounded-xl object-cover" />
+                            ) : (
+                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 text-[11px] font-semibold text-slate-600">
+                                {fileExt ?? 'FILE'}
+                              </div>
+                            )}
+                            <span className="truncate text-slate-700">{item.file.name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="text-rose-600 hover:underline"
+                            onClick={() => removePendingDocumentFile(index)}
+                          >
+                            {t('doctorForm.media.galleryPendingRemove')}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <p className="mt-2 text-[11px] text-slate-500">{t('doctorForm.media.pendingUploadNote')}</p>
+                  {isMediaUploading && pendingDocumentFiles.length > 0 && (
+                    <p className="mt-2 text-xs text-primary-600">{t('doctorForm.media.mediaUploading')}</p>
+                  )}
+                </div>
+              )}
+              {mediaErrors.documents && (
+                <p className="text-xs text-rose-600">
+                  {t('doctorForm.media.uploadErrorLabel')}: {mediaErrors.documents}
+                </p>
+              )}
+            </div>
             <div className="rounded-2xl border border-slate-100 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-slate-900">
@@ -1880,6 +1792,87 @@ export const DoctorProfileFormPage = () => {
       case 'specialties':
         return (
           <>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-xs text-slate-500">
+                  {t('doctorForm.about.labels.primarySpecialty')} <RequiredAsterisk />
+                </label>
+                <Controller
+                  name="specialty"
+                  control={control}
+                  rules={{
+                    validate: (value) => (value?.length ? true : t('doctorForm.validation.specialtyRequired')),
+                  }}
+                  render={({ field }) => {
+                    const selected = Array.isArray(field.value) ? field.value : []
+                    const toggle = (value: string) => {
+                      if (selected.includes(value)) {
+                        field.onChange(selected.filter((item) => item !== value))
+                        return
+                      }
+                      if (selected.length >= 3) {
+                        toast.error(t('doctorForm.validation.selectionLimit', { count: 3 }))
+                        return
+                      }
+                      field.onChange([...selected, value])
+                    }
+                    return (
+                      <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                          {therapySpecialtyOptions.map((option) => {
+                            const active = selected.includes(option.value)
+                            return (
+                              <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
+                                <Checkbox checked={active} onChange={() => toggle(option.value)} />
+                                {option.label}
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  }}
+                />
+                {errors.specialty && <p className="text-xs text-rose-500">{errors.specialty.message}</p>}
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">{t('doctorForm.about.labels.secondarySpecialty')}</label>
+                <Controller
+                  name="sub_specialty"
+                  control={control}
+                  render={({ field }) => {
+                    const selected = Array.isArray(field.value) ? field.value : []
+                    const toggle = (value: string) => {
+                      if (selected.includes(value)) {
+                        field.onChange(selected.filter((item) => item !== value))
+                        return
+                      }
+                      if (selected.length >= 7) {
+                        toast.error(t('doctorForm.validation.selectionLimit', { count: 7 }))
+                        return
+                      }
+                      field.onChange([...selected, value])
+                    }
+                    return (
+                      <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                          {therapySpecialtyOptions.map((option) => {
+                            const active = selected.includes(option.value)
+                            return (
+                              <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
+                                <Checkbox checked={active} onChange={() => toggle(option.value)} />
+                                {option.label}
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  }}
+                />
+                {errors.sub_specialty && <p className="text-xs text-rose-500">{errors.sub_specialty.message}</p>}
+              </div>
+            </div>
             <div className="space-y-3 rounded-2xl border border-slate-100 p-4">
               <div>
                 <h4 className="font-semibold text-slate-900">{t('doctorForm.specialties.categoriesTitle')}</h4>
@@ -1932,41 +1925,63 @@ export const DoctorProfileFormPage = () => {
       case 'clientFocus':
         return (
           <>
-            <div className="rounded-2xl border border-slate-100 p-4 space-y-4">
-              <div>
-                <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.participants')}</p>
-                <div className="flex flex-wrap gap-4">
-                  {participantOptions.map((option) => (
-                    <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
-                      <Checkbox
-                        checked={clientParticipants.includes(option)}
-                        onChange={() => toggleWithLimit(option, setClientParticipants, 3)}
-                      />
-                      {t(`doctorForm.clientFocus.participantsOptions.${option}`)}
-                    </label>
-                  ))}
+            <div className="space-y-4 rounded-2xl border border-slate-100 bg-white/80 p-4">
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-slate-800">{t('doctorForm.clientFocus.participants')}</p>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {participantOptions.map((option) => {
+                    const active = clientParticipants.includes(option)
+                    return (
+                      <label
+                        key={option}
+                        className={cn(
+                          'flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm transition',
+                          active
+                            ? 'border-primary-200 bg-primary-50 text-primary-700 shadow-card'
+                            : 'border-slate-200 text-slate-600 hover:border-slate-300',
+                        )}
+                      >
+                        <Checkbox
+                          checked={active}
+                          onChange={() => toggleWithLimit(option, setClientParticipants, 3)}
+                        />
+                        {t(`doctorForm.clientFocus.participantsOptions.${option}`)}
+                      </label>
+                    )
+                  })}
                 </div>
               </div>
-              <div>
-                <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.ageGroups')}</p>
-                <div className="flex flex-wrap gap-4">
-                  {ageGroupOptions.map((option) => (
-                    <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
-                      <Checkbox
-                        checked={clientAgeGroups.includes(option)}
-                        onChange={() =>
-                          setClientAgeGroups((prev) =>
-                            prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
-                          )
-                        }
-                      />
-                      {t(`doctorForm.clientFocus.ageOptions.${option}`)}
-                    </label>
-                  ))}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-slate-800">{t('doctorForm.clientFocus.ageGroups')}</p>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {ageGroupOptions.map((option) => {
+                    const active = clientAgeGroups.includes(option)
+                    return (
+                      <label
+                        key={option}
+                        className={cn(
+                          'flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm transition',
+                          active
+                            ? 'border-primary-200 bg-primary-50 text-primary-700 shadow-card'
+                            : 'border-slate-200 text-slate-600 hover:border-slate-300',
+                        )}
+                      >
+                        <Checkbox
+                          checked={active}
+                          onChange={() =>
+                            setClientAgeGroups((prev) =>
+                              prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
+                            )
+                          }
+                        />
+                        {t(`doctorForm.clientFocus.ageOptions.${option}`)}
+                      </label>
+                    )
+                  })}
                 </div>
               </div>
-              <div>
-                <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.faith')}</p>
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-slate-800">{t('doctorForm.clientFocus.faith')}</p>
                 <div className="flex flex-wrap gap-2">
                   {faithOrientationOptions.map((option) => {
                     const isActive = faithOrientation === option
@@ -1989,22 +2004,33 @@ export const DoctorProfileFormPage = () => {
                   })}
                 </div>
               </div>
-              <div>
-                <p className="text-xs text-slate-500">{t('doctorForm.clientFocus.allied')}</p>
-                <div className="grid gap-2 md:grid-cols-2">
-                  {alliedCommunityOptions.map((option) => (
-                    <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
-                      <Checkbox
-                        checked={alliedCommunities.includes(option)}
-                        onChange={() =>
-                          setAlliedCommunities((prev) =>
-                            prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
-                          )
-                        }
-                      />
-                      {t(`doctorForm.clientFocus.alliedOptions.${option}`)}
-                    </label>
-                  ))}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-slate-800">{t('doctorForm.clientFocus.allied')}</p>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {alliedCommunityOptions.map((option) => {
+                    const active = alliedCommunities.includes(option)
+                    return (
+                      <label
+                        key={option}
+                        className={cn(
+                          'flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm transition',
+                          active
+                            ? 'border-primary-200 bg-primary-50 text-primary-700 shadow-card'
+                            : 'border-slate-200 text-slate-600 hover:border-slate-300',
+                        )}
+                      >
+                        <Checkbox
+                          checked={active}
+                          onChange={() =>
+                            setAlliedCommunities((prev) =>
+                              prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
+                            )
+                          }
+                        />
+                        {t(`doctorForm.clientFocus.alliedOptions.${option}`)}
+                      </label>
+                    )
+                  })}
                 </div>
               </div>
             </div>

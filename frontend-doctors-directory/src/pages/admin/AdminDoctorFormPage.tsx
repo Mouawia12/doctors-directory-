@@ -62,7 +62,6 @@ interface DoctorFormValues {
   additionalCredentialsInput: string
   insurancesInput: string
   license_number: string
-  license_state?: string
   license_expiration?: string
   professional_role?: string
   licensure_status: 'licensed' | 'supervised' | 'unlicensed'
@@ -180,7 +179,6 @@ const defaultValues: DoctorFormValues = {
   additionalCredentialsInput: '',
   insurancesInput: '',
   license_number: '',
-  license_state: '',
   license_expiration: '',
   professional_role: '',
   licensure_status: 'licensed',
@@ -490,7 +488,6 @@ export const AdminDoctorFormPage = () => {
         additionalCredentialsInput: (doctor.additional_credentials ?? []).join('\n'),
         insurancesInput: (doctor.insurances ?? []).join(', '),
         license_number: doctor.license_number ?? '',
-        license_state: doctor.license_state ?? '',
         license_expiration: doctor.license_expiration ?? '',
         professional_role: doctor.professional_role ?? '',
         licensure_status: (doctor.licensure_status as DoctorFormValues['licensure_status']) ?? 'licensed',
@@ -619,7 +616,6 @@ export const AdminDoctorFormPage = () => {
       qualifications: splitByLine(values.qualificationsInput),
       additional_credentials: splitByLine(values.additionalCredentialsInput),
       license_number: values.license_number,
-      license_state: normalizeText(values.license_state),
       license_expiration: normalizeText(values.license_expiration),
       professional_role: normalizeText(values.professional_role),
       licensure_status: values.licensure_status,
@@ -784,95 +780,6 @@ export const AdminDoctorFormPage = () => {
               <Input {...register('tagline')} />
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.specialty')}</label>
-              <Controller
-                name="specialty"
-                control={control}
-                rules={{
-                  validate: (value) => (value?.length ? true : t('adminDoctorForm.validations.required')),
-                }}
-                render={({ field }) => {
-                  const selected = Array.isArray(field.value) ? field.value : []
-                  const toggle = (value: string) => {
-                    if (selected.includes(value)) {
-                      field.onChange(selected.filter((item) => item !== value))
-                      return
-                    }
-                    if (selected.length >= 3) {
-                      toast.error(t('doctorForm.validation.selectionLimit', { count: 3 }))
-                      return
-                    }
-                    field.onChange([...selected, value])
-                  }
-                  return (
-                    <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
-                      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                        {specialtyOptions.map((option) => {
-                          const active = selected.includes(option.value)
-                          return (
-                            <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
-                              <Checkbox checked={active} onChange={() => toggle(option.value)} />
-                              {option.label}
-                            </label>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                }}
-              />
-              {errors.specialty && <p className="text-xs text-rose-500">{errors.specialty.message}</p>}
-            </div>
-            <div>
-              <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.subSpecialty')}</label>
-              <Controller
-                name="sub_specialty"
-                control={control}
-                render={({ field }) => {
-                  const selected = Array.isArray(field.value) ? field.value : []
-                  const toggle = (value: string) => {
-                    if (selected.includes(value)) {
-                      field.onChange(selected.filter((item) => item !== value))
-                      return
-                    }
-                    if (selected.length >= 7) {
-                      toast.error(t('doctorForm.validation.selectionLimit', { count: 7 }))
-                      return
-                    }
-                    field.onChange([...selected, value])
-                  }
-                  return (
-                    <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
-                      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                        {specialtyOptions.map((option) => {
-                          const active = selected.includes(option.value)
-                          return (
-                            <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
-                              <Checkbox checked={active} onChange={() => toggle(option.value)} />
-                              {option.label}
-                            </label>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                }}
-              />
-            </div>
-            <div>
-              <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.professionalRole')}</label>
-              <Select {...register('professional_role')} defaultValue={defaultValues.professional_role}>
-                <option value="">{t('adminDoctorForm.placeholders.professionalRole')}</option>
-                {professionalRoleOptionsMemo.map((option) => (
-                  <option key={option.id} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </div>
           <div className="grid gap-4 md:grid-cols-4">
             <div>
               <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.yearsExperience')}</label>
@@ -888,30 +795,8 @@ export const AdminDoctorFormPage = () => {
                 ))}
               </Select>
             </div>
-            <div>
-              <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.licensureStatus')}</label>
-              <Select {...register('licensure_status')}>
-                {licensureOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.licenseNumber')}</label>
-              <Input {...register('license_number', { required: t('adminDoctorForm.validations.required') })} />
-            </div>
           </div>
           <div className="grid gap-4 md:grid-cols-4">
-            <div>
-              <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.licenseState')}</label>
-              <Input {...register('license_state')} />
-            </div>
-            <div>
-              <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.licenseExpiration')}</label>
-              <Input type="date" {...register('license_expiration')} />
-            </div>
             <div>
               <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.languages')}</label>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -954,6 +839,37 @@ export const AdminDoctorFormPage = () => {
             <div>
               <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.qualificationsNote')}</label>
               <Textarea rows={2} {...register('qualificationsNoteInput')} />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.licenseNumber')}</label>
+                <Input {...register('license_number', { required: t('adminDoctorForm.validations.required') })} />
+              </div>
+              <div>
+                <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.licenseExpiration')}</label>
+                <Input type="date" {...register('license_expiration')} />
+              </div>
+              <div>
+                <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.professionalRole')}</label>
+                <Select {...register('professional_role')} defaultValue={defaultValues.professional_role}>
+                  <option value="">{t('adminDoctorForm.placeholders.professionalRole')}</option>
+                  {professionalRoleOptionsMemo.map((option) => (
+                    <option key={option.id} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.licensureStatus')}</label>
+                <Select {...register('licensure_status')}>
+                  {licensureOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
@@ -1391,6 +1307,84 @@ export const AdminDoctorFormPage = () => {
           <div>
             <p className="text-xs text-slate-500">{t('adminDoctorForm.sections.categoriesNote')}</p>
             <h3 className="text-lg font-semibold text-slate-900">{t('adminDoctorForm.sections.categories')}</h3>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.specialty')}</label>
+              <Controller
+                name="specialty"
+                control={control}
+                rules={{
+                  validate: (value) => (value?.length ? true : t('adminDoctorForm.validations.required')),
+                }}
+                render={({ field }) => {
+                  const selected = Array.isArray(field.value) ? field.value : []
+                  const toggle = (value: string) => {
+                    if (selected.includes(value)) {
+                      field.onChange(selected.filter((item) => item !== value))
+                      return
+                    }
+                    if (selected.length >= 3) {
+                      toast.error(t('doctorForm.validation.selectionLimit', { count: 3 }))
+                      return
+                    }
+                    field.onChange([...selected, value])
+                  }
+                  return (
+                    <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                        {specialtyOptions.map((option) => {
+                          const active = selected.includes(option.value)
+                          return (
+                            <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
+                              <Checkbox checked={active} onChange={() => toggle(option.value)} />
+                              {option.label}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                }}
+              />
+              {errors.specialty && <p className="text-xs text-rose-500">{errors.specialty.message}</p>}
+            </div>
+            <div>
+              <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.subSpecialty')}</label>
+              <Controller
+                name="sub_specialty"
+                control={control}
+                render={({ field }) => {
+                  const selected = Array.isArray(field.value) ? field.value : []
+                  const toggle = (value: string) => {
+                    if (selected.includes(value)) {
+                      field.onChange(selected.filter((item) => item !== value))
+                      return
+                    }
+                    if (selected.length >= 7) {
+                      toast.error(t('doctorForm.validation.selectionLimit', { count: 7 }))
+                      return
+                    }
+                    field.onChange([...selected, value])
+                  }
+                  return (
+                    <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                        {specialtyOptions.map((option) => {
+                          const active = selected.includes(option.value)
+                          return (
+                            <label key={option.id} className="flex items-center gap-2 text-sm text-slate-700">
+                              <Checkbox checked={active} onChange={() => toggle(option.value)} />
+                              {option.label}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                }}
+              />
+            </div>
           </div>
           {categoriesQuery.isLoading ? (
             <p className="text-sm text-slate-500">{t('adminDoctorForm.categoriesLoading')}</p>

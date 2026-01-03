@@ -37,7 +37,6 @@ export interface AdminDoctorPayload {
   qualifications?: string[]
   additional_credentials?: string[]
   license_number?: string | null
-  license_state?: string | null
   license_expiration?: string | null
   professional_role?: string | null
   licensure_status?: 'licensed' | 'supervised' | 'unlicensed' | null

@@ -105,8 +105,7 @@ export const SearchPage = () => {
       const findRoot = (matcher: (value: string) => boolean) =>
         rootCategories.find((category) => matcher(category.name))
 
-      const specialtyRoot =
-        findRoot((name) => /تخصص/.test(name)) ?? rootCategories[0] ?? null
+      const specialtyRoot = findRoot((name) => /تخصص/.test(name)) ?? null
       const issueRoot =
         findRoot((name) => /قضا|مشكل/.test(name)) ??
         rootCategories.find((category) => category.id !== specialtyRoot?.id) ??

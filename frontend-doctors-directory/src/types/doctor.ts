@@ -54,7 +54,6 @@ export interface Doctor {
   qualifications?: string[]
   additional_credentials?: string[]
   license_number?: string
-  license_state?: string
   license_expiration?: string
   languages?: string[]
   gender?: string
