@@ -13,7 +13,6 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { Select } from '@/components/ui/Select'
 import { LocationPicker } from '@/components/common/LocationPicker'
 import { useDoctorProfileQuery, useSaveDoctorProfile, useDoctorMediaUpload, useDoctorMediaDelete } from '@/features/doctor/hooks'
-import { useCategoriesQuery } from '@/features/categories/hooks'
 import type { ApiResponse } from '@/types/api'
 import type { Category } from '@/types/doctor'
 import { cn } from '@/lib/utils'
@@ -179,7 +178,6 @@ type PendingMediaFile = { file: File; preview?: string }
 
 export const DoctorProfileFormPage = () => {
   const { data: doctor, isLoading } = useDoctorProfileQuery()
-  const categoriesQuery = useCategoriesQuery()
   const saveProfile = useSaveDoctorProfile()
   const mediaUpload = useDoctorMediaUpload()
   const mediaDelete = useDoctorMediaDelete()
