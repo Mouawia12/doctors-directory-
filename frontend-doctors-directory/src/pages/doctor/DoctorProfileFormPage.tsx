@@ -300,11 +300,6 @@ export const DoctorProfileFormPage = () => {
     }
   }, [])
 
-  const flattenedCategories = useMemo(
-    () => flattenCategories(categoriesQuery.data ?? []),
-    [categoriesQuery.data],
-  )
-
   const {
     register,
     handleSubmit,
@@ -562,12 +557,6 @@ export const DoctorProfileFormPage = () => {
     } catch (error) {
       toast.error(getErrorMessage(error, t('doctorForm.toasts.saveError')))
     }
-  }
-
-  const handleCategoryToggle = (categoryId: number) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
-    )
   }
 
   const toggleWithLimit = (value: string, setter: Dispatch<SetStateAction<string[]>>, limit?: number) => {
