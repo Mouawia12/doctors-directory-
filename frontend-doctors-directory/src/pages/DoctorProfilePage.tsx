@@ -65,6 +65,43 @@ export const DoctorProfilePage = () => {
   ].filter((paragraph): paragraph is string => Boolean(paragraph && paragraph.trim().length > 0))
   const therapyModalities = doctor.therapy_modalities ?? []
   const insurances = doctor.insurances ?? []
+  const documents = doctor.media?.documents ?? []
+  const qualifications = doctor.qualifications ?? []
+  const additionalCredentials = doctor.additional_credentials ?? []
+  const listSeparator = t('common.comma')
+  const primarySpecialties = formatSpecialtyList(doctor.specialty, listSeparator)
+  const secondarySpecialties = formatSpecialtyList(doctor.sub_specialty, listSeparator)
+  const licensureStatusLabel = doctor.licensure_status
+    ? t(`doctorForm.about.licensureOptions.${doctor.licensure_status}`, { defaultValue: doctor.licensure_status })
+    : t('doctorProfile.notProvided')
+  const participantLabels = (doctor.client_participants ?? []).map((item) =>
+    t(`doctorForm.clientFocus.participantsOptions.${item}`, { defaultValue: item }),
+  )
+  const ageGroupLabels = (doctor.client_age_groups ?? []).map((item) =>
+    t(`doctorForm.clientFocus.ageOptions.${item}`, { defaultValue: item }),
+  )
+  const alliedLabels = (doctor.allied_communities ?? []).map((item) =>
+    t(`doctorForm.clientFocus.alliedOptions.${item}`, { defaultValue: item }),
+  )
+  const faithLabel = doctor.faith_orientation
+    ? t(`doctorForm.clientFocus.faithOptions.${doctor.faith_orientation}`, { defaultValue: doctor.faith_orientation })
+    : t('doctorProfile.notProvided')
+  const identityTraits = (doctor.identity_traits as Record<string, unknown> | undefined) ?? {}
+  const identityGender = Array.isArray(identityTraits.gender_identity)
+    ? identityTraits.gender_identity.map((item) =>
+        t(`doctorForm.identity.genderOptions.${item}`, { defaultValue: String(item) }),
+      )
+    : []
+  const identityEthnicity = Array.isArray(identityTraits.ethnicity)
+    ? identityTraits.ethnicity.map((item) =>
+        t(`doctorForm.identity.ethnicityOptions.${item}`, { defaultValue: String(item) }),
+      )
+    : []
+  const identityLgbtq = Array.isArray(identityTraits.lgbtqia)
+    ? identityTraits.lgbtqia.map((item) =>
+        t(`doctorForm.identity.lgbtqOptions.${item}`, { defaultValue: String(item) }),
+      )
+    : []
   const telHref = buildTelLink(doctor.phone)
   const whatsappHref = buildWhatsAppLink(doctor.whatsapp)
   const bookingLink = whatsappHref ?? telHref
@@ -287,6 +324,240 @@ export const DoctorProfilePage = () => {
       </section>
 
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
+        <h2 className="text-xl font-semibold text-slate-900">{t('doctorForm.specialties.title')}</h2>
+        <p className="text-sm text-slate-500">{t('doctorForm.specialties.description')}</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.about.labels.primarySpecialty')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {primarySpecialties || t('doctorProfile.notProvided')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.about.labels.secondarySpecialty')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {secondarySpecialties || t('doctorProfile.notProvided')}
+            </p>
+          </div>
+        </div>
+        {doctor.specialties_note && (
+          <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
+            <p className="text-xs text-slate-500">{t('doctorForm.specialties.noteLabel')}</p>
+            <p className="mt-2">{doctor.specialties_note}</p>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
+        <h2 className="text-xl font-semibold text-slate-900">{t('doctorForm.qualifications.title')}</h2>
+        <p className="text-sm text-slate-500">{t('doctorForm.qualifications.description')}</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.about.labels.professionalRole')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {doctor.professional_role || t('doctorProfile.notProvided')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.about.labels.licensureStatus')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">{licensureStatusLabel}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseNumber')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {doctor.license_number || t('doctorProfile.notProvided')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.about.labels.licenseExpiration')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {doctor.license_expiration
+                ? new Date(doctor.license_expiration).toLocaleDateString()
+                : t('doctorProfile.notProvided')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.about.labels.credentialSuffix')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {doctor.credentials_suffix || t('doctorProfile.notProvided')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.about.labels.pronouns')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {doctor.preferred_pronouns || t('doctorProfile.notProvided')}
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.qualifications.mainQualifications')}</p>
+            {qualifications.length > 0 ? (
+              <div className="mt-2 space-y-2 text-sm text-slate-700">
+                {qualifications.map((item) => (
+                  <p key={item}>{item}</p>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.notProvided')}</p>
+            )}
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.qualifications.additionalCredentials')}</p>
+            {additionalCredentials.length > 0 ? (
+              <div className="mt-2 space-y-2 text-sm text-slate-700">
+                {additionalCredentials.map((item) => (
+                  <p key={item}>{item}</p>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.notProvided')}</p>
+            )}
+          </div>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.qualifications.lastInstitution')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {doctor.education_institution || t('doctorProfile.notProvided')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.qualifications.degreeType')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {doctor.education_degree || t('doctorProfile.notProvided')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.qualifications.graduationYear')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {doctor.education_graduation_year ?? t('doctorProfile.notProvided')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.qualifications.practiceStartYear')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {doctor.practice_start_year ?? t('doctorProfile.notProvided')}
+            </p>
+          </div>
+        </div>
+        {doctor.qualifications_note && (
+          <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
+            <p className="text-xs text-slate-500">{t('doctorForm.qualifications.note')}</p>
+            <p className="mt-2">{doctor.qualifications_note}</p>
+          </div>
+        )}
+        {documents.length > 0 && (
+          <div className="mt-4 rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.media.documentsTitle')}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {documents.map((document) => (
+                <a
+                  key={document.id}
+                  href={document.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700 underline"
+                >
+                  {document.name}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
+        <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.clientFocusTitle')}</h2>
+        <p className="text-sm text-slate-500">{t('doctorProfile.clientFocusCopy')}</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorProfile.participants')}</p>
+            {participantLabels.length > 0 ? (
+              <p className="mt-2 text-sm font-semibold text-slate-900">{participantLabels.join(listSeparator)}</p>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.participantsEmpty')}</p>
+            )}
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorProfile.ageGroups')}</p>
+            {ageGroupLabels.length > 0 ? (
+              <p className="mt-2 text-sm font-semibold text-slate-900">{ageGroupLabels.join(listSeparator)}</p>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.ageGroupsEmpty')}</p>
+            )}
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorProfile.faithOrientation')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">{faithLabel}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorProfile.alliedCommunities')}</p>
+            {alliedLabels.length > 0 ? (
+              <p className="mt-2 text-sm font-semibold text-slate-900">{alliedLabels.join(listSeparator)}</p>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.alliedEmpty')}</p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
+        <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.identityTitle')}</h2>
+        <p className="text-sm text-slate-500">{t('doctorProfile.identityCopy')}</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorProfile.identityGender')}</p>
+            {identityGender.length > 0 ? (
+              <p className="mt-2 text-sm font-semibold text-slate-900">{identityGender.join(listSeparator)}</p>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.identityEmpty')}</p>
+            )}
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorProfile.identityEthnicity')}</p>
+            {identityEthnicity.length > 0 ? (
+              <p className="mt-2 text-sm font-semibold text-slate-900">{identityEthnicity.join(listSeparator)}</p>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.identityEmpty')}</p>
+            )}
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorProfile.identityLgbtq')}</p>
+            {identityLgbtq.length > 0 ? (
+              <p className="mt-2 text-sm font-semibold text-slate-900">{identityLgbtq.join(listSeparator)}</p>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.identityEmpty')}</p>
+            )}
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorForm.identity.religion')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {typeof identityTraits.religion === 'string' && identityTraits.religion.trim() !== ''
+                ? identityTraits.religion
+                : t('doctorProfile.notProvided')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4">
+            <p className="text-xs text-slate-500">{t('doctorProfile.identityBirthYear')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {typeof identityTraits.birth_year === 'number' || typeof identityTraits.birth_year === 'string'
+                ? identityTraits.birth_year
+                : t('doctorProfile.notProvided')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 p-4 md:col-span-2">
+            <p className="text-xs text-slate-500">{t('doctorProfile.identityOther')}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {typeof identityTraits.other === 'string' && identityTraits.other.trim() !== ''
+                ? identityTraits.other
+                : t('doctorProfile.notProvided')}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.treatmentTitle')}</h2>
         <p className="text-sm text-slate-500">
           {t('doctorProfile.treatmentCopy')}
@@ -392,12 +663,22 @@ export const DoctorProfilePage = () => {
                 {t('doctorProfile.phone')}: <PhoneNumber value={doctor.phone} className="text-slate-900" />
               </p>
             )}
+            {doctor.mobile_phone && (
+              <p>
+                {t('doctorProfile.mobilePhone')}: <PhoneNumber value={doctor.mobile_phone} className="text-slate-900" />
+              </p>
+            )}
             {doctor.whatsapp && (
               <p>
                 {t('doctorProfile.whatsapp')}: <PhoneNumber value={doctor.whatsapp} className="text-slate-900" />
               </p>
             )}
             {doctor.email && <p>{t('doctorProfile.email')}: {doctor.email}</p>}
+            {doctor.appointment_email && (
+              <p>
+                {t('doctorProfile.appointmentEmail')}: {doctor.appointment_email}
+              </p>
+            )}
             {doctor.website && (
               <p>
                 {t('doctorProfile.website')}: {' '}
@@ -406,6 +687,14 @@ export const DoctorProfilePage = () => {
                 </a>
               </p>
             )}
+            <p>
+              {t('doctorProfile.acceptsEmails')}:{' '}
+              {doctor.accepts_email_messages ? t('doctorProfile.booleanYes') : t('doctorProfile.booleanNo')}
+            </p>
+            <p>
+              {t('doctorProfile.offersIntroCall')}:{' '}
+              {doctor.offers_intro_call ? t('doctorProfile.booleanYes') : t('doctorProfile.booleanNo')}
+            </p>
           </div>
         </div>
         <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
