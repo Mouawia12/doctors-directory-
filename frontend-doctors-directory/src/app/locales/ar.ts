@@ -584,7 +584,7 @@ export const ar = {
       focusChip: 'دعم الصحة النفسية المتكامل',
       focusEmpty: 'لم تتم إضافة تخصصات إضافية.',
       personalStatementTitle: 'البيان الشخصي',
-      personalStatementCopy: 'ثلاث فقرات يكتبها المختص لتعريف العملاء.',
+      personalStatementCopy: '',
       financesTitle: 'الشؤون المالية',
       financesCopy: 'الأتعاب، التأمينات، طرق الدفع كما تظهر في Psychology Today.',
       individualSession: 'جلسة فردية',

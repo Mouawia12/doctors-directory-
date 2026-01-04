@@ -58,11 +58,6 @@ export const DoctorProfilePage = () => {
       })
     : t('doctorProfile.newClients.default')
   const paymentMethods = doctor.payment_methods ?? []
-  const aboutParagraphs = [
-    doctor.about_paragraph_one,
-    doctor.about_paragraph_two,
-    doctor.about_paragraph_three,
-  ].filter((paragraph): paragraph is string => Boolean(paragraph && paragraph.trim().length > 0))
   const therapyModalities = doctor.therapy_modalities ?? []
   const insurances = doctor.insurances ?? []
   const documents = doctor.media?.documents ?? []
@@ -109,6 +104,11 @@ export const DoctorProfilePage = () => {
     typeof value === 'number' && !Number.isNaN(value)
       ? `${value.toLocaleString()} ${t('doctorProfile.feeCurrency')}`
       : t('doctorProfile.notProvided')
+  const aboutParagraphs = [
+    doctor.about_paragraph_one,
+    doctor.about_paragraph_two,
+    doctor.about_paragraph_three,
+  ].filter((paragraph): paragraph is string => typeof paragraph === 'string' && paragraph.trim() !== '')
 
   const schema = {
     '@context': 'https://schema.org',
@@ -157,17 +157,6 @@ export const DoctorProfilePage = () => {
             <p className="text-base text-slate-600">
               {doctor.bio || t('doctorProfile.bioFallback')}
             </p>
-            {aboutParagraphs.length > 0 && (
-              <div className="rounded-2xl border border-slate-100 bg-white p-4">
-                <p className="text-sm font-semibold text-slate-900">{t('doctorProfile.personalStatementTitle')}</p>
-                <p className="text-xs text-slate-500">{t('doctorProfile.personalStatementCopy')}</p>
-                <div className="mt-3 space-y-3 text-sm text-slate-700">
-                  {aboutParagraphs.map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                  ))}
-                </div>
-              </div>
-            )}
             <div className="grid gap-4 rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-600 md:grid-cols-3">
               <div>
                 <p className="text-xs uppercase text-slate-400">{t('doctorProfile.experience')}</p>
@@ -242,6 +231,19 @@ export const DoctorProfilePage = () => {
         </div>
       </section>
 
+      {aboutParagraphs.length > 0 && (
+        <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
+          <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.personalStatementTitle')}</h2>
+          {t('doctorProfile.personalStatementCopy') && (
+            <p className="mt-2 text-sm text-slate-500">{t('doctorProfile.personalStatementCopy')}</p>
+          )}
+          <div className="mt-4 space-y-4 text-sm leading-relaxed text-slate-700">
+            {aboutParagraphs.map((paragraph, index) => (
+              <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.financesTitle')}</h2>

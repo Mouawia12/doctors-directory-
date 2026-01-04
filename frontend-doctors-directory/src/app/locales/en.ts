@@ -586,7 +586,7 @@ export const en = {
       focusChip: 'Holistic mental health care',
       focusEmpty: 'No additional specialties yet.',
       personalStatementTitle: 'Personal statement',
-      personalStatementCopy: 'Three short paragraphs written by the therapist.',
+      personalStatementCopy: '',
       financesTitle: 'Finances',
       financesCopy: 'Fees, insurance, and payments.',
       individualSession: 'Individual session',
