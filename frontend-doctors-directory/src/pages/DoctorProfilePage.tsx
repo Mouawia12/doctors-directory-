@@ -322,7 +322,6 @@ export const DoctorProfilePage = () => {
 
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorForm.specialties.title')}</h2>
-        <p className="text-sm text-slate-500">{t('doctorForm.specialties.description')}</p>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-100 p-4">
             <p className="text-xs text-slate-500">{t('doctorForm.about.labels.primarySpecialty')}</p>
@@ -347,7 +346,6 @@ export const DoctorProfilePage = () => {
 
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorForm.qualifications.title')}</h2>
-        <p className="text-sm text-slate-500">{t('doctorForm.qualifications.description')}</p>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-slate-100 p-4">
             <p className="text-xs text-slate-500">{t('doctorForm.about.labels.professionalRole')}</p>
@@ -466,7 +464,6 @@ export const DoctorProfilePage = () => {
 
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.clientFocusTitle')}</h2>
-        <p className="text-sm text-slate-500">{t('doctorProfile.clientFocusCopy')}</p>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-100 p-4">
             <p className="text-xs text-slate-500">{t('doctorProfile.participants')}</p>
@@ -501,7 +498,6 @@ export const DoctorProfilePage = () => {
 
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.identityTitle')}</h2>
-        <p className="text-sm text-slate-500">{t('doctorProfile.identityCopy')}</p>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-100 p-4">
             <p className="text-xs text-slate-500">{t('doctorProfile.identityGender')}</p>
