@@ -256,13 +256,13 @@ const DoctorProfileOverviewPage = () => {
         </>
       )}
 
-      {doctor.clinics?.length ? (
+          {doctor.clinics?.length ? (
         <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
           <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.clinicsTitle')}</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {doctor.clinics.map((clinic) => (
               <div key={clinic.id} className="rounded-2xl border border-slate-100 p-4 text-sm text-slate-600">
-                <p className="text-base font-semibold text-slate-900">{clinic.city}</p>
+                <p className="text-base font-semibold text-slate-900">{clinic.name || clinic.city}</p>
                 <p>{clinic.address}</p>
               </div>
             ))}

@@ -245,9 +245,6 @@ export const DoctorProfilePage = () => {
 
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.financesTitle')}</h2>
-        <p className="text-sm text-slate-500">
-          {t('doctorProfile.financesCopy')}
-        </p>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-slate-100 p-4">
             <p className="text-xs uppercase text-slate-400">{t('doctorProfile.individualSession')}</p>
@@ -559,9 +556,6 @@ export const DoctorProfilePage = () => {
 
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
         <h2 className="text-xl font-semibold text-slate-900">{t('doctorProfile.treatmentTitle')}</h2>
-        <p className="text-sm text-slate-500">
-          {t('doctorProfile.treatmentCopy')}
-        </p>
         <div className="mt-4">
           {therapyModalities.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -586,7 +580,7 @@ export const DoctorProfilePage = () => {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {doctor.clinics.map((clinic) => (
               <div key={clinic.id} className="rounded-2xl border border-slate-100 p-4">
-                <p className="font-semibold text-slate-800">{clinic.city}</p>
+                <p className="font-semibold text-slate-800">{clinic.name || clinic.city}</p>
                 <p className="text-sm text-slate-500">{clinic.address}</p>
                 <div className="mt-3">
                   <p className="text-xs text-slate-500">{t('doctorProfile.workingHours')}</p>
@@ -602,7 +596,7 @@ export const DoctorProfilePage = () => {
                 .map((clinic) => ({
                   lat: clinic.lat as number,
                   lng: clinic.lng as number,
-                  title: clinic.city,
+                  title: clinic.name || clinic.city,
                 }))}
             />
           </div>

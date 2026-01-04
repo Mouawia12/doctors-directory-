@@ -99,7 +99,7 @@ export const DoctorCard = ({ doctor, compact = false, profilePath }: DoctorCardP
           {doctor.clinics && doctor.clinics.length > 0 && (
             <p className="text-xs text-slate-500">
               {t('doctorCard.clinicsIn')}{' '}
-              {doctor.clinics.map((clinic) => clinic.city).join(t('common.comma'))}
+              {doctor.clinics.map((clinic) => clinic.name || clinic.city).join(t('common.comma'))}
             </p>
           )}
         </div>

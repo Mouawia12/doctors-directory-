@@ -1055,6 +1055,7 @@ export const ar = {
         statusNote: 'ملاحظات الحالة',
         userId: 'معرّف المستخدم المرتبط',
         clinic: 'عيادة',
+        clinicName: 'اسم العيادة',
         address: 'العنوان',
         workHours: 'أوقات العمل',
       },
@@ -1308,6 +1309,7 @@ export const ar = {
       clinics: {
         title: 'العيادات والمواقع',
         add: 'إضافة عيادة',
+        name: 'اسم العيادة',
         city: 'المدينة',
         address: 'العنوان',
         mapLabel: 'حدد موقع العيادة على الخريطة',

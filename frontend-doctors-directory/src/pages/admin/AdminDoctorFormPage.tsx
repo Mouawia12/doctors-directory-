@@ -33,6 +33,7 @@ type ClinicWorkHoursForm = Record<
 
 interface ClinicFormValues {
   id?: number
+  name?: string
   city: string
   address: string
   lat?: string
@@ -150,6 +151,7 @@ const serializeWorkHours = (state?: ClinicWorkHoursForm) => {
 }
 
 const defaultClinic: ClinicFormValues = {
+  name: '',
   city: '',
   address: '',
   lat: '',
@@ -548,6 +550,7 @@ export const AdminDoctorFormPage = () => {
           doctor.clinics && doctor.clinics.length > 0
             ? doctor.clinics.map((clinic) => ({
                 id: clinic.id,
+                name: clinic.name ?? '',
                 city: clinic.city ?? '',
                 address: clinic.address ?? '',
                 lat: clinic.lat?.toString() ?? '',
@@ -570,6 +573,7 @@ export const AdminDoctorFormPage = () => {
 
     const clinicsPayload = values.clinics.map((clinic) => ({
       id: clinic.id,
+      name: clinic.name?.trim() || undefined,
       city: clinic.city,
       address: clinic.address,
       lat: toNumber(clinic.lat),
@@ -1230,7 +1234,7 @@ export const AdminDoctorFormPage = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => clinicsArray.append({ city: '', address: '', lat: '', lng: '', work_hours: createWorkHoursDefaults() })}
+              onClick={() => clinicsArray.append({ name: '', city: '', address: '', lat: '', lng: '', work_hours: createWorkHoursDefaults() })}
               disabled={clinicsArray.fields.length >= 3}
             >
               {t('adminDoctorForm.addClinic')}
@@ -1251,7 +1255,11 @@ export const AdminDoctorFormPage = () => {
                     </Button>
                   )}
                 </div>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div>
+                    <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.clinicName')}</label>
+                    <Input {...register(`clinics.${index}.name` as const)} />
+                  </div>
                   <div>
                     <label className="text-sm text-slate-600">{t('adminDoctorForm.labels.city')}</label>
                     <Input

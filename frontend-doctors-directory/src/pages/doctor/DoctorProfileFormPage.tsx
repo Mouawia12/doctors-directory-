@@ -148,6 +148,7 @@ const findFirstErrorField = (errors: FieldErrors<FormValues>, parentPath = ''): 
 
 interface ClinicForm {
   id?: number
+  name?: string
   address: string
   city: string
   lat?: number
@@ -168,6 +169,7 @@ const safeStringArray = (value: unknown): string[] => {
 }
 
 const createBlankClinic = (): ClinicForm => ({
+  name: '',
   address: '',
   city: '',
   work_hours: createWorkHoursState(),
@@ -408,6 +410,7 @@ export const DoctorProfileFormPage = () => {
     setClinics(
       doctor.clinics?.map((clinic) => ({
         id: clinic.id,
+        name: clinic.name ?? '',
         address: clinic.address,
         city: clinic.city,
         lat: clinic.lat ?? undefined,
@@ -495,6 +498,7 @@ export const DoctorProfileFormPage = () => {
     const cleanedClinics = clinics
       .map((clinic) => ({
         id: clinic.id,
+        name: clinic.name?.trim() || undefined,
         address: clinic.address.trim(),
         city: clinic.city.trim(),
         lat: clinic.lat ?? null,
@@ -1411,21 +1415,30 @@ export const DoctorProfileFormPage = () => {
                       {t('doctorForm.clinics.remove')}
                     </Button>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="text-xs text-slate-500">
-                        {t('doctorForm.clinics.city')} <RequiredAsterisk />
-                      </label>
-                      <Input
-                        value={clinic.city}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="text-xs text-slate-500">
+                      {t('doctorForm.clinics.name')}
+                    </label>
+                    <Input
+                      value={clinic.name ?? ''}
+                      onChange={(event) => handleClinicChange(index, 'name', event.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500">
+                      {t('doctorForm.clinics.city')} <RequiredAsterisk />
+                    </label>
+                    <Input
+                      value={clinic.city}
                         onChange={(e) => handleClinicChange(index, 'city', e.target.value)}
                         aria-required="true"
                       />
-                    </div>
-                    <div>
-                      <label className="text-xs text-slate-500">
-                        {t('doctorForm.clinics.address')} <RequiredAsterisk />
-                      </label>
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500">
+                      {t('doctorForm.clinics.address')} <RequiredAsterisk />
+                    </label>
                       <Input
                         value={clinic.address}
                         onChange={(e) => handleClinicChange(index, 'address', e.target.value)}

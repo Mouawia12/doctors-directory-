@@ -2,6 +2,7 @@ export type DoctorStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 
 export interface Clinic {
   id: number
+  name?: string | null
   address: string
   city: string
   lat: number | null

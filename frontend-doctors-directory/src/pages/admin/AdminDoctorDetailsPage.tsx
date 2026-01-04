@@ -508,7 +508,7 @@ export const AdminDoctorDetailsPage = () => {
             <div className="grid gap-4 md:grid-cols-2">
               {doctor.clinics.map((clinic) => (
                 <div key={clinic.id} className="rounded-2xl border border-slate-100 p-4">
-                  <p className="font-semibold text-slate-800">{clinic.city}</p>
+                  <p className="font-semibold text-slate-800">{clinic.name || clinic.city}</p>
                   <p className="text-sm text-slate-500">{clinic.address}</p>
                   <div className="mt-3">
                     <p className="text-xs text-slate-500">{t('doctorProfile.workingHours')}</p>
@@ -524,7 +524,7 @@ export const AdminDoctorDetailsPage = () => {
                   .map((clinic) => ({
                     lat: clinic.lat as number,
                     lng: clinic.lng as number,
-                    title: `${clinic.city} - ${clinic.address}`,
+                    title: `${clinic.name || clinic.city} - ${clinic.address}`,
                   }))}
               />
             </div>

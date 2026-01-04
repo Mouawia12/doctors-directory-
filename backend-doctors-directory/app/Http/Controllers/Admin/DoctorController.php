@@ -173,6 +173,7 @@ class DoctorController extends Controller
         $payload->each(function (array $clinicData) use ($doctor): void {
             $clinicId = $clinicData['id'] ?? null;
             $attributes = collect($clinicData)->only([
+                'name',
                 'address',
                 'city',
                 'lat',

@@ -9,6 +9,7 @@ export interface AdminDoctorFilters {
 
 export interface AdminDoctorClinicInput {
   id?: number
+  name?: string | null
   address: string
   city: string
   lat?: number | null

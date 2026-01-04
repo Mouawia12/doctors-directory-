@@ -1057,6 +1057,7 @@ export const en = {
         statusNote: 'Status note',
         userId: 'Linked user ID',
         clinic: 'Clinic',
+        clinicName: 'Clinic name',
         address: 'Address',
         workHours: 'Working hours',
       },
@@ -1306,6 +1307,7 @@ export const en = {
       clinics: {
         title: 'Clinics & locations',
         add: 'Add clinic',
+        name: 'Clinic name',
         city: 'City',
         address: 'Address',
         mapLabel: 'Pin clinic on the map',

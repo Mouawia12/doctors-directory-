@@ -94,6 +94,7 @@ class DoctorProfileRequest extends FormRequest
             'categories.*' => ['integer', 'exists:categories,id'],
             'clinics' => ['nullable', 'array', 'max:3'],
             'clinics.*.id' => ['sometimes', 'integer', 'exists:clinics,id'],
+            'clinics.*.name' => ['nullable', 'string', 'max:255'],
             'clinics.*.address' => ['required_with:clinics', 'string', 'max:255'],
             'clinics.*.city' => ['required_with:clinics', 'string', 'max:120'],
             'clinics.*.lat' => ['nullable', 'numeric'],
